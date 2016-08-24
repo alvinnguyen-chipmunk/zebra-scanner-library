@@ -1,6 +1,6 @@
 1. Please run build.sh
 
-./build.sh
+source ./build.sh
 
 This script is to build shared library "ssi" and its demo application.
 
