@@ -6,7 +6,7 @@ CFLAGS=-std=gnu99 -Wall
 CFLAGS_LIB=-fPIC -shared
 CC=$(CROSS_COMPILE)gcc
 BIN_PATH=./image/usr/bin
-LIB_PATH=$(BIN)/usr/lib
+LIB_PATH=./image/usr/lib
 
 all:
 	$(CC) $(CFLAGS) $(SRC) -L. -lssi -I. -o $(BIN_PATH)/$(TARGET)
