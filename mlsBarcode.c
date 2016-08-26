@@ -37,8 +37,9 @@ char mlsBarcodeReader_Open() {
 	char error = EXIT_SUCCESS;
 	struct termios dev_conf;
 	int flags = 0;
+	char *dev_name = getenv("ZEBRA_SCANNER");
 
-	scanner = open(ZEBRA_DEVICE, O_RDWR | O_NOCTTY);
+	scanner = open(dev_name, O_RDWR | O_NOCTTY);
 	if (scanner < 0) {
 		perror(__func__);
 		error = EXIT_FAILURE;

@@ -9,7 +9,6 @@
 #ifndef ssi_h
 #define ssi_h
 
-#define ZEBRA_DEVICE		"/dev/ttyACM0"
 #define BAUDRATE		B9600
 
 typedef unsigned char byte;
