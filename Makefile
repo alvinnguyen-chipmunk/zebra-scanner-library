@@ -9,7 +9,7 @@ BIN_PATH=./image/usr/bin
 LIB_PATH=./image/usr/lib
 
 all:
-	$(CC) $(CFLAGS) $(SRC) -L. -lssi -I. -o $(BIN_PATH)/$(TARGET)
+	$(CC) $(CFLAGS) $(SRC) -L./image/usr/lib -lssi -I. -o $(BIN_PATH)/$(TARGET)
 
 lib:
 	$(CC) $(CFLAGS) $(CFLAGS_LIB) $(SRC_LIB) -o $(LIB_PATH)/$(TARGET_LIB)
