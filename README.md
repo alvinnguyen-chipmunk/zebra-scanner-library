@@ -1,3 +1,11 @@
+0. REQUIREMENT
+
+Scanner must be configured in "SSI over USB CDC" mode.
+Please use Windows SDK provided by Zebra to scan "SSI over USB CDC" barcode.
+
+The setting barcode could be found in:
+PL3307 IG (72E-149624-02rA).pdf - PL3307 Decoder Intergration Guide  
+
 1. BUILD
 
 $ source ./build.sh
