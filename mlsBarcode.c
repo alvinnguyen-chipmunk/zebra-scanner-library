@@ -140,9 +140,8 @@ unsigned int mlsBarcodeReader_ReadData(char *buff) {
 	for (; i < barcodeLen; i++) {
 		buff[i] = (char) recvBuff[i + SSI_PKG_BARCODETYPE + 1];
 	}
-	buff[i+1] = '\0';
 
-	return readByte;
+	return barcodeLen;
 }
 
 /*!

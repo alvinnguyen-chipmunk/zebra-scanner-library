@@ -17,6 +17,7 @@
 
 int main(int argc, const char * argv[]) {
 	int error = EXIT_SUCCESS;
+	int barcodeLen = 0;
 	char *buff = (char *) malloc(BUFFER_LENGTH * sizeof(char));
 
 	error = mlsBarcodeReader_Open();
@@ -25,12 +26,12 @@ int main(int argc, const char * argv[]) {
 		goto EXIT;
 	}
 
-	mlsBarcodeReader_ReadData(buff);
+	barcodeLen = mlsBarcodeReader_ReadData(buff);
 	if (error) {
 		perror("Read data");
 		goto EXIT;
 	}
-	printf("\e[36mBarcode: %s\e[0m\n", buff);
+	printf("\e[36mBarcode(%d): %s\e[0m\n", barcodeLen, buff);
 
 	error = mlsBarcodeReader_Close();
 
