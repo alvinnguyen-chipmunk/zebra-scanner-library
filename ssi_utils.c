@@ -13,53 +13,63 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
+
+#include <signal.h>
+#include <sys/time.h>
 
 #include "ssi_utils.h"
 #include "ssi.h"
 
+#define TRUE	1;
+#define FALSE	0;
+
+#define MSB_16(x)		(x >> 8)
+#define LSB_16(x)		(x & UINT8_MAX)
+
+#define TIMEOUT_DEFAULT		5;
+
+static int is_timeout=FALSE;
+static int is_read=FALSE;
+static int scanner = 0;
+
+static byte pkg[MAX_PKG_LEN] = {0};
+static int byteRead = 0;
+
+static void HandleSignal(int sig);
+static int CalculateChecksum(byte *pkg);
+
 //  Calculate the 2's Complement checksum of the data packet
-int add_checksum(byte *pkg) {
-	int error = EXIT_SUCCESS;
-	unsigned int cksumLSB = pkg[SSI_PKG_LENGTH] + 1;
-	unsigned int cksumMSB = pkg[SSI_PKG_LENGTH];
+int CalculateChecksum(byte *pkg) {
+	int checksum = 0;
 
-	pkg[cksumMSB] = 0;
-	pkg[cksumLSB] = 0;
-
-	for (unsigned int i = 0; i < pkg[SSI_PKG_LENGTH]; i++)
+	for (unsigned int i = 0; i < PKG_LEN(pkg); i++)
 	{
-		if (pkg[cksumLSB] + pkg[i] > 0xFF)  // If adding the next byte will cause the digits to roll to the next byte, increment it manually
-		{
-			pkg[cksumMSB]++;
-		}
-		pkg[cksumLSB] += pkg[i];
+		checksum += pkg[i];
 	}
 
-	// Get 1's complement
-	pkg[cksumMSB] ^= 0xFF;
-	pkg[cksumLSB] ^= 0xFF;
+	// 1's complement
+	checksum ^= 0xFFFF;	// flip all 16 bits
 
-	// Get 2's complement
-	if (pkg[cksumLSB] == 0xFF) {
-		pkg[cksumMSB] += 1;
-		pkg[cksumLSB] = 0x00;
-	}
-	else {
-		pkg[cksumLSB] += 1;
-	}
+	// 2's complement
+	checksum += 1;
 
-	return error;
+	return checksum;
 }
 
 int prepare_pkg(byte *pkg, byte opcode) {
 	int error = EXIT_SUCCESS;
+	int checksum = 0;
 
-	pkg[SSI_PKG_LENGTH] = SSI_DEFAULT_LENGTH;
-	pkg[SSI_PKG_OPCODE] = opcode;
-	pkg[SSI_PKG_SOURCE] = SSI_HOST;
-	pkg[SSI_PKG_STATUS] = SSI_DEFAULT_STATUS;
+	pkg[INDEX_LEN] = SSI_DEFAULT_LEN;
+	pkg[INDEX_OPCODE] = opcode;
+	pkg[INDEX_SRC] = SSI_HOST;
+	pkg[INDEX_STAT] = SSI_DEFAULT_STATUS;
 
-	add_checksum(pkg);
+	// add checksum
+	checksum = CalculateChecksum(pkg);
+	pkg[PKG_LEN(pkg)] = checksum >> 8;
+	pkg[PKG_LEN(pkg) + 1] = checksum & 0xFF;
 
 	return error;
 }
@@ -73,33 +83,101 @@ int wakeup_scanner(int fd) {
 }
 
 void display_pkg(byte *pkg) {
-	for (int i = 0; i < (pkg[SSI_PKG_LENGTH] + 2); i++) {
+	for (int i = 0; i < (PKG_LEN(pkg) + 2); i++) {
 		printf("0x%x ", pkg[i]);
 	}
 	printf("\n");
 }
 
 int ssi_read(int fd, byte *buff) {
-	int readByte = 0;
-	int recvPkgLen = 0;
-	struct termios dev_conf;
+	int timeoutValue = 0;
+	int ret = 0;
+	struct itimerval timeoutTimer;
 
-	tcgetattr(fd, &dev_conf);
+	scanner = fd;
+	is_timeout = FALSE;
+	is_read = FALSE;
 
-	// Get package length first
-	dev_conf.c_cc[VTIME] = 0;
-	dev_conf.c_cc[VMIN] = 1;
-	tcsetattr(fd, TCSANOW, &dev_conf);
-	do {
-		read(fd, &recvPkgLen, 1);
-	} while (0 == recvPkgLen);
-	readByte += recvPkgLen + 2;
+	if (NULL == getenv("ZEBRA_TIMEOUT"))
+	{
+		timeoutValue = TIMEOUT_DEFAULT;
+	}
+	else
+	{
+		timeoutValue = atoi(getenv("ZEBRA_TIMEOUT"));
+	}
 
-	dev_conf.c_cc[VMIN] = readByte - 1;
-	tcsetattr(fd, TCSANOW, &dev_conf);
+	// Setup one shot timeout timer
+	timeoutTimer.it_interval.tv_sec = 0;
+	timeoutTimer.it_interval.tv_usec = 0;
+	timeoutTimer.it_value.tv_sec = timeoutValue;
+	timeoutTimer.it_value.tv_usec = 0;
 
-	buff[SSI_PKG_LENGTH] = recvPkgLen;
-	read(fd, &buff[1], readByte - 1);
+	// Start timer
+	signal(SIGALRM, HandleSignal);
+	setitimer(ITIMER_REAL, &timeoutTimer, NULL);
 
-	return readByte;
+	// Enable interrupt for receiver
+	signal(SIGIO, HandleSignal);
+
+	while (! is_timeout)
+	{
+		if (is_read)
+		{
+			int checksum = 0;
+			checksum = CalculateChecksum(pkg);
+
+			if ( (MSB_16(checksum) == pkg[PKG_LEN(pkg)]) && (LSB_16(checksum) == pkg[PKG_LEN(pkg) + 1]) )
+			{
+				ret = byteRead;
+				memcpy(buff, pkg, (PKG_LEN(pkg) + 2) );
+				break;
+			}
+			else
+			{
+				ret = -ECKSUM;
+				buff = NULL;
+				break;
+			}
+		}
+	}
+	signal(SIGIO, SIG_IGN);
+	signal(SIGALRM, SIG_IGN);
+
+	if (is_timeout)
+	{
+		ret = -ETIME;
+		buff = NULL;
+	}
+
+	return ret;
+}
+
+void HandleSignal(int sig)
+{
+	if (SIGALRM == sig)
+	{
+		printf("TIMEOUT\t");
+		is_timeout = TRUE;
+		signal(SIGIO, SIG_IGN);
+		signal(SIGALRM, SIG_IGN);
+	}
+	else if (SIGIO == sig)
+	{
+		int pkgLen = 0;
+
+		signal(SIGIO, SIG_IGN);
+
+		read(scanner, &pkgLen, 1);
+		if (pkgLen > 0)
+		{
+			while(pkgLen <= 0);
+			pkg[0] = pkgLen;
+			byteRead++;
+			byteRead += read(scanner, &pkg[1], pkgLen+1);
+			is_read = TRUE;
+		}
+
+		signal(SIGIO, HandleSignal);
+	}
 }

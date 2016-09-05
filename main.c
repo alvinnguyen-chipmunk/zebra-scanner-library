@@ -13,28 +13,35 @@
 #include "ssi.h"
 #include "ssi_utils.h"
 
-#define BUFFER_LENGTH	50
+#define BUFFER_LEN	50
 
-int main(int argc, const char * argv[]) {
-	int error = EXIT_SUCCESS;
+int main(int argc, const char * argv[])
+{
+	int ret = EXIT_SUCCESS;
 	int barcodeLen = 0;
-	char *buff = (char *) malloc(BUFFER_LENGTH * sizeof(char));
+	char *buff = (char *) malloc(BUFFER_LEN * sizeof(char));
 
-	error = mlsBarcodeReader_Open();
-	if (error) {
-		perror("Open device");
+	ret = mlsBarcodeReader_Open();
+	if (ret)
+	{
+		printf("ERROR: open device\n");
 		goto EXIT;
 	}
 
-	barcodeLen = mlsBarcodeReader_ReadData(buff);
-	if (error) {
-		perror("Read data");
+	ret = mlsBarcodeReader_ReadData(buff);
+	if (ret <= 0)
+	{
+		printf("Error: read data\n");
 		goto EXIT;
 	}
-	printf("\e[36mBarcode(%d): %s\e[0m\n", barcodeLen, buff);
+	else
+	{
+		barcodeLen = ret;
+		printf("\e[36mBarcode(%d): %s\e[0m\n", barcodeLen, buff);
+	}
 
-	error = mlsBarcodeReader_Close();
+	ret = mlsBarcodeReader_Close();
 
 EXIT:
-	return error;
+	return ret;
 }

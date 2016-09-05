@@ -26,22 +26,23 @@ typedef unsigned char byte;
 // Devices ID
 #define SSI_HOST							0x04
 
-#define SSI_DEFAULT_LENGTH					0x04
+#define SSI_DEFAULT_LEN						0x04
 #define SSI_DEFAULT_STATUS					0x00
-#define SSI_CKSUM_LENGTH					0x02
+#define SSI_CKSUM_LEN						0x02
 
 // Parameters
 #define SSI_DEC								0xEE
 #define SSI_DEC_RAW							0x00
 #define SSI_DEC_PACKED						0x01
 #define SSI_BEEP_NONE						0xFF
+#define MAX_PKG_LEN							255
 
 // Package index
-#define SSI_PKG_LENGTH						0
-#define SSI_PKG_OPCODE						1
-#define SSI_PKG_SOURCE						2
-#define SSI_PKG_STATUS						3
-#define SSI_PKG_BARCODETYPE					4
+#define INDEX_LEN							0
+#define INDEX_OPCODE						1
+#define INDEX_SRC							2
+#define INDEX_STAT							3
+#define INDEX_BARCODETYPE					4
 
 // Status bits
 /*
@@ -57,5 +58,11 @@ typedef unsigned char byte;
 // Actions
 #define SSI_CUSTOM_DEFAULTS_ACT_WR			0x00
 #define SSI_CUSTOM_DEFAULTS_ACT_RESTORE		0x01
+
+// Macro
+#define PKG_LEN(x)		(x[INDEX_LEN])
+
+// Error
+#define ECKSUM								1
 
 #endif /* ssi_command_h */
