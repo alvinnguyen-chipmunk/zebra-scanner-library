@@ -16,7 +16,6 @@ extern "C"
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <linux/input.h>
 #include <string.h>
 #include <stdio.h>
 #include <termios.h>
