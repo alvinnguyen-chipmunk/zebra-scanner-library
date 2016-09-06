@@ -66,6 +66,7 @@ char mlsBarcodeReader_Open() {
 	dev_conf.c_iflag = 0;
 	dev_conf.c_oflag = 0;
 	dev_conf.c_lflag = 0;
+	dev_conf.c_lflag = (ISIG);
 
 	error = cfsetspeed(&dev_conf, BAUDRATE);
 	if (error) {
