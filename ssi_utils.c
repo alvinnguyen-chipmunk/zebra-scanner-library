@@ -166,18 +166,13 @@ void HandleSignal(int sig)
 	{
 		int pkgLen = 0;
 
-		signal(SIGIO, SIG_IGN);
-
 		read(scanner, &pkgLen, 1);
 		if (pkgLen > 0)
 		{
-			while(pkgLen <= 0);
 			pkg[0] = pkgLen;
 			byteRead++;
 			byteRead += read(scanner, &pkg[1], pkgLen+1);
 			is_read = TRUE;
 		}
-
-		signal(SIGIO, HandleSignal);
 	}
 }

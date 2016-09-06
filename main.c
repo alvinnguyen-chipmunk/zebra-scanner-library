@@ -13,7 +13,7 @@
 #include "ssi.h"
 #include "ssi_utils.h"
 
-#define BUFFER_LEN	50
+#define BUFFER_LEN	MAX_PKG_LEN
 
 int main(int argc, const char * argv[])
 {

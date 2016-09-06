@@ -1,5 +1,6 @@
 #!/bin/bash
 
+sync
 make clean
 make lib
 make
