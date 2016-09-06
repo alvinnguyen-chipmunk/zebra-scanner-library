@@ -38,7 +38,7 @@ char mlsBarcodeReader_Open() {
 	int flags = 0;
 	char *dev_name = getenv("ZEBRA_SCANNER");
 
-	scanner = open(dev_name, O_RDWR | O_NOCTTY | O_NONBLOCK);
+	scanner = open(dev_name, O_RDWR | O_NOCTTY);
 	if (scanner < 0) {
 		perror(__func__);
 		error = EXIT_FAILURE;
@@ -62,9 +62,10 @@ char mlsBarcodeReader_Open() {
 	}
 
 	// Configure tty dev
-	dev_conf.c_cflag = BAUDRATE | CRTSCTS | CS8 | CLOCAL | CREAD;
-	dev_conf.c_iflag = IGNPAR | ICRNL;
+	dev_conf.c_cflag = (CRTSCTS | CS8 | HUPCL);
+	dev_conf.c_iflag = 0;
 	dev_conf.c_oflag = 0;
+	dev_conf.c_lflag = (ISIG);
 
 	error = cfsetspeed(&dev_conf, BAUDRATE);
 	if (error) {
