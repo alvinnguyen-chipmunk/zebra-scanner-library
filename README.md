@@ -8,6 +8,12 @@ PL3307 IG (72E-149624-02rA).pdf - PL3307 Decoder Intergration Guide
 
 1. BUILD
 
+For x86_64:
+$ source ./build.sh
+
+For ARM:
+$ apt-get install gcc-arm-linux-gnueabihf
+$ export CROSS_COMPILE=arm-linux-gnueabihf-
 $ source ./build.sh
 
 OUTPUT: ./image
@@ -16,7 +22,7 @@ OUTPUT: ./image
 
 2. DEPLOY on board
 
-$ cp ./image/* <Board rootfs>/
+$ tar xf release/mlsScanner.tar.xz -C <board_rootfs>
 
 3. CONFIGURE device:
 Please use barcode to configure decoder to transmit formatted package of barcode before using this application.
