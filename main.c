@@ -10,10 +10,8 @@
 #include <stdlib.h>
 
 #include "mlsBarcode.h"
-#include "ssi.h"
-#include "ssi_utils.h"
 
-#define BUFFER_LEN	MAX_PKG_LEN
+#define BUFFER_LEN	1000
 
 int main(int argc, const char * argv[])
 {
