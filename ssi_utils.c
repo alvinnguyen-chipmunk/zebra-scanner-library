@@ -43,6 +43,34 @@ static int byteRead = 0;
 static void HandleSignal(int sig);
 static int CalculateChecksum(byte *pkg);
 
+int ssi_config(int fd)
+{
+	int ret = EXIT_SUCCESS;
+	byte param[3] = {SSI_BEEP_NONE, SSI_DEC_FORMAT, SSI_DEC_PACKED};
+	byte sendBuff[MAX_PKG_LEN];
+	byte recvBuff[MAX_PKG_LEN];
+
+	printf("Configure SSI package format...");
+	prepare_pkg( sendBuff, SSI_PARAM_SEND, param, ( sizeof(param) / sizeof(*param) ) );
+	write(scanner, sendBuff, PKG_LEN(sendBuff) + 2);
+	printf("OK\n");
+
+	printf("Receive ACK...");
+	ret = ssi_read(scanner, recvBuff);
+	if ( (ret <= 0) || (SSI_CMD_ACK != recvBuff[INDEX_OPCODE]) )
+	{
+		printf("ERROR\n");
+		goto EXIT;
+	}
+	else
+	{
+		printf("OK\n");
+	}
+
+EXIT:
+	return ret;
+}
+
 //  Calculate the 2's Complement checksum of the data packet
 int CalculateChecksum(byte *pkg) {
 	int checksum = 0;
@@ -65,7 +93,7 @@ int prepare_pkg(byte *pkg, byte opcode, byte *param, byte paramLen) {
 	int error = EXIT_SUCCESS;
 	int checksum = 0;
 
-	pkg[INDEX_LEN] = SSI_DEFAULT_LEN;
+	pkg[INDEX_LEN] = SSI_DEFAULT_LEN + param_len;
 	pkg[INDEX_OPCODE] = opcode;
 	pkg[INDEX_SRC] = SSI_HOST;
 	pkg[INDEX_STAT] = SSI_DEFAULT_STATUS;

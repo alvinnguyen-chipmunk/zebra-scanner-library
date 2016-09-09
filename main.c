@@ -17,7 +17,7 @@ int main(int argc, const char * argv[])
 {
 	int ret = EXIT_SUCCESS;
 	int barcodeLen = 0;
-	char *buff = (char *) malloc(BUFFER_LEN * sizeof(char));
+	char buff[BUFFER_LEN];
 
 	ret = mlsBarcodeReader_Open();
 	if (ret)

@@ -23,8 +23,9 @@ extern "C"
 
 #include "ssi.h"
 #include "ssi_utils.h"
+#include "mlsBarcode.h"
 
-int scanner = 0;
+static int scanner = 0;
 
 /*!
  * \brief mlsBarcodeReader_Open Open Reader descritptor file for read write
@@ -33,7 +34,7 @@ int scanner = 0;
  * - EXIT_FAILURE: Fail
  */
 char mlsBarcodeReader_Open() {
-	char error = EXIT_SUCCESS;
+	char ret = EXIT_SUCCESS;
 	struct termios dev_conf;
 	int flags = 0;
 	char *dev_name = getenv("ZEBRA_SCANNER");
@@ -41,7 +42,7 @@ char mlsBarcodeReader_Open() {
 	scanner = open(dev_name, O_RDWR);
 	if (scanner < 0) {
 		perror(__func__);
-		error = EXIT_FAILURE;
+		ret = EXIT_FAILURE;
 		goto EXIT;
 	}
 
@@ -49,15 +50,15 @@ char mlsBarcodeReader_Open() {
 	flags = fcntl(scanner, F_GETFL);
 	if (0 > flags) {
 		perror("F_GETFL");
-		error = EXIT_FAILURE;
+		ret = EXIT_FAILURE;
 		goto EXIT;
 	}
 	flags |= (O_NDELAY | O_ASYNC);
 
-	error = fcntl(scanner, F_SETFL, flags);
-	if (error) {
+	ret = fcntl(scanner, F_SETFL, flags);
+	if (ret) {
 		perror("F_SETFL");
-		error = EXIT_FAILURE;
+		ret = EXIT_FAILURE;
 		goto EXIT;
 	}
 
@@ -67,17 +68,17 @@ char mlsBarcodeReader_Open() {
 	dev_conf.c_oflag = 0;
 	dev_conf.c_lflag = (ISIG);
 
-	error = cfsetspeed(&dev_conf, BAUDRATE);
-	if (error) {
+	ret = cfsetspeed(&dev_conf, BAUDRATE);
+	if (ret) {
 		perror("Set speed");
-		error = EXIT_FAILURE;
+		ret = EXIT_FAILURE;
 		goto EXIT;
 	}
 
-	error = tcsetattr(scanner, TCSANOW, &dev_conf);
-	if (error) {
+	ret = tcsetattr(scanner, TCSANOW, &dev_conf);
+	if (ret) {
 		perror("Set attribute");
-		error = EXIT_FAILURE;
+		ret = EXIT_FAILURE;
 		goto EXIT;
 	}
 
@@ -89,7 +90,7 @@ char mlsBarcodeReader_Open() {
 	}
 
 EXIT:
-	return error;
+	return ret;
 }
 
 /*!
@@ -102,7 +103,6 @@ unsigned int mlsBarcodeReader_ReadData(char *buff) {
 	int ret = 0;
 	byte recvBuff[MAX_PKG_LEN] = {0};
 
-	// Wipe out input buffer
 	printf("Wipe out input buffer...");
 	tcflush(scanner, TCIFLUSH);
 	printf("OK\n");
