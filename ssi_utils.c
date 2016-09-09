@@ -14,12 +14,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <assert.h>
 
-#include <signal.h>
+#include <sys/signal.h>
 #include <sys/time.h>
+#include <sys/types.h>
 
 #include "ssi_utils.h"
 #include "ssi.h"
+
+#define _POSIX_SOURCE 1 /* POSIX compliant source */
 
 #define TRUE	1;
 #define FALSE	0;
@@ -31,7 +35,7 @@
 
 static int is_timeout=FALSE;
 static int is_read=FALSE;
-static int scanner = 0;
+static int ssiDev = 0;
 
 static byte pkg[MAX_PKG_LEN] = {0};
 static int byteRead = 0;
@@ -57,7 +61,7 @@ int CalculateChecksum(byte *pkg) {
 	return checksum;
 }
 
-int prepare_pkg(byte *pkg, byte opcode) {
+int prepare_pkg(byte *pkg, byte opcode, byte *param, byte paramLen) {
 	int error = EXIT_SUCCESS;
 	int checksum = 0;
 
@@ -65,6 +69,12 @@ int prepare_pkg(byte *pkg, byte opcode) {
 	pkg[INDEX_OPCODE] = opcode;
 	pkg[INDEX_SRC] = SSI_HOST;
 	pkg[INDEX_STAT] = SSI_DEFAULT_STATUS;
+
+	if ( (NULL != param) && (0 != paramLen) )
+	{
+		pkg[INDEX_LEN] += paramLen;
+		memcpy(&pkg[INDEX_STAT + 1], param, paramLen);
+	}
 
 	// add checksum
 	checksum = CalculateChecksum(pkg);
@@ -89,12 +99,33 @@ void display_pkg(byte *pkg) {
 	printf("\n");
 }
 
+int ssi_write(int fd, byte opcode, byte *param, byte paramLen)
+{
+	int ret = EXIT_SUCCESS;
+	byte *sendBuff = malloc( (SSI_DEFAULT_LEN + paramLen) * sizeof(byte) );
+	byte *recvBuff = malloc(MAX_PKG_LEN * sizeof(byte));
+
+	prepare_pkg(sendBuff, opcode, param, paramLen);
+	write(fd, sendBuff, sendBuff[INDEX_LEN]);
+	display_pkg(sendBuff);
+
+	if (SSI_CMD_ACK != opcode)
+	{
+		// Check ACK
+		ret = ssi_read(fd, recvBuff);
+	}
+
+	free(sendBuff);
+	free(recvBuff);
+	return ret;
+}
+
 int ssi_read(int fd, byte *buff) {
 	int timeoutValue = 0;
 	int ret = 0;
 	struct itimerval timeoutTimer;
 
-	scanner = fd;
+	ssiDev = fd;
 	is_timeout = FALSE;
 	is_read = FALSE;
 
@@ -159,20 +190,20 @@ void HandleSignal(int sig)
 	{
 		printf("TIMEOUT\t");
 		is_timeout = TRUE;
-		signal(SIGIO, SIG_IGN);
-		signal(SIGALRM, SIG_IGN);
 	}
 	else if (SIGIO == sig)
 	{
 		int pkgLen = 0;
 
-		read(scanner, &pkgLen, 1);
+		read(ssiDev, &pkgLen, 1);
 		if (pkgLen > 0)
 		{
 			pkg[0] = pkgLen;
 			byteRead++;
-			byteRead += read(scanner, &pkg[1], pkgLen+1);
+			byteRead += read(ssiDev, &pkg[1], pkgLen+1);
 			is_read = TRUE;
 		}
+
+		signal(sig, HandleSignal);
 	}
 }

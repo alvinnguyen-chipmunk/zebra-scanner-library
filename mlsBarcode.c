@@ -38,7 +38,7 @@ char mlsBarcodeReader_Open() {
 	int flags = 0;
 	char *dev_name = getenv("ZEBRA_SCANNER");
 
-	scanner = open(dev_name, O_RDWR | O_NOCTTY);
+	scanner = open(dev_name, O_RDWR);
 	if (scanner < 0) {
 		perror(__func__);
 		error = EXIT_FAILURE;
@@ -62,10 +62,9 @@ char mlsBarcodeReader_Open() {
 	}
 
 	// Configure tty dev
-	dev_conf.c_cflag = (CRTSCTS | CS8 | HUPCL);
+	dev_conf.c_cflag = (CRTSCTS | CS8 | CLOCAL | CREAD);
 	dev_conf.c_iflag = 0;
 	dev_conf.c_oflag = 0;
-	dev_conf.c_lflag = 0;
 	dev_conf.c_lflag = (ISIG);
 
 	error = cfsetspeed(&dev_conf, BAUDRATE);
@@ -82,12 +81,12 @@ char mlsBarcodeReader_Open() {
 		goto EXIT;
 	}
 
-//	error = fcntl(scanner, F_SETOWN, getpid());
-//	if (error) {
-//		perror("F_SETOWN");
-//		error = EXIT_FAILURE;
-//		goto EXIT;
-//	}
+	error = fcntl(scanner, F_SETOWN, getpid());
+	if (error) {
+		perror("F_SETOWN");
+		error = EXIT_FAILURE;
+		goto EXIT;
+	}
 
 EXIT:
 	return error;
@@ -101,7 +100,6 @@ EXIT:
 unsigned int mlsBarcodeReader_ReadData(char *buff) {
 	int barcodeLen = 0;
 	int ret = 0;
-	byte sendBuff[SSI_DEFAULT_LEN + 2];
 	byte recvBuff[MAX_PKG_LEN] = {0};
 
 	// Wipe out input buffer
@@ -109,19 +107,11 @@ unsigned int mlsBarcodeReader_ReadData(char *buff) {
 	tcflush(scanner, TCIFLUSH);
 	printf("OK\n");
 
-	// Send Start session cmd
 	printf("Send Start session cmd...");
-	prepare_pkg(sendBuff, SSI_START_SESSION);
-	write(scanner, sendBuff, SSI_DEFAULT_LEN + 2);
-	printf("OK\n");
-
-	// Receive ACK
-	printf("Receive ACK...");
-	ret = ssi_read(scanner, recvBuff);
-	if (ret <= 0)
+	ret = ssi_write(scanner, SSI_START_SESSION, NULL, 0);
+	if (ret < 0)
 	{
 		printf("ERROR\n");
-		buff = NULL;
 		goto EXIT;
 	}
 	else
@@ -130,7 +120,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff) {
 	}
 
 	// Receive barcode in formatted package
-	printf("Received data: ");
+	printf("Received data!");
 	ret = ssi_read(scanner, recvBuff);
 	if (ret <= 0)
 	{
@@ -140,25 +130,18 @@ unsigned int mlsBarcodeReader_ReadData(char *buff) {
 	}
 	else
 	{
+		printf("Send ACK to scanner!");
+		ssi_write(scanner, SSI_CMD_ACK, NULL, 0);
+
+		// Extract barcode to buffer
+		barcodeLen = recvBuff[INDEX_LEN] - INDEX_BARCODETYPE - 1;
+		memcpy(buff, &recvBuff[INDEX_BARCODETYPE + 1], barcodeLen);
 		display_pkg(recvBuff);
 	}
-	
-	// Send ACK to scanner
-	printf("Send ACK to scanner...");
-	prepare_pkg(sendBuff, SSI_CMD_ACK);
-	write(scanner, sendBuff, SSI_DEFAULT_LEN + 2);
-	printf("OK\n");
-
-	// Extract barcode to buffer
-	barcodeLen = recvBuff[INDEX_LEN] - INDEX_BARCODETYPE - 1;
-	memcpy(buff, &recvBuff[INDEX_BARCODETYPE + 1], barcodeLen);
 
 EXIT:
-	// Send Stop session cmd
 	printf("Send Stop session cmd...");
-	prepare_pkg(sendBuff, SSI_STOP_SESSION);
-	write(scanner, sendBuff, SSI_DEFAULT_LEN + 2);
-	printf("OK\n");
+	ssi_write(scanner, SSI_STOP_SESSION, NULL, 0);
 
 	return ret;
 }
