@@ -34,7 +34,7 @@ static int scanner = 0;
  * - EXIT_FAILURE: Fail
  */
 char mlsBarcodeReader_Open() {
-	char error = EXIT_SUCCESS;
+	char ret = EXIT_SUCCESS;
 	struct termios dev_conf;
 	int flags = 0;
 	char *dev_name = getenv("ZEBRA_SCANNER");
@@ -42,7 +42,7 @@ char mlsBarcodeReader_Open() {
 	scanner = open(dev_name, O_RDWR | O_NOCTTY);
 	if (scanner < 0) {
 		perror(__func__);
-		error = EXIT_FAILURE;
+		ret = EXIT_FAILURE;
 		goto EXIT;
 	}
 
@@ -50,15 +50,15 @@ char mlsBarcodeReader_Open() {
 	flags = fcntl(scanner, F_GETFL);
 	if (0 > flags) {
 		perror("F_GETFL");
-		error = EXIT_FAILURE;
+		ret = EXIT_FAILURE;
 		goto EXIT;
 	}
 	flags |= (O_NDELAY | O_ASYNC);
 
-	error = fcntl(scanner, F_SETFL, flags);
-	if (error) {
+	ret = fcntl(scanner, F_SETFL, flags);
+	if (ret) {
 		perror("F_SETFL");
-		error = EXIT_FAILURE;
+		ret = EXIT_FAILURE;
 		goto EXIT;
 	}
 
@@ -69,17 +69,17 @@ char mlsBarcodeReader_Open() {
 	dev_conf.c_lflag = 0;
 	dev_conf.c_lflag = (ISIG);
 
-	error = cfsetspeed(&dev_conf, BAUDRATE);
-	if (error) {
+	ret = cfsetspeed(&dev_conf, BAUDRATE);
+	if (ret) {
 		perror("Set speed");
-		error = EXIT_FAILURE;
+		ret = EXIT_FAILURE;
 		goto EXIT;
 	}
 
-	error = tcsetattr(scanner, TCSANOW, &dev_conf);
-	if (error) {
+	ret = tcsetattr(scanner, TCSANOW, &dev_conf);
+	if (ret) {
 		perror("Set attribute");
-		error = EXIT_FAILURE;
+		ret = EXIT_FAILURE;
 		goto EXIT;
 	}
 
@@ -89,10 +89,9 @@ char mlsBarcodeReader_Open() {
 //		error = EXIT_FAILURE;
 //		goto EXIT;
 //	}
-	ssi_config(scanner);
 
 EXIT:
-	return error;
+	return ret;
 }
 
 /*!
@@ -112,22 +111,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff) {
 	printf("OK\n");
 
 	printf("Send Start session cmd...");
-	prepare_pkg(sendBuff, SSI_START_SESSION, NULL, 0);
-	write(scanner, sendBuff, SSI_DEFAULT_LEN + 2);
-	printf("OK\n");
-
-	printf("Receive ACK...");
-	ret = ssi_read(scanner, recvBuff);
-	if (ret <= 0)
-	{
-		printf("ERROR\n");
-		buff = NULL;
-		goto EXIT;
-	}
-	else
-	{
-		printf("OK\n");
-	}
+	ssi_write(scanner, SSI_START_SESSION, NULL, 0);
 
 	// Receive barcode in formatted package
 	printf("Received data: ");

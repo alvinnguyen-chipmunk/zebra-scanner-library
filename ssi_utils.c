@@ -44,12 +44,26 @@ int ssi_config(int fd)
 	int ret = EXIT_SUCCESS;
 	byte param[3] = {SSI_BEEP_NONE, SSI_DEC_FORMAT, SSI_DEC_PACKED};
 	byte sendBuff[MAX_PKG_LEN];
+	byte recvBuff[MAX_PKG_LEN];
 
 	printf("Configure SSI package format...");
 	prepare_pkg( sendBuff, SSI_PARAM_SEND, param, ( sizeof(param) / sizeof(*param) ) );
 	write(scanner, sendBuff, PKG_LEN(sendBuff) + 2);
 	printf("OK\n");
 
+	printf("Receive ACK...");
+	ret = ssi_read(scanner, recvBuff);
+	if ( (ret <= 0) || (SSI_CMD_ACK != recvBuff[INDEX_OPCODE]) )
+	{
+		printf("ERROR\n");
+		goto EXIT;
+	}
+	else
+	{
+		printf("OK\n");
+	}
+
+EXIT:
 	return ret;
 }
 
@@ -106,6 +120,34 @@ void display_pkg(byte *pkg) {
 		printf("0x%x ", pkg[i]);
 	}
 	printf("\n");
+}
+
+int ssi_write(int fd, byte opcode, const byte *param, unsigned int param_len)
+{
+	int ret = EXIT_SUCCESS;
+	byte *sendBuff = (byte *)malloc( (SSI_DEFAULT_LEN + param_len) * sizeof(*sendBuff));
+	byte *recvBuff = (byte *)malloc(MAX_PKG_LEN);
+	if ( (NULL == sendBuff) || (NULL == recvBuff) )
+	{
+		printf("ERROR: %s: can not allocate buffer\n", __func__);
+	}
+
+	prepare_pkg(sendBuff, opcode, param, param_len);
+	write(scanner, sendBuff, sendBuff[INDEX_LEN]);
+	// Check ACK
+	ret = ssi_read(scanner, recvBuff);
+	if ( (ret <= 0) || (SSI_CMD_ACK != recvBuff[INDEX_OPCODE]) )
+	{
+		printf("ERROR\n");
+		goto EXIT;
+	}
+	else
+	{
+		printf("OK\n");
+	}
+
+EXIT:
+	return ret;
 }
 
 int ssi_read(int fd, byte *buff) {
