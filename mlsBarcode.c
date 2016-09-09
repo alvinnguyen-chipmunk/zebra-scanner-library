@@ -23,8 +23,9 @@ extern "C"
 
 #include "ssi.h"
 #include "ssi_utils.h"
+#include "mlsBarcode.h"
 
-int scanner = 0;
+static int scanner = 0;
 
 /*!
  * \brief mlsBarcodeReader_Open Open Reader descritptor file for read write
@@ -88,6 +89,7 @@ char mlsBarcodeReader_Open() {
 //		error = EXIT_FAILURE;
 //		goto EXIT;
 //	}
+	ssi_config(scanner);
 
 EXIT:
 	return error;
@@ -101,21 +103,19 @@ EXIT:
 unsigned int mlsBarcodeReader_ReadData(char *buff) {
 	int barcodeLen = 0;
 	int ret = 0;
-	byte sendBuff[SSI_DEFAULT_LEN + 2];
+
+	byte sendBuff[MAX_PKG_LEN];
 	byte recvBuff[MAX_PKG_LEN] = {0};
 
-	// Wipe out input buffer
 	printf("Wipe out input buffer...");
 	tcflush(scanner, TCIFLUSH);
 	printf("OK\n");
 
-	// Send Start session cmd
 	printf("Send Start session cmd...");
-	prepare_pkg(sendBuff, SSI_START_SESSION);
+	prepare_pkg(sendBuff, SSI_START_SESSION, NULL, 0);
 	write(scanner, sendBuff, SSI_DEFAULT_LEN + 2);
 	printf("OK\n");
 
-	// Receive ACK
 	printf("Receive ACK...");
 	ret = ssi_read(scanner, recvBuff);
 	if (ret <= 0)
@@ -142,10 +142,9 @@ unsigned int mlsBarcodeReader_ReadData(char *buff) {
 	{
 		display_pkg(recvBuff);
 	}
-	
-	// Send ACK to scanner
+
 	printf("Send ACK to scanner...");
-	prepare_pkg(sendBuff, SSI_CMD_ACK);
+	prepare_pkg(sendBuff, SSI_CMD_ACK, NULL, 0);
 	write(scanner, sendBuff, SSI_DEFAULT_LEN + 2);
 	printf("OK\n");
 
@@ -154,9 +153,8 @@ unsigned int mlsBarcodeReader_ReadData(char *buff) {
 	memcpy(buff, &recvBuff[INDEX_BARCODETYPE + 1], barcodeLen);
 
 EXIT:
-	// Send Stop session cmd
 	printf("Send Stop session cmd...");
-	prepare_pkg(sendBuff, SSI_STOP_SESSION);
+	prepare_pkg(sendBuff, SSI_STOP_SESSION, NULL, 0);
 	write(scanner, sendBuff, SSI_DEFAULT_LEN + 2);
 	printf("OK\n");
 

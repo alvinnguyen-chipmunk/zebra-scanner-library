@@ -13,7 +13,8 @@
 #include <termios.h>
 #include "ssi.h"
 
-int prepare_pkg(byte *pkg, byte opcode);
+int ssi_config(int fd);
+int prepare_pkg(byte *pkg, byte opcode, const byte *param, unsigned int param_len);
 int wakeup_scanner(int fd);
 int ssi_read(int fd, byte *buff);
 void display_pkg(byte *pkg);

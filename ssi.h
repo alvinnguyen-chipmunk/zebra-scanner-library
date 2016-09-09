@@ -22,6 +22,7 @@ typedef unsigned char byte;
 #define SSI_CUSTOM_DEFAULTS					0x12
 #define SSI_DECODE_DATA						0xF3
 #define SSI_FLUSH_QUEUE						0xD2
+#define SSI_PARAM_SEND						0xC6
 
 // Devices ID
 #define SSI_HOST							0x04
@@ -30,12 +31,12 @@ typedef unsigned char byte;
 #define SSI_DEFAULT_STATUS					0x00
 #define SSI_CKSUM_LEN						0x02
 
-// Parameters
-#define SSI_DEC								0xEE
+// Param
+#define SSI_USB_DEV_TYPE					0x
+#define SSI_DEC_FORMAT						0xEE
 #define SSI_DEC_RAW							0x00
 #define SSI_DEC_PACKED						0x01
 #define SSI_BEEP_NONE						0xFF
-#define MAX_PKG_LEN							255
 
 // Package index
 #define INDEX_LEN							0
@@ -58,6 +59,9 @@ typedef unsigned char byte;
 // Actions
 #define SSI_CUSTOM_DEFAULTS_ACT_WR			0x00
 #define SSI_CUSTOM_DEFAULTS_ACT_RESTORE		0x01
+
+// Limit
+#define MAX_PKG_LEN							257
 
 // Macro
 #define PKG_LEN(x)		(x[INDEX_LEN])
