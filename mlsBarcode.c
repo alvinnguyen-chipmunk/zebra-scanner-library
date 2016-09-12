@@ -35,57 +35,29 @@ static int scanner = 0;
  */
 char mlsBarcodeReader_Open() {
 	char ret = EXIT_SUCCESS;
-	struct termios dev_conf;
-	int flags = 0;
-	char *dev_name = getenv("ZEBRA_SCANNER");
 
-	scanner = open(dev_name, O_RDWR);
-	if (scanner < 0) {
-		perror(__func__);
+	ret = (char) OpenTTY();
+	if (ret <= 0)
+	{
 		ret = EXIT_FAILURE;
 		goto EXIT;
 	}
-
-	// Set flags for blocking mode and sync for writing
-	flags = fcntl(scanner, F_GETFL);
-	if (0 > flags) {
-		perror("F_GETFL");
-		ret = EXIT_FAILURE;
-		goto EXIT;
+	else
+	{
+		scanner = ret;
 	}
-	flags |= (O_NDELAY | O_ASYNC);
 
-	ret = fcntl(scanner, F_SETFL, flags);
-	if (ret) {
-		perror("F_SETFL");
-		ret = EXIT_FAILURE;
+	ret = (char) ConfigTTY(scanner);
+	if (ret)
+	{
+		printf("%s: ERROR\n", __func__);
 		goto EXIT;
 	}
 
-	// Configure tty dev
-	dev_conf.c_cflag = (CRTSCTS | CS8 | CLOCAL | CREAD);
-	dev_conf.c_iflag = 0;
-	dev_conf.c_oflag = 0;
-	dev_conf.c_lflag = (ISIG);
-
-	ret = cfsetspeed(&dev_conf, BAUDRATE);
-	if (ret) {
-		perror("Set speed");
-		ret = EXIT_FAILURE;
-		goto EXIT;
-	}
-
-	ret = tcsetattr(scanner, TCSANOW, &dev_conf);
-	if (ret) {
-		perror("Set attribute");
-		ret = EXIT_FAILURE;
-		goto EXIT;
-	}
-
-	error = fcntl(scanner, F_SETOWN, getpid());
-	if (error) {
-		perror("F_SETOWN");
-		error = EXIT_FAILURE;
+	ret = (char) ConfigSSI(scanner);
+	if (ret)
+	{
+		printf("%s: ERROR\n", __func__);
 		goto EXIT;
 	}
 
@@ -108,7 +80,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff) {
 	printf("OK\n");
 
 	printf("Send Start session cmd...");
-	ret = ssi_write(scanner, SSI_START_SESSION, NULL, 0);
+	ret = WriteSSI(scanner, SSI_START_SESSION, NULL, 0);
 	if (ret < 0)
 	{
 		printf("ERROR\n");
@@ -121,7 +93,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff) {
 
 	// Receive barcode in formatted package
 	printf("Received data!");
-	ret = ssi_read(scanner, recvBuff);
+	ret = ReadSSI(scanner, recvBuff);
 	if (ret <= 0)
 	{
 		printf("ERROR\n");
@@ -131,17 +103,17 @@ unsigned int mlsBarcodeReader_ReadData(char *buff) {
 	else
 	{
 		printf("Send ACK to scanner!");
-		ssi_write(scanner, SSI_CMD_ACK, NULL, 0);
+		WriteSSI(scanner, SSI_CMD_ACK, NULL, 0);
 
 		// Extract barcode to buffer
 		barcodeLen = recvBuff[INDEX_LEN] - INDEX_BARCODETYPE - 1;
 		memcpy(buff, &recvBuff[INDEX_BARCODETYPE + 1], barcodeLen);
-		display_pkg(recvBuff);
+		DisplayPkg(recvBuff);
 	}
 
 EXIT:
 	printf("Send Stop session cmd...");
-	ssi_write(scanner, SSI_STOP_SESSION, NULL, 0);
+	WriteSSI(scanner, SSI_STOP_SESSION, NULL, 0);
 
 	return ret;
 }

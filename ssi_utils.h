@@ -13,10 +13,12 @@
 #include <termios.h>
 #include "ssi.h"
 
-int prepare_pkg(byte *pkg, byte opcode, byte *param, byte paramLen);
 int wakeup_scanner(int fd);
-int ssi_write(int fd, byte opcode, byte *param, byte paramLen);
-int ssi_read(int fd, byte *buff);
-void display_pkg(byte *pkg);
+int OpenTTY();
+int ConfigTTY(int fd);
+int ConfigSSI(int fd);
+int WriteSSI(int fd, byte opcode, byte *param, byte paramLen);
+int ReadSSI(int fd, byte *buff);
+void DisplayPkg(byte *pkg);
 
 #endif /* ssi_utils_h */
