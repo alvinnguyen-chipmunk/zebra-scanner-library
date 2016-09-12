@@ -22,14 +22,12 @@ int main(int argc, const char * argv[])
 	ret = mlsBarcodeReader_Open();
 	if (ret)
 	{
-		printf("ERROR: open device\n");
 		goto EXIT;
 	}
 
 	ret = mlsBarcodeReader_ReadData(buff);
 	if (ret <= 0)
 	{
-		printf("Error: read data\n");
 		goto EXIT;
 	}
 	else
@@ -38,7 +36,7 @@ int main(int argc, const char * argv[])
 		printf("\e[36mBarcode(%d): %s\e[0m\n", barcodeLen, buff);
 	}
 
-	ret = mlsBarcodeReader_Close();
+	mlsBarcodeReader_Close();
 
 EXIT:
 	return ret;

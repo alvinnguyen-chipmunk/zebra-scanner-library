@@ -26,17 +26,18 @@ typedef unsigned char byte;
 
 // Devices ID
 #define SSI_HOST							0x04
-
 #define SSI_DEFAULT_LEN						0x04
 #define SSI_DEFAULT_STATUS					0x00
 #define SSI_CKSUM_LEN						0x02
 
 // Param
-#define SSI_USB_DEV_TYPE					0x
 #define SSI_DEC_FORMAT						0xEE
 #define SSI_DEC_RAW							0x00
 #define SSI_DEC_PACKED						0x01
 #define SSI_BEEP_NONE						0xFF
+#define SSI_SW_HANDSHAKE					0x9F
+#define SSI_EN_ACK							0x01
+#define SSI_DIS_ACK							0x00
 
 // Package index
 #define INDEX_LEN							0

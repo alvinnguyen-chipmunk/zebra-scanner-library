@@ -13,7 +13,6 @@
 #include <termios.h>
 #include "ssi.h"
 
-int wakeup_scanner(int fd);
 int OpenTTY();
 int ConfigTTY(int fd);
 int ConfigSSI(int fd);

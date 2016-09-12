@@ -29,42 +29,14 @@
 #define MSB_16(x)		(x >> 8)
 #define LSB_16(x)		(x & UINT8_MAX)
 
-#define TIMEOUT_DEFAULT		5;
+#define TIMEOUT_SEC		5;
 
-static int is_timeout=FALSE;
-static int is_read=FALSE;
-static int ssiDev = 0;
-
-static byte pkg[MAX_PKG_LEN] = {0};
-static int byteRead = 0;
-
-static void HandleSignal(int sig);
 static int CalculateChecksum(byte *pkg);
 static int PreparePkg(byte *pkg, byte opcode, byte *param, byte paramLen);
 
-int ConfigSSI(int fd)
-{
-	int ret = EXIT_SUCCESS;
-	const int paramLen = 3;
-	byte param[3] = {SSI_BEEP_NONE, SSI_DEC_FORMAT, SSI_DEC_PACKED};
-
-	printf("Configure SSI package format...");
-	ret = WriteSSI(fd, SSI_PARAM_SEND, param, paramLen);
-
-	if (ret < 0)
-	{
-		printf("ERROR: %s\n", __func__);
-	}
-	else
-	{
-		printf("OK\n");
-	}
-
-	return ret;
-}
-
 //  Calculate the 2's Complement checksum of the data packet
-static int CalculateChecksum(byte *pkg) {
+static int CalculateChecksum(byte *pkg)
+{
 	int checksum = 0;
 
 	for (unsigned int i = 0; i < PKG_LEN(pkg); i++)
@@ -81,11 +53,12 @@ static int CalculateChecksum(byte *pkg) {
 	return checksum;
 }
 
-static int PreparePkg(byte *pkg, byte opcode, byte *param, byte paramLen) {
+static int PreparePkg(byte *pkg, byte opcode, byte *param, byte paramLen)
+{
 	int error = EXIT_SUCCESS;
 	int checksum = 0;
 
-	pkg[INDEX_LEN] = SSI_DEFAULT_LEN + paramLen;
+	pkg[INDEX_LEN] = SSI_DEFAULT_LEN;
 	pkg[INDEX_OPCODE] = opcode;
 	pkg[INDEX_SRC] = SSI_HOST;
 	pkg[INDEX_STAT] = SSI_DEFAULT_STATUS;
@@ -104,22 +77,57 @@ static int PreparePkg(byte *pkg, byte opcode, byte *param, byte paramLen) {
 	return error;
 }
 
-int wakeup_scanner(int fd) {
-	int wakeup_cmd[2] = {0x00, 0x00};
-
-	write(fd, wakeup_cmd, 2);
-
-	return 0;
-}
-
-void DisplayPkg(byte *pkg) {
+void DisplayPkg(byte *pkg)
+{
 	if (NULL != pkg)
 	{
-		for (int i = 0; i < (PKG_LEN(pkg) + 2); i++) {
+		for (int i = 0; i < (PKG_LEN(pkg) + 2); i++)
+		{
 			printf("0x%x ", pkg[i]);
 		}
 		printf("\n");
 	}
+}
+
+int ConfigSSI(int fd)
+{
+	int ret = EXIT_SUCCESS;
+	const int paramLen = 3;
+	byte param[3] =	{0, 0, 0};
+
+	param[0] = SSI_BEEP_NONE;
+	param[1] = SSI_SW_HANDSHAKE;
+	param[2] = SSI_EN_ACK;
+	printf("Enable ACK/NAK handshaking...");
+	ret = WriteSSI(fd, SSI_PARAM_SEND, param, paramLen);
+
+	if (ret < 0)
+	{
+		printf("ERROR: %s\n", __func__);
+		goto EXIT;
+	}
+	else
+	{
+		printf("OK\n");
+	}
+
+	param[0] = SSI_BEEP_NONE;
+	param[1] = SSI_DEC_FORMAT;
+	param[2] = SSI_DEC_PACKED;
+	printf("Configure SSI package format...");
+	ret = WriteSSI(fd, SSI_PARAM_SEND, param, paramLen);
+
+	if (ret < 0)
+	{
+		printf("ERROR: %s\n", __func__);
+	}
+	else
+	{
+		printf("OK\n");
+	}
+
+EXIT:
+	return ret;
 }
 
 int WriteSSI(int fd, byte opcode, byte *param, byte paramLen)
@@ -129,110 +137,63 @@ int WriteSSI(int fd, byte opcode, byte *param, byte paramLen)
 	byte *recvBuff = malloc(MAX_PKG_LEN * sizeof(byte));
 
 	PreparePkg(sendBuff, opcode, param, paramLen);
-	write(fd, sendBuff, sendBuff[INDEX_LEN]);
+	ret = (int) write(fd, sendBuff, sendBuff[INDEX_LEN] + 2);
+	if (ret <= 0)
+	{
+		perror("write");
+		goto EXIT;
+	}
 	DisplayPkg(sendBuff);
 
+	// Check ACK
 	if (SSI_CMD_ACK != opcode)
 	{
-		// Check ACK
 		ret = ReadSSI(fd, recvBuff);
 		if (SSI_CMD_ACK != recvBuff[INDEX_OPCODE])
 		{
 			ret = -1;
-			DisplayPkg(recvBuff);
 		}
 	}
 
+EXIT:
 	free(sendBuff);
 	free(recvBuff);
 	return ret;
 }
 
-int ReadSSI(int fd, byte *buff) {
-	int timeoutValue = 0;
+int ReadSSI(int fd, byte *buff)
+{
+
 	int ret = 0;
-	struct itimerval timeoutTimer;
-	ssiDev = fd;
-	is_timeout = FALSE;
-	is_read = FALSE;
 
-	if (NULL == getenv("ZEBRA_TIMEOUT"))
+	// Get first byte which indicate package lenght
+	ret = (int) read(fd, buff, 1);
+	if (ret)
 	{
-		timeoutValue = TIMEOUT_DEFAULT;
+		perror("read");
+		goto EXIT;
 	}
-	else
-	{
-		timeoutValue = atoi(getenv("ZEBRA_TIMEOUT"));
-	}
+	printf("%x\n", buff[0]);
+//	DisplayPkg(buff);
 
-	// Setup one shot timeout timer
-	timeoutTimer.it_interval.tv_sec = 0;
-	timeoutTimer.it_interval.tv_usec = 0;
-	timeoutTimer.it_value.tv_sec = timeoutValue;
-	timeoutTimer.it_value.tv_usec = 0;
-
-	// Start timer
-	signal(SIGALRM, HandleSignal);
-	setitimer(ITIMER_REAL, &timeoutTimer, NULL);
-
-	// Enable interrupt for receiver
-	signal(SIGIO, HandleSignal);
-
-	while (! is_timeout)
-	{
-		if (is_read)
-		{
-			int checksum = 0;
-			checksum = CalculateChecksum(pkg);
-
-			if ( (MSB_16(checksum) == pkg[PKG_LEN(pkg)]) && (LSB_16(checksum) == pkg[PKG_LEN(pkg) + 1]) )
-			{
-				ret = byteRead;
-				memcpy(buff, pkg, (PKG_LEN(pkg) + 2) );
-				break;
-			}
-			else
-			{
-				ret = -ECKSUM;
-				buff = NULL;
-				break;
-			}
-		}
-	}
-	signal(SIGIO, SIG_IGN);
-	signal(SIGALRM, SIG_IGN);
-
-	if (is_timeout)
-	{
-		ret = -ETIME;
-		buff = NULL;
-	}
-
+EXIT:
 	return ret;
 }
 
-static void HandleSignal(int sig)
+
+int OpenTTY(void)
 {
-	if (SIGALRM == sig)
-	{
-		printf("TIMEOUT\t");
-		is_timeout = TRUE;
-	}
-	else if (SIGIO == sig)
-	{
-		int pkgLen = 0;
+	int fd = 0;
+	char *dev_name = getenv("ZEBRA_SCANNER");
+//	char *dev_name = "/dev/tty.usbmodem1421";
 
-		read(ssiDev, &pkgLen, 1);
-		if (pkgLen > 0)
-		{
-			pkg[0] = pkgLen;
-			byteRead++;
-			byteRead += read(ssiDev, &pkg[1], pkgLen+1);
-			is_read = TRUE;
-		}
-
-		signal(sig, HandleSignal);
+	fd = open(dev_name, O_RDWR);
+	if (fd < 0)
+	{
+		perror(__func__);
 	}
+
+	return fd;
 }
 
 int ConfigTTY(int fd)
@@ -243,62 +204,48 @@ int ConfigTTY(int fd)
 
 	// Set flags for blocking mode and sync for writing
 	flags = fcntl(fd, F_GETFL);
-	if (0 > flags) {
+	if (0 > flags)
+	{
 		perror("F_GETFL");
 		ret = EXIT_FAILURE;
 		goto EXIT;
 	}
-	flags |= (O_NDELAY | O_ASYNC);
+	flags |= (O_FSYNC);
+	flags &= ~(O_NDELAY | O_ASYNC);
 
 	ret = fcntl(fd, F_SETFL, flags);
-	if (ret) {
+	if (ret)
+	{
 		perror("F_SETFL");
 		ret = EXIT_FAILURE;
 		goto EXIT;
 	}
 
 	// Configure tty dev
-	devConf.c_cflag = (CRTSCTS | CS8 | CLOCAL | CREAD);
+	devConf.c_cflag = (CS8 | CLOCAL | CREAD);
 	devConf.c_iflag = 0;
 	devConf.c_oflag = 0;
 	devConf.c_lflag = 0;
 	devConf.c_cc[VMIN] = 0;
 	devConf.c_cc[VTIME] = 30;	// 3s timeout
 
+	// Portability: Use cfsetspeed instead of CBAUD since c_cflag/CBAUD is not in POSIX
 	ret = cfsetspeed(&devConf, BAUDRATE);
-	if (ret) {
+	if (ret)
+	{
 		perror("Set speed");
 		ret = EXIT_FAILURE;
 		goto EXIT;
 	}
 
 	ret = tcsetattr(fd, TCSANOW, &devConf);
-	if (ret) {
+	if (ret)
+	{
 		perror("Set attribute");
-		ret = EXIT_FAILURE;
-		goto EXIT;
-	}
-
-	ret = fcntl(fd, F_SETOWN, getpid());
-	if (ret) {
-		perror("F_SETOWN");
 		ret = EXIT_FAILURE;
 		goto EXIT;
 	}
 
 EXIT:
 	return ret;
-}
-
-int OpenTTY(void)
-{
-	int fd = 0;
-	char *dev_name = getenv("ZEBRA_SCANNER");
-
-	fd = open(dev_name, O_RDWR);
-	if (fd < 0) {
-		perror(__func__);
-	}
-
-	return fd;
 }

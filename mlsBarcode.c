@@ -81,7 +81,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff) {
 
 	printf("Send Start session cmd...");
 	ret = WriteSSI(scanner, SSI_START_SESSION, NULL, 0);
-	if (ret < 0)
+	if (ret)
 	{
 		printf("ERROR\n");
 		goto EXIT;
@@ -113,7 +113,16 @@ unsigned int mlsBarcodeReader_ReadData(char *buff) {
 
 EXIT:
 	printf("Send Stop session cmd...");
-	WriteSSI(scanner, SSI_STOP_SESSION, NULL, 0);
+	ret = WriteSSI(scanner, SSI_STOP_SESSION, NULL, 0);
+	if (ret)
+	{
+		printf("ERROR\n");
+		goto EXIT;
+	}
+	else
+	{
+		printf("OK\n");
+	}
 
 	return ret;
 }
