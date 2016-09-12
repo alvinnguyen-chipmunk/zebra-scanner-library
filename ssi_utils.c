@@ -92,34 +92,22 @@ void DisplayPkg(byte *pkg)
 int ConfigSSI(int fd)
 {
 	int ret = EXIT_SUCCESS;
-	const int paramLen = 3;
-	byte param[3] =	{0, 0, 0};
+	const int paramLen = 100;
+	byte param[paramLen] =	{
+		PARAM_BEEP_NONE,
+		PARAM_B_DEC_FORMAT	, ENABLE,
+		PARAM_B_SW_ACK		, ENABLE,
+		PARAM_B_SCAN_PARAM	, DISABLE,	// Disable to avoid accidental changes param from scanning
+		PARAM_TRIGGER_MODE	, PARAM_TRIGGER_HOST
+		};
 
-	param[0] = SSI_BEEP_NONE;
-	param[1] = SSI_SW_HANDSHAKE;
-	param[2] = SSI_EN_ACK;
-	printf("Enable ACK/NAK handshaking...");
+	printf("Configure SSI parameters...");
 	ret = WriteSSI(fd, SSI_PARAM_SEND, param, paramLen);
 
 	if (ret < 0)
 	{
 		printf("ERROR: %s\n", __func__);
 		goto EXIT;
-	}
-	else
-	{
-		printf("OK\n");
-	}
-
-	param[0] = SSI_BEEP_NONE;
-	param[1] = SSI_DEC_FORMAT;
-	param[2] = SSI_DEC_PACKED;
-	printf("Configure SSI package format...");
-	ret = WriteSSI(fd, SSI_PARAM_SEND, param, paramLen);
-
-	if (ret < 0)
-	{
-		printf("ERROR: %s\n", __func__);
 	}
 	else
 	{

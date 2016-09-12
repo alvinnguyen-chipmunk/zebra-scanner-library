@@ -30,14 +30,17 @@ typedef unsigned char byte;
 #define SSI_DEFAULT_STATUS					0x00
 #define SSI_CKSUM_LEN						0x02
 
-// Param
-#define SSI_DEC_FORMAT						0xEE
-#define SSI_DEC_RAW							0x00
-#define SSI_DEC_PACKED						0x01
-#define SSI_BEEP_NONE						0xFF
-#define SSI_SW_HANDSHAKE					0x9F
-#define SSI_EN_ACK							0x01
-#define SSI_DIS_ACK							0x00
+// Param:
+// PARAM_B_*: bool value parameters
+#define ENABLE								0x01
+#define DISABLE								0x00
+#define PARAM_B_SCAN_PARAM					0xEC
+#define PARAM_B_DEC_FORMAT					0xEE
+#define PARAM_B_SW_ACK						0x9F
+// PARAM_*: param with none-bool values
+#define PARAM_BEEP_NONE						0xFF
+#define PARAM_TRIGGER_MODE					0x8A
+#define PARAM_TRIGGER_HOST					0x08
 
 // Package index
 #define INDEX_LEN							0
