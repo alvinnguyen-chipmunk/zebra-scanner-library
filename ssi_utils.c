@@ -252,6 +252,7 @@ int ConfigTTY(int fd)
 	int ret = EXIT_SUCCESS;
 	int flags = 0;
 	struct termios devConf;
+	char dump[MAX_PKG_LEN];
 
 	// Set flags for blocking mode and sync for writing
 	flags = fcntl(fd, F_GETFL);
@@ -278,7 +279,7 @@ int ConfigTTY(int fd)
 	devConf.c_oflag = 0;
 	devConf.c_lflag = 0;
 	devConf.c_cc[VMIN] = 0;
-	devConf.c_cc[VTIME] = TIMEOUT_MSEC;	// ms timeout
+	devConf.c_cc[VTIME] = 0;	// read non-blocking flush dump data. See blocking read timeout later
 
 	// Portability: Use cfsetspeed instead of CBAUD since c_cflag/CBAUD is not in POSIX
 	ret = cfsetspeed(&devConf, BAUDRATE);
@@ -289,6 +290,16 @@ int ConfigTTY(int fd)
 		goto EXIT;
 	}
 
+	ret = tcsetattr(fd, TCSANOW, &devConf);
+	if (ret)
+	{
+		perror("Set attribute");
+		ret = EXIT_FAILURE;
+		goto EXIT;
+	}
+
+	read(fd, dump, ( sizeof(dump)/ sizeof(*dump) ) );
+	devConf.c_cc[VTIME] = TIMEOUT_MSEC;		// set ms timeout
 	ret = tcsetattr(fd, TCSANOW, &devConf);
 	if (ret)
 	{

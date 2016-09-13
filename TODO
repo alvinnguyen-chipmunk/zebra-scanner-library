@@ -3,3 +3,33 @@
 2. Change to state machine
 
 3. Change to auto scan routine
+
+4. Bug: after a failed scan session, next session will be failed 100%
+  - Phenomenon: dump data of previous session in input queue
+  - Solution: flush out that data
+  	+ Try-1: tcflush(scanner, TCIFLUSH);
+	  => FAILED
+	+ Try-2:
+		...
+		// Set to non-blocking read to flush out dump data
+		devConf.c_cc[VTIME] = 0;
+		tcsetattr();
+		// Flush data
+		read(scanner, dump, sizeof(dump));
+		// Set to timeout blocking read
+		devConf.c_cc[VTIME] = TIMEOUT_MSEC;
+		tcsetattr();
+  - Result: OK
+
+5. Default Reset: Default host of USB interface is SNAPI, need to be SSI
+  - Phenomenon: accidentally reset to default. Statistic until Sep 13:
+  	+ Touch board (> 5 times)
+	+ Suddenly power off (> 2 times)
+	+ Software not good (maybe transmit while decoder running) (1 time)
+  - Workaround:
+  	Step-1: use Windows app to change to SSI
+	Step-2: write custom default
+	        (NOTE: need to implement in SW, current = scan barcode)
+    => Feasibility check is OK
+  - TODO: Modules also need to change from SNAPI -> SSI at least 1 time.
+          RISK: factory reset is SNAPI and can not be changed by SW.

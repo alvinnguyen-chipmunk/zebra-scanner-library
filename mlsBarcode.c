@@ -75,9 +75,29 @@ unsigned int mlsBarcodeReader_ReadData(char *buff) {
 	int ret = 0;
 	byte recvBuff[MAX_PKG_LEN] = {0};
 
-	printf("Wipe out input buffer...");
-	tcflush(scanner, TCIFLUSH);
-	printf("OK\n");
+	printf("Send Scan disable cmd...");
+	ret = WriteSSI(scanner, SSI_SCAN_DISABLE, NULL, 0);
+	if (ret)
+	{
+		printf("ERROR\n");
+		goto EXIT;
+	}
+	else
+	{
+		printf("OK\n");
+	}
+
+	printf("Send flush queue cmd...");
+	ret = WriteSSI(scanner, SSI_FLUSH_QUEUE, NULL, 0);
+	if (ret)
+	{
+		printf("ERROR\n");
+		goto EXIT;
+	}
+	else
+	{
+		printf("OK\n");
+	}
 
 	printf("Send Scan enable cmd...");
 	ret = WriteSSI(scanner, SSI_SCAN_ENABLE, NULL, 0);

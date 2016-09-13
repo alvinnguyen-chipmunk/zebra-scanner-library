@@ -24,6 +24,7 @@ typedef unsigned char byte;
 #define SSI_FLUSH_QUEUE						0xD2
 #define SSI_PARAM_SEND						0xC6
 #define SSI_SCAN_ENABLE						0xE9
+#define SSI_SCAN_DISABLE					0xEA
 
 // Devices ID
 #define SSI_HOST							0x04
