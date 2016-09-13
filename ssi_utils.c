@@ -142,22 +142,20 @@ int WriteSSI(int fd, byte opcode, byte *param, byte paramLen)
 	byte *recvBuff = malloc(MAX_PKG_LEN * sizeof(byte));
 
 	PreparePkg(sendBuff, opcode, param, paramLen);
-	ret = (int) write(fd, sendBuff, sendBuff[INDEX_LEN] + 2);
-	if (ret <= 0)
+	if ( write(fd, sendBuff, sendBuff[INDEX_LEN] + 2) <= 0)
 	{
 		perror("write");
 		ret = EXIT_FAILURE;
 		goto EXIT;
 	}
-	DisplayPkg(sendBuff);
 
 	// Check ACK
 	if (SSI_CMD_ACK != opcode)
 	{
-		ret = ReadSSI(fd, recvBuff);
-		if (ret)
+		if (ReadSSI(fd, recvBuff) <= 0)
 		{
 			printf("%s: no ACK\n", __func__);
+			ret = EXIT_FAILURE;
 		}
 		else if (SSI_CMD_ACK != recvBuff[INDEX_OPCODE])
 		{
@@ -187,7 +185,6 @@ int ReadSSI(int fd, byte *buff)
 		perror("read");
 		goto EXIT;
 	}
-	DisplayPkg(buff);
 
 EXIT:
 	return ret;
