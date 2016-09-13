@@ -106,7 +106,7 @@ int ConfigSSI(int fd)
 	int ret = EXIT_SUCCESS;
 	byte param[9] =	{
 		PARAM_BEEP_NONE,
-		PARAM_B_DEC_FORMAT	, ENABLE,
+		PARAM_B_DEC_FORMAT	, ENABLE
 		PARAM_B_SW_ACK		, ENABLE,
 		PARAM_B_SCAN_PARAM	, DISABLE,	// Disable to avoid accidental changes param from scanning
 		PARAM_TRIGGER_MODE	, PARAM_TRIGGER_HOST
