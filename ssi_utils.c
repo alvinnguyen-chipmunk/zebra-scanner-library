@@ -31,11 +31,14 @@
 
 #define TIMEOUT_SEC		5;
 
-static int CalculateChecksum(byte *pkg);
-static int PreparePkg(byte *pkg, byte opcode, byte *param, byte paramLen);
+static uint16_t CalculateChecksum(byte *pkg);
+static void PreparePkg(byte *pkg, byte opcode, byte *param, byte paramLen);
 
-//  Calculate the 2's Complement checksum of the data packet
-static int CalculateChecksum(byte *pkg)
+/*!
+ * \brief CalculateChecksum calculate 2's complement of pkg
+ * \return 16 bits checksum (2' complement) value
+ */
+static uint16_t CalculateChecksum(byte *pkg)
 {
 	int checksum = 0;
 
@@ -53,10 +56,12 @@ static int CalculateChecksum(byte *pkg)
 	return checksum;
 }
 
-static int PreparePkg(byte *pkg, byte opcode, byte *param, byte paramLen)
+/*!
+ * \brief PreparePkg generate package from input opcode and params
+ */
+static void PreparePkg(byte *pkg, byte opcode, byte *param, byte paramLen)
 {
-	int error = EXIT_SUCCESS;
-	int checksum = 0;
+	uint16_t checksum = 0;
 
 	pkg[INDEX_LEN] = SSI_DEFAULT_LEN;
 	pkg[INDEX_OPCODE] = opcode;
@@ -73,10 +78,11 @@ static int PreparePkg(byte *pkg, byte opcode, byte *param, byte paramLen)
 	checksum = CalculateChecksum(pkg);
 	pkg[PKG_LEN(pkg)] = checksum >> 8;
 	pkg[PKG_LEN(pkg) + 1] = checksum & 0xFF;
-
-	return error;
 }
 
+/*!
+ * \brief DisplayPkg print out package
+ */
 void DisplayPkg(byte *pkg)
 {
 	if (NULL != pkg)
@@ -89,11 +95,16 @@ void DisplayPkg(byte *pkg)
 	}
 }
 
+/*!
+ * \brief ConfigSSI send parameters to configure scanner
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
 int ConfigSSI(int fd)
 {
 	int ret = EXIT_SUCCESS;
-	const int paramLen = 100;
-	byte param[paramLen] =	{
+	byte param[9] =	{
 		PARAM_BEEP_NONE,
 		PARAM_B_DEC_FORMAT	, ENABLE,
 		PARAM_B_SW_ACK		, ENABLE,
@@ -102,9 +113,9 @@ int ConfigSSI(int fd)
 		};
 
 	printf("Configure SSI parameters...");
-	ret = WriteSSI(fd, SSI_PARAM_SEND, param, paramLen);
+	ret = WriteSSI(fd, SSI_PARAM_SEND, param, ( sizeof(param) / sizeof(*param) ) );
 
-	if (ret < 0)
+	if (ret)
 	{
 		printf("ERROR: %s\n", __func__);
 		goto EXIT;
@@ -118,6 +129,12 @@ EXIT:
 	return ret;
 }
 
+/*!
+ * \brief WriteSSI write formatted package to scanner via file descriptor
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
 int WriteSSI(int fd, byte opcode, byte *param, byte paramLen)
 {
 	int ret = EXIT_SUCCESS;
@@ -129,6 +146,7 @@ int WriteSSI(int fd, byte opcode, byte *param, byte paramLen)
 	if (ret <= 0)
 	{
 		perror("write");
+		ret = EXIT_FAILURE;
 		goto EXIT;
 	}
 	DisplayPkg(sendBuff);
@@ -137,9 +155,14 @@ int WriteSSI(int fd, byte opcode, byte *param, byte paramLen)
 	if (SSI_CMD_ACK != opcode)
 	{
 		ret = ReadSSI(fd, recvBuff);
-		if (SSI_CMD_ACK != recvBuff[INDEX_OPCODE])
+		if (ret)
 		{
-			ret = -1;
+			printf("%s: no ACK\n", __func__);
+		}
+		else if (SSI_CMD_ACK != recvBuff[INDEX_OPCODE])
+		{
+			printf("%s: ACK failure\n", __func__);
+			ret = EXIT_FAILURE;
 		}
 	}
 
@@ -149,26 +172,31 @@ EXIT:
 	return ret;
 }
 
+/*!
+ * \brief ReadSSI read formatted package from scanner via file descriptor
+ * \return number of read bytes
+ */
 int ReadSSI(int fd, byte *buff)
 {
-
 	int ret = 0;
 
 	// Get first byte which indicate package lenght
-	ret = (int) read(fd, buff, 1);
-	if (ret)
+	ret = (int) read(fd, buff, 255);
+	if (ret <= 0)
 	{
 		perror("read");
 		goto EXIT;
 	}
-	printf("%x\n", buff[0]);
-//	DisplayPkg(buff);
+	DisplayPkg(buff);
 
 EXIT:
 	return ret;
 }
 
-
+/*!
+ * \brief WriteSSI write formatted package to scanner via file descriptor
+ * \return file descriptor
+ */
 int OpenTTY(void)
 {
 	int fd = 0;
@@ -184,6 +212,12 @@ int OpenTTY(void)
 	return fd;
 }
 
+/*!
+ * \brief WriteSSI write formatted package to scanner via file descriptor
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
 int ConfigTTY(int fd)
 {
 	int ret = EXIT_SUCCESS;

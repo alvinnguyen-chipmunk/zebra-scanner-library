@@ -36,7 +36,7 @@ static int scanner = 0;
 char mlsBarcodeReader_Open() {
 	char ret = EXIT_SUCCESS;
 
-	ret = (char) OpenTTY();
+	ret = OpenTTY();
 	if (ret <= 0)
 	{
 		ret = EXIT_FAILURE;
