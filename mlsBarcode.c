@@ -19,7 +19,7 @@ extern "C"
 #include <string.h>
 #include <stdio.h>
 #include <termios.h>
-#include <locale.h>
+#include <assert.h>
 
 #include "ssi.h"
 #include "ssi_utils.h"
@@ -79,6 +79,18 @@ unsigned int mlsBarcodeReader_ReadData(char *buff) {
 	tcflush(scanner, TCIFLUSH);
 	printf("OK\n");
 
+	printf("Send Scan enable cmd...");
+	ret = WriteSSI(scanner, SSI_SCAN_ENABLE, NULL, 0);
+	if (ret)
+	{
+		printf("ERROR\n");
+		goto EXIT;
+	}
+	else
+	{
+		printf("OK\n");
+	}
+
 	printf("Send Start session cmd...");
 	ret = WriteSSI(scanner, SSI_START_SESSION, NULL, 0);
 	if (ret)
@@ -92,21 +104,20 @@ unsigned int mlsBarcodeReader_ReadData(char *buff) {
 	}
 
 	// Receive barcode in formatted package
-	printf("Received data!\n");
+	printf("Receive data: \n");
 	ret = ReadSSI(scanner, recvBuff);
 	if (ret <= 0)
 	{
-		printf("ERROR\n");
 		buff = NULL;
 		goto EXIT;
 	}
 	else
 	{
-		printf("Send ACK to scanner!\n");
-		WriteSSI(scanner, SSI_CMD_ACK, NULL, 0);
-
 		// Extract barcode to buffer
-		barcodeLen = recvBuff[INDEX_LEN] - INDEX_BARCODETYPE - 1;
+		assert(NULL != recvBuff);
+		DisplayPkg(recvBuff);
+		barcodeLen = recvBuff[INDEX_LEN] - SSI_DEFAULT_LEN	- 1;
+		assert(barcodeLen < MAX_PKG_LEN);
 		memcpy(buff, &recvBuff[INDEX_BARCODETYPE + 1], barcodeLen);
 		DisplayPkg(recvBuff);
 	}
@@ -121,6 +132,7 @@ EXIT:
 	}
 	else
 	{
+		ret = barcodeLen;
 		printf("OK\n");
 	}
 

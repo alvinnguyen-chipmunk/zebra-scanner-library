@@ -18,6 +18,7 @@ int main(int argc, const char * argv[])
 	int ret = EXIT_SUCCESS;
 	int barcodeLen = 0;
 	char buff[BUFFER_LEN];
+	memset(buff, 0, BUFFER_LEN);
 
 	ret = mlsBarcodeReader_Open();
 	if (ret)
@@ -33,7 +34,7 @@ int main(int argc, const char * argv[])
 	else
 	{
 		barcodeLen = ret;
-		printf("\e[36mBarcode(%d): %s\e[0m\n", barcodeLen, buff);
+		printf("\e[36mBarcode(%d):\n%s\e[0m\n", barcodeLen, buff);
 	}
 
 	mlsBarcodeReader_Close();

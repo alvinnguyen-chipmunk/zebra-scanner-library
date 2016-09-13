@@ -2,7 +2,7 @@ TARGET=zebra-demo
 TARGET_LIB=libssi.so
 SRC=main.c
 SRC_LIB=ssi_utils.c mlsBarcode.c
-CFLAGS=-std=gnu99 -Wall
+CFLAGS=-std=gnu99 -Wall -g
 CFLAGS_LIB=-fPIC -shared
 CC=$(CROSS_COMPILE)gcc
 BIN_PATH=./image/usr/bin

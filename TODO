@@ -1,0 +1,5 @@
+1. Segmentation fault at mlfsBarcode_read: ln121: memcpy()
+
+2. Change to state machine
+
+3. Change to auto scan routine

@@ -23,16 +23,18 @@
 #include "ssi_utils.h"
 #include "ssi.h"
 
-#define TRUE	1;
-#define FALSE	0;
-
 #define MSB_16(x)		(x >> 8)
 #define LSB_16(x)		(x & UINT8_MAX)
 
-#define TIMEOUT_SEC		5;
+#define TRUE				1
+#define FALSE				0
+
+
+#define TIMEOUT_MSEC		50
 
 static uint16_t CalculateChecksum(byte *pkg);
 static void PreparePkg(byte *pkg, byte opcode, byte *param, byte paramLen);
+static int IsChecksumOK(byte *pkg);
 
 /*!
  * \brief CalculateChecksum calculate 2's complement of pkg
@@ -81,11 +83,37 @@ static void PreparePkg(byte *pkg, byte opcode, byte *param, byte paramLen)
 }
 
 /*!
+ * \brief IsChecksumOK check 2 last bytes for checksum
+ * \return
+ */
+static int IsChecksumOK(byte *pkg)
+{
+	int ret = 0;
+	uint16_t cksum = 0;
+
+	cksum += pkg[PKG_LEN(pkg) + 1];
+	cksum += pkg[PKG_LEN(pkg)] << 8;
+
+	if (cksum == CalculateChecksum(pkg))
+	{
+		ret = TRUE;
+	}
+	else
+	{
+		ret = FALSE;
+	}
+
+	return ret;
+}
+
+/*!
  * \brief DisplayPkg print out package
  */
 void DisplayPkg(byte *pkg)
 {
-	if (NULL != pkg)
+	static char *debug = NULL;
+	debug = getenv("SSI_DEBUG");
+	if ( (NULL != debug) && (NULL != pkg) )
 	{
 		for (int i = 0; i < (PKG_LEN(pkg) + 2); i++)
 		{
@@ -109,7 +137,7 @@ int ConfigSSI(int fd)
 		PARAM_B_DEC_FORMAT	, ENABLE,
 		PARAM_B_SW_ACK		, ENABLE,
 		PARAM_B_SCAN_PARAM	, DISABLE,	// Disable to avoid accidental changes param from scanning
-		PARAM_TRIGGER_MODE	, PARAM_TRIGGER_HOST
+		PARAM_TRIGGER_MODE	, PARAM_TRIGGER_HOST,
 		};
 
 	printf("Configure SSI parameters...");
@@ -130,7 +158,7 @@ EXIT:
 }
 
 /*!
- * \brief WriteSSI write formatted package to scanner via file descriptor
+ * \brief WriteSSI write formatted package and check ACK to/from scanner via file descriptor
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
@@ -139,7 +167,7 @@ int WriteSSI(int fd, byte opcode, byte *param, byte paramLen)
 {
 	int ret = EXIT_SUCCESS;
 	byte *sendBuff = malloc( (SSI_DEFAULT_LEN + paramLen) * sizeof(byte) );
-	byte *recvBuff = malloc(MAX_PKG_LEN * sizeof(byte));
+	byte recvBuff[MAX_PKG_LEN];
 
 	PreparePkg(sendBuff, opcode, param, paramLen);
 	if ( write(fd, sendBuff, sendBuff[INDEX_LEN] + 2) <= 0)
@@ -166,12 +194,11 @@ int WriteSSI(int fd, byte opcode, byte *param, byte paramLen)
 
 EXIT:
 	free(sendBuff);
-	free(recvBuff);
 	return ret;
 }
 
 /*!
- * \brief ReadSSI read formatted package from scanner via file descriptor
+ * \brief ReadSSI read formatted package and response ACK from/to scanner via file descriptor
  * \return number of read bytes
  */
 int ReadSSI(int fd, byte *buff)
@@ -179,10 +206,15 @@ int ReadSSI(int fd, byte *buff)
 	int ret = 0;
 
 	// Get first byte which indicate package lenght
-	ret = (int) read(fd, buff, 255);
-	if (ret <= 0)
+	ret = (int) read(fd, buff, MAX_PKG_LEN);
+	if ( (ret > 0) || (IsChecksumOK(buff)) )
 	{
-		perror("read");
+		DisplayPkg(buff);
+		WriteSSI(fd, SSI_CMD_ACK, NULL, 0);
+	}
+	else
+	{
+		printf("%s: ERROR", __func__);
 		goto EXIT;
 	}
 
@@ -246,7 +278,7 @@ int ConfigTTY(int fd)
 	devConf.c_oflag = 0;
 	devConf.c_lflag = 0;
 	devConf.c_cc[VMIN] = 0;
-	devConf.c_cc[VTIME] = 30;	// 3s timeout
+	devConf.c_cc[VTIME] = TIMEOUT_MSEC;	// ms timeout
 
 	// Portability: Use cfsetspeed instead of CBAUD since c_cflag/CBAUD is not in POSIX
 	ret = cfsetspeed(&devConf, BAUDRATE);

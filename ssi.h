@@ -20,9 +20,10 @@ typedef unsigned char byte;
 #define SSI_PARAM_SEND						0xC6
 #define SSI_CMD_ACK							0xD0
 #define SSI_CUSTOM_DEFAULTS					0x12
-#define SSI_DECODE_DATA						0xF3
+#define SSI_DEC_DATA						0xF3
 #define SSI_FLUSH_QUEUE						0xD2
 #define SSI_PARAM_SEND						0xC6
+#define SSI_SCAN_ENABLE						0xE9
 
 // Devices ID
 #define SSI_HOST							0x04
@@ -41,6 +42,7 @@ typedef unsigned char byte;
 #define PARAM_BEEP_NONE						0xFF
 #define PARAM_TRIGGER_MODE					0x8A
 #define PARAM_TRIGGER_HOST					0x08
+#define PARAM_DEC_TIMEOUT					0x88
 
 // Package index
 #define INDEX_LEN							0
