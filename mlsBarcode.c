@@ -92,7 +92,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff) {
 	}
 
 	// Receive barcode in formatted package
-	printf("Received data!");
+	printf("Received data!\n");
 	ret = ReadSSI(scanner, recvBuff);
 	if (ret <= 0)
 	{
@@ -102,7 +102,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff) {
 	}
 	else
 	{
-		printf("Send ACK to scanner!");
+		printf("Send ACK to scanner!\n");
 		WriteSSI(scanner, SSI_CMD_ACK, NULL, 0);
 
 		// Extract barcode to buffer
