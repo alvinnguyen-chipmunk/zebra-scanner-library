@@ -1,25 +1,9 @@
+--- WAITING ---
 1. Segmentation fault at mlfsBarcode_read: ln121: memcpy()
 
 2. Change to state machine
 
 3. Change to auto scan routine
-
-4. Bug: after a failed scan session, next session will be failed 100%
-  - Phenomenon: dump data of previous session in input queue
-  - Solution: flush out that data
-  	+ Try-1: tcflush(scanner, TCIFLUSH);
-	  => FAILED
-	+ Try-2:
-		...
-		// Set to non-blocking read to flush out dump data
-		devConf.c_cc[VTIME] = 0;
-		tcsetattr();
-		// Flush data
-		read(scanner, dump, sizeof(dump));
-		// Set to timeout blocking read
-		devConf.c_cc[VTIME] = TIMEOUT_MSEC;
-		tcsetattr();
-  - Result: OK
 
 5. Default Reset: Default host of USB interface is SNAPI, need to be SSI
   - Phenomenon: accidentally reset to default. Statistic until Sep 13:
@@ -33,3 +17,25 @@
     => Feasibility check is OK
   - TODO: Modules also need to change from SNAPI -> SSI at least 1 time.
           RISK: factory reset is SNAPI and can not be changed by SW.
+
+--- FINISHED ---
+
+4. Bug: after a failed scan session, next session will be failed 100%
+  - Phenomenon: dump data of previous session in input queue
+  - Solution: flush out that data
+  	+ Try-1: tcflush(scanner, TCIFLUSH);
+	  => FAILED
+	  => Update (Sep 14, 13:44): tcflush failed in mlsBarcode.c using
+	     global 'scanner' variable. However, it's ok with local 'fd'
+	     with ssi_utils functions.
+	+ Try-2:
+		...
+		// Set to non-blocking read to flush out dump data
+		devConf.c_cc[VTIME] = 0;
+		tcsetattr();
+		// Flush data
+		read(scanner, dump, sizeof(dump));
+		// Set to timeout blocking read
+		devConf.c_cc[VTIME] = TIMEOUT_MSEC;
+		tcsetattr();
+  - Result: OK
