@@ -18,6 +18,8 @@
   - TODO: Modules also need to change from SNAPI -> SSI at least 1 time.
           RISK: factory reset is SNAPI and can not be changed by SW.
 
+6. Implement multi-package reading
+
 --- FINISHED ---
 
 4. Bug: after a failed scan session, next session will be failed 100%
