@@ -28,7 +28,7 @@ typedef unsigned char byte;
 
 // Devices ID
 #define SSI_HOST							0x04
-#define SSI_DEFAULT_LEN						0x04
+#define SSI_HEADER_LEN						0x04
 #define SSI_DEFAULT_STATUS					0x00
 #define SSI_CKSUM_LEN						0x02
 

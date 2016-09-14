@@ -65,7 +65,7 @@ static void PreparePkg(byte *pkg, byte opcode, byte *param, byte paramLen)
 {
 	uint16_t checksum = 0;
 
-	pkg[INDEX_LEN] = SSI_DEFAULT_LEN;
+	pkg[INDEX_LEN] = SSI_HEADER_LEN;
 	pkg[INDEX_OPCODE] = opcode;
 	pkg[INDEX_SRC] = SSI_HOST;
 	pkg[INDEX_STAT] = SSI_DEFAULT_STATUS;
@@ -166,7 +166,7 @@ EXIT:
 int WriteSSI(int fd, byte opcode, byte *param, byte paramLen)
 {
 	int ret = EXIT_SUCCESS;
-	byte *sendBuff = malloc( (SSI_DEFAULT_LEN + paramLen) * sizeof(byte) );
+	byte *sendBuff = malloc( (SSI_HEADER_LEN + paramLen) * sizeof(byte) );
 	byte recvBuff[MAX_PKG_LEN];
 
 	// Flush old input queue

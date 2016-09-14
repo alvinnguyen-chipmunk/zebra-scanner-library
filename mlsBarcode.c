@@ -136,7 +136,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff) {
 		// Extract barcode to buffer
 		assert(NULL != recvBuff);
 		DisplayPkg(recvBuff);
-		barcodeLen = recvBuff[INDEX_LEN] - SSI_DEFAULT_LEN	- 1;
+		barcodeLen = recvBuff[INDEX_LEN] - SSI_HEADER_LEN	- 1;
 		assert(barcodeLen < MAX_PKG_LEN);
 		memcpy(buff, &recvBuff[INDEX_BARCODETYPE + 1], barcodeLen);
 		DisplayPkg(recvBuff);
