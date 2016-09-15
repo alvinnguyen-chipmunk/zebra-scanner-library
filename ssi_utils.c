@@ -172,12 +172,13 @@ void DisplayPkg(byte *pkg)
 int ConfigSSI(int fd)
 {
 	int ret = EXIT_SUCCESS;
-	byte param[9] =	{
-		PARAM_BEEP_NONE,
-		PARAM_B_DEC_FORMAT	, ENABLE,
-		PARAM_B_SW_ACK		, ENABLE,
-		PARAM_B_SCAN_PARAM	, DISABLE,	// Disable to avoid accidental changes param from scanning
-		PARAM_TRIGGER_MODE	, PARAM_TRIGGER_HOST,
+	byte param[12] =	{
+						PARAM_BEEP_NONE,
+						PARAM_B_DEC_FORMAT	, ENABLE,
+						PARAM_B_SW_ACK		, ENABLE,
+						PARAM_B_SCAN_PARAM	, DISABLE,	// Disable to avoid accidental changes param from scanning
+						PARAM_TRIGGER_MODE	, PARAM_TRIGGER_PRESENT,
+		PARAM_INDEX_F0,	PARAM_B_DEC_EVENT	, ENABLE
 		};
 
 	printf("Configure SSI parameters...");
@@ -223,7 +224,7 @@ int WriteSSI(int fd, byte opcode, byte *param, byte paramLen)
 	// Check ACK
 	if (SSI_CMD_ACK != opcode)
 	{
-		if (ReadSSI(fd, recvBuff) <= 0)
+		if (ReadSSI(fd, recvBuff, 1) <= 0)
 		{
 			printf("%s: no ACK\n", __func__);
 			ret = EXIT_FAILURE;
@@ -248,15 +249,26 @@ EXIT:
  * \brief ReadSSI read formatted package and response ACK from/to scanner via file descriptor
  * \return number of read bytes
  */
-int ReadSSI(int fd, byte *buff)
+int ReadSSI(int fd, byte *buff, const int timeout)
 {
 	int ret = 0;
 	int lastIndex = 0;
+	int oldVTIME = 0;
+	struct termios devConf;
 	byte recvBuff[MAX_PKG_LEN];
+
+	tcgetattr(fd, &devConf);
+	oldVTIME = devConf.c_cc[VTIME];
+	devConf.c_cc[VTIME] = timeout;
+	tcsetattr(fd, TCSANOW, &devConf);
 
 	do
 	{
 		ret += (int) read(fd, &recvBuff[INDEX_LEN]		, 1);// read first byte for length
+		if (ret <= 0)
+		{
+			goto EXIT;
+		}
 		ret += (int) read(fd, &recvBuff[INDEX_LEN + 1]	, recvBuff[INDEX_LEN] + 1);
 		DisplayPkg(recvBuff);
 		if ( (ret > 0) || (IsChecksumOK(recvBuff)) )
@@ -274,6 +286,8 @@ int ReadSSI(int fd, byte *buff)
 	} while (IsContinue(recvBuff));
 
 EXIT:
+	devConf.c_cc[VTIME] = oldVTIME;
+	tcsetattr(fd, TCSANOW, &devConf);
 	return ret;
 }
 

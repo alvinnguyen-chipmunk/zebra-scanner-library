@@ -46,11 +46,19 @@ typedef unsigned char byte;
 #define PARAM_B_SCAN_PARAM					0xEC
 #define PARAM_B_DEC_FORMAT					0xEE
 #define PARAM_B_SW_ACK						0x9F
+#define PARAM_B_DEC_EVENT					0x00
 // PARAM_*: param with none-bool values
 #define PARAM_BEEP_NONE						0xFF
 #define PARAM_TRIGGER_MODE					0x8A
+#define PARAM_TRIGGER_PRESENT				0x07
 #define PARAM_TRIGGER_HOST					0x08
+#define PARAM_TRIGGER_AUTO					0x09
+#define PARAM_TRIGGER_AUTO_WITHLED			0x0A
 #define PARAM_DEC_TIMEOUT					0x88
+// PARAM_INDEX_Fx (x = 0, 1, 2)
+#define PARAM_INDEX_F0						0xF0
+#define PARAM_INDEX_F1						0xF1
+#define PARAM_INDEX_F2						0xF2
 
 // Package index
 #define INDEX_LEN							0

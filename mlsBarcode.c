@@ -70,61 +70,62 @@ EXIT:
  * \param buff point to buffer which store data.
  * \return number of byte(s) read.
  */
-unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength) {
+unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const int timeout) {
 	int barcodeLen = 0;
 	int ret = 0;
 	byte recvBuff[4000] = {0};
+	assert( (timeout >= 0) && (timeout <= 25) );
 
-	printf("Send Scan disable cmd...");
-	ret = WriteSSI(scanner, SSI_SCAN_DISABLE, NULL, 0);
-	if (ret)
-	{
-		printf("ERROR\n");
-		goto EXIT;
-	}
-	else
-	{
-		printf("OK\n");
-	}
+//	printf("Send Scan disable cmd...");
+//	ret = WriteSSI(scanner, SSI_SCAN_DISABLE, NULL, 0);
+//	if (ret)
+//	{
+//		printf("ERROR\n");
+//		goto EXIT;
+//	}
+//	else
+//	{
+//		printf("OK\n");
+//	}
+//
+//	printf("Send flush queue cmd...");
+//	ret = WriteSSI(scanner, SSI_FLUSH_QUEUE, NULL, 0);
+//	if (ret)
+//	{
+//		printf("ERROR\n");
+//		goto EXIT;
+//	}
+//	else
+//	{
+//		printf("OK\n");
+//	}
+//
+//	printf("Send Scan enable cmd...");
+//	ret = WriteSSI(scanner, SSI_SCAN_ENABLE, NULL, 0);
+//	if (ret)
+//	{
+//		printf("ERROR\n");
+//		goto EXIT;
+//	}
+//	else
+//	{
+//		printf("OK\n");
+//	}
 
-	printf("Send flush queue cmd...");
-	ret = WriteSSI(scanner, SSI_FLUSH_QUEUE, NULL, 0);
-	if (ret)
-	{
-		printf("ERROR\n");
-		goto EXIT;
-	}
-	else
-	{
-		printf("OK\n");
-	}
-
-	printf("Send Scan enable cmd...");
-	ret = WriteSSI(scanner, SSI_SCAN_ENABLE, NULL, 0);
-	if (ret)
-	{
-		printf("ERROR\n");
-		goto EXIT;
-	}
-	else
-	{
-		printf("OK\n");
-	}
-
-	printf("Send Start session cmd...");
-	ret = WriteSSI(scanner, SSI_START_SESSION, NULL, 0);
-	if (ret)
-	{
-		printf("ERROR\n");
-		goto EXIT;
-	}
-	else
-	{
-		printf("OK\n");
-	}
+//	printf("Send Start session cmd...");
+//	ret = WriteSSI(scanner, SSI_START_SESSION, NULL, 0);
+//	if (ret)
+//	{
+//		printf("ERROR\n");
+//		goto EXIT;
+//	}
+//	else
+//	{
+//		printf("OK\n");
+//	}
 
 	printf("Wait for decode event...");
-	ret = ReadSSI(scanner, recvBuff);
+	ret = ReadSSI(scanner, recvBuff, timeout);
 	if (ret <= 0)
 	{
 		printf("ERROR: No decode event\n");
@@ -137,7 +138,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength) {
 
 	// Receive barcode in formatted package
 	printf("Receive data: \n");
-	ret = ReadSSI(scanner, recvBuff);
+	ret = ReadSSI(scanner, recvBuff, timeout);
 	if (ret <= 0)
 	{
 		buff = NULL;
@@ -163,6 +164,32 @@ EXIT:
 		ret = barcodeLen;
 		printf("OK\n");
 	}
+
+	return ret;
+}
+
+/*!
+ * \brief mlsBarcodeReader_Enable Enable Reader for scaning QR code/Bar Code
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_SUCCESS: Fail
+ */
+char mlsBarcodeReader_Enable()
+{
+	char ret = EXIT_SUCCESS;
+
+	return ret;
+}
+
+/*!
+ * \brief mlsBarcodeReader_Disable Disable reader, Reader can't scan any QR code/bar code
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_SUCCESS: Fail
+ */
+char mlsBarcodeReader_Disable()
+{
+	char ret = EXIT_SUCCESS;
 
 	return ret;
 }

@@ -8,15 +8,23 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 
 #include "mlsBarcode.h"
 
 #define BUFFER_LEN	4000
+#define TRUE		1
+#define FALSE		0
+
+static int isRunning = FALSE;
+
+static void HandleSignal(int sig);
 
 int main(int argc, const char * argv[])
 {
 	int ret = EXIT_SUCCESS;
 	int barcodeLen = 0;
+	const int timeout = 10;	// 1/10 sec
 	char buff[BUFFER_LEN];
 	memset(buff, 0, BUFFER_LEN);
 
@@ -26,19 +34,31 @@ int main(int argc, const char * argv[])
 		goto EXIT;
 	}
 
-	ret = mlsBarcodeReader_ReadData(buff, BUFFER_LEN);
-	if (ret <= 0)
+	isRunning = TRUE;
+	signal(SIGINT, HandleSignal);
+	while (isRunning)
 	{
-		goto EXIT;
-	}
-	else
-	{
-		barcodeLen = ret;
-		printf("\e[36mBarcode(%d):\n%s\e[0m\n", barcodeLen, buff);
+		ret = mlsBarcodeReader_ReadData(buff, BUFFER_LEN, timeout);
+		if (ret > 0)
+		{
+			barcodeLen = ret;
+			printf("\e[36mBarcode(%d):\n%s\e[0m\n", barcodeLen, buff);
+			memset(buff, 0, BUFFER_LEN);
+		}
 	}
 
+	printf("Finished!\n");
 	mlsBarcodeReader_Close();
 
 EXIT:
 	return ret;
+}
+
+static void HandleSignal(int sig)
+{
+	if (SIGINT == sig)
+	{
+		psignal(sig, "Received");
+		isRunning = FALSE;
+	}
 }
