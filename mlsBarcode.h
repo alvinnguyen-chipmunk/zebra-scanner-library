@@ -42,7 +42,7 @@ char mlsBarcodeReader_Disable();
  * \param buff point to buffer which store data.
  * \return number of byte(s) read.
  */
-unsigned int mlsBarcodeReader_ReadData(char *buff, int buffLength);
+unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength);
 
 /*!
  * \brief mlsBarcodeReader_close close Reader file descriptor

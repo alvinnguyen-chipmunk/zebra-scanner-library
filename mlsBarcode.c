@@ -70,7 +70,7 @@ EXIT:
  * \param buff point to buffer which store data.
  * \return number of byte(s) read.
  */
-unsigned int mlsBarcodeReader_ReadData(char *buff, int buffLength) {
+unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength) {
 	int barcodeLen = 0;
 	int ret = 0;
 	byte recvBuff[4000] = {0};
@@ -116,6 +116,18 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, int buffLength) {
 	if (ret)
 	{
 		printf("ERROR\n");
+		goto EXIT;
+	}
+	else
+	{
+		printf("OK\n");
+	}
+
+	printf("Wait for decode event...");
+	ret = ReadSSI(scanner, recvBuff);
+	if (ret <= 0)
+	{
+		printf("ERROR: No decode event\n");
 		goto EXIT;
 	}
 	else

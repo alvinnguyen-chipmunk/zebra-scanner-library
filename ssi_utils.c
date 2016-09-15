@@ -35,8 +35,41 @@
 static uint16_t CalculateChecksum(byte *pkg);
 static void PreparePkg(byte *pkg, byte opcode, byte *param, byte paramLen);
 static int IsChecksumOK(byte *pkg);
-static int IsPackage_(byte pkgType, byte *pkg);
 static int IsContinue(byte *pkg);
+static char *strNAK(int code);
+
+
+/*!
+ * \brief strNAK generate NAK message based on code
+ * \return NAK message string
+ */
+static char *strNAK(int code)
+{
+	char *msg = NULL;
+
+	switch (code) {
+		case NAK_RESEND:
+			msg = "RESEND";
+			break;
+
+		case NAK_CANCEL:
+			msg = "CANCEL";
+			break;
+
+		case NAK_DENIED:
+			msg = "DENIED";
+			break;
+
+		case NAK_BAD_CONTEXT:
+			msg = "NAK_BAD_CONTEXT";
+			break;
+
+	  default:
+			break;
+	}
+
+	return msg;
+}
 
 /*!
  * \brief CalculateChecksum calculate 2's complement of pkg
@@ -98,17 +131,6 @@ static int IsChecksumOK(byte *pkg)
 	cksum += pkg[PKG_LEN(pkg)] << 8;
 
 	return (cksum == CalculateChecksum(pkg));
-}
-
-/*!
- * \brief IsPackage_ check package's type
- * \return
- * - TRUE: Is input pkgType
- * - FALSE: Is NOT input pkgType
- */
-static int IsPackage_(byte pkgType, byte *pkg)
-{
-	return (pkgType == pkg[INDEX_OPCODE]);
 }
 
 /*!
@@ -206,6 +228,10 @@ int WriteSSI(int fd, byte opcode, byte *param, byte paramLen)
 			printf("%s: no ACK\n", __func__);
 			ret = EXIT_FAILURE;
 		}
+		else if (SSI_CMD_NAK == recvBuff[INDEX_OPCODE])
+		{
+			printf("%s: NAK: %s\n", __func__, strNAK(recvBuff[INDEX_OPCODE]));
+		}
 		else if (SSI_CMD_ACK != recvBuff[INDEX_OPCODE])
 		{
 			printf("%s: ACK failure\n", __func__);
@@ -232,6 +258,7 @@ int ReadSSI(int fd, byte *buff)
 	{
 		ret += (int) read(fd, &recvBuff[INDEX_LEN]		, 1);// read first byte for length
 		ret += (int) read(fd, &recvBuff[INDEX_LEN + 1]	, recvBuff[INDEX_LEN] + 1);
+		DisplayPkg(recvBuff);
 		if ( (ret > 0) || (IsChecksumOK(recvBuff)) )
 		{
 			WriteSSI(fd, SSI_CMD_ACK, NULL, 0);
@@ -329,27 +356,14 @@ EXIT:
 	return ret;
 }
 
-int ExtractBarcode(byte *pkg, char *buff, int buffLength)
+int ExtractBarcode(byte *pkg, char *buff, const int buffLength)
 {
 	char *barcodePtr = buff;
 	byte *pkgPtr = pkg;
-	byte *dump = pkg;
 	int barcodeLength = 0;
 	int barcodePartLength = 0;
 
-	printf("pkg(0): %d\n", PKG_LEN(dump) + 2);
-	dump += PKG_LEN(dump) + 2;
-	printf("pkg(1): %d\n", PKG_LEN(dump) + 2);
-
-	printf("\e[32m");
-	for (int i = 0; i < 405; i++)
-	{
-		if ( ( (pkg[i] <= '9') && (pkg[i] >= '0') ) || (pkg[i] == ' ') || (pkg[i] == '\n') )
-		{
-			printf("%c", pkg[i]);
-		}
-	}
-	printf("\e[0m\n");
+	printf("\n");
 
 	if (NULL != pkgPtr)
 	{
@@ -368,13 +382,6 @@ int ExtractBarcode(byte *pkg, char *buff, int buffLength)
 		barcodePartLength = PKG_LEN(pkgPtr) - SSI_HEADER_LEN - 1;
 		memcpy(barcodePtr, &pkgPtr[INDEX_BARCODETYPE + 1], barcodePartLength);
 		barcodeLength += barcodePartLength;	// 1 byte of barcode type
-
-		printf("\e[35m");
-		for (int i = 0; i < barcodeLength; i++)
-		{
-			printf("%c", buff[i]);
-		}
-		printf("\e[0m\n");
 	}
 
 	return barcodeLength;

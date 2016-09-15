@@ -19,12 +19,19 @@ typedef unsigned char byte;
 #define SSI_REQ_REVISION					0xA3
 #define SSI_PARAM_SEND						0xC6
 #define SSI_CMD_ACK							0xD0
+#define SSI_CMD_NAK							0xD1
 #define SSI_CUSTOM_DEFAULTS					0x12
 #define SSI_DEC_DATA						0xF3
 #define SSI_FLUSH_QUEUE						0xD2
 #define SSI_PARAM_SEND						0xC6
 #define SSI_SCAN_ENABLE						0xE9
 #define SSI_SCAN_DISABLE					0xEA
+
+// NAK Code
+#define NAK_RESEND							0x01
+#define NAK_BAD_CONTEXT						0x02
+#define NAK_DENIED							0x06
+#define NAK_CANCEL							0x0A
 
 // Devices ID
 #define SSI_HOST							0x04
