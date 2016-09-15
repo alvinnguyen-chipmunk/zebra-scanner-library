@@ -18,6 +18,7 @@ int ConfigTTY(int fd);
 int ConfigSSI(int fd);
 int WriteSSI(int fd, byte opcode, byte *param, byte paramLen);
 int ReadSSI(int fd, byte *buff);
+int ExtractBarcode(byte *pkg, char *buff, int buffLength);
 void DisplayPkg(byte *pkg);
 
 #endif /* ssi_utils_h */

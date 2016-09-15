@@ -35,6 +35,8 @@
 static uint16_t CalculateChecksum(byte *pkg);
 static void PreparePkg(byte *pkg, byte opcode, byte *param, byte paramLen);
 static int IsChecksumOK(byte *pkg);
+static int IsPackage_(byte pkgType, byte *pkg);
+static int IsContinue(byte *pkg);
 
 /*!
  * \brief CalculateChecksum calculate 2's complement of pkg
@@ -85,37 +87,53 @@ static void PreparePkg(byte *pkg, byte opcode, byte *param, byte paramLen)
 /*!
  * \brief IsChecksumOK check 2 last bytes for checksum
  * \return
+ * - TRUE: checksum is correct
+ * - FALSE: checksum is incorrect
  */
 static int IsChecksumOK(byte *pkg)
 {
-	int ret = 0;
 	uint16_t cksum = 0;
 
 	cksum += pkg[PKG_LEN(pkg) + 1];
 	cksum += pkg[PKG_LEN(pkg)] << 8;
 
-	if (cksum == CalculateChecksum(pkg))
-	{
-		ret = TRUE;
-	}
-	else
-	{
-		ret = FALSE;
-	}
-
-	return ret;
+	return (cksum == CalculateChecksum(pkg));
 }
 
 /*!
- * \brief DisplayPkg print out package
+ * \brief IsPackage_ check package's type
+ * \return
+ * - TRUE: Is input pkgType
+ * - FALSE: Is NOT input pkgType
+ */
+static int IsPackage_(byte pkgType, byte *pkg)
+{
+	return (pkgType == pkg[INDEX_OPCODE]);
+}
+
+/*!
+ * \brief IsLastPackage check package's type
+ * \return
+ * - TRUE: Is last package in multiple packages stream
+ * - FALSE: Is intermediate package in multiple packages stream
+ */
+static int IsContinue(byte *pkg)
+{
+	return (STAT_CONTINUATION & pkg[INDEX_STAT]);
+}
+
+/*!
+ * \brief DisplayPkg print out package.
+ * If PKG_LEN(pkg) > MAX_PKG_LEN, only first MAX_PKG_LEN bytes are displayed
  */
 void DisplayPkg(byte *pkg)
 {
-	static char *debug = NULL;
+	char *debug = NULL;
 	debug = getenv("SSI_DEBUG");
+
 	if ( (NULL != debug) && (NULL != pkg) )
 	{
-		for (int i = 0; i < (PKG_LEN(pkg) + 2); i++)
+		for (int i = 0; i < PKG_LEN(pkg); i++)
 		{
 			printf("0x%x ", pkg[i]);
 		}
@@ -173,7 +191,7 @@ int WriteSSI(int fd, byte opcode, byte *param, byte paramLen)
 	tcflush(fd, TCIFLUSH);
 
 	PreparePkg(sendBuff, opcode, param, paramLen);
-	if ( write(fd, sendBuff, sendBuff[INDEX_LEN] + 2) <= 0)
+	if ( write(fd, sendBuff, PKG_LEN(sendBuff) + 2) <= 0)
 	{
 		perror("write");
 		ret = EXIT_FAILURE;
@@ -207,19 +225,26 @@ EXIT:
 int ReadSSI(int fd, byte *buff)
 {
 	int ret = 0;
+	int lastIndex = 0;
+	byte recvBuff[MAX_PKG_LEN];
 
-	// Get first byte which indicate package lenght
-	ret = (int) read(fd, buff, MAX_PKG_LEN);
-	if ( (ret > 0) || (IsChecksumOK(buff)) )
+	do
 	{
-		DisplayPkg(buff);
-		WriteSSI(fd, SSI_CMD_ACK, NULL, 0);
-	}
-	else
-	{
-		printf("%s: ERROR", __func__);
-		goto EXIT;
-	}
+		ret += (int) read(fd, &recvBuff[INDEX_LEN]		, 1);// read first byte for length
+		ret += (int) read(fd, &recvBuff[INDEX_LEN + 1]	, recvBuff[INDEX_LEN] + 1);
+		if ( (ret > 0) || (IsChecksumOK(recvBuff)) )
+		{
+			WriteSSI(fd, SSI_CMD_ACK, NULL, 0);
+			memcpy(&buff[lastIndex], recvBuff, PKG_LEN(recvBuff) + 2);
+			lastIndex += PKG_LEN(recvBuff) + 2;
+		}
+		else
+		{
+			printf("%s: ERROR", __func__);
+			ret = -1;
+			goto EXIT;
+		}
+	} while (IsContinue(recvBuff));
 
 EXIT:
 	return ret;
@@ -232,10 +257,10 @@ EXIT:
 int OpenTTY(void)
 {
 	int fd = 0;
-	char *dev_name = getenv("ZEBRA_SCANNER");
-//	char *dev_name = "/dev/tty.usbmodem1421";
+	char *devName = getenv("ZEBRA_SCANNER");
+//	char *devName = "/dev/tty.usbmodem1421";
 
-	fd = open(dev_name, O_RDWR);
+	fd = open(devName, O_RDWR, O_NONBLOCK);
 	if (fd < 0)
 	{
 		perror(__func__);
@@ -276,7 +301,7 @@ int ConfigTTY(int fd)
 	}
 
 	// Configure tty dev
-	devConf.c_cflag = (CS8 | CLOCAL | CREAD);
+	devConf.c_cflag = (CRTSCTS | CS8 | CLOCAL | CREAD);
 	devConf.c_iflag = 0;
 	devConf.c_oflag = 0;
 	devConf.c_lflag = 0;
@@ -302,4 +327,55 @@ int ConfigTTY(int fd)
 
 EXIT:
 	return ret;
+}
+
+int ExtractBarcode(byte *pkg, char *buff, int buffLength)
+{
+	char *barcodePtr = buff;
+	byte *pkgPtr = pkg;
+	byte *dump = pkg;
+	int barcodeLength = 0;
+	int barcodePartLength = 0;
+
+	printf("pkg(0): %d\n", PKG_LEN(dump) + 2);
+	dump += PKG_LEN(dump) + 2;
+	printf("pkg(1): %d\n", PKG_LEN(dump) + 2);
+
+	printf("\e[32m");
+	for (int i = 0; i < 405; i++)
+	{
+		if ( ( (pkg[i] <= '9') && (pkg[i] >= '0') ) || (pkg[i] == ' ') || (pkg[i] == '\n') )
+		{
+			printf("%c", pkg[i]);
+		}
+	}
+	printf("\e[0m\n");
+
+	if (NULL != pkgPtr)
+	{
+		while (IsContinue(pkgPtr))
+		{
+			barcodePartLength = PKG_LEN(pkgPtr) - SSI_HEADER_LEN - 1;
+			memcpy(barcodePtr, &pkgPtr[INDEX_BARCODETYPE + 1], barcodePartLength);
+			barcodeLength += barcodePartLength;	// 1 byte of barcode type
+
+			// Point to next pkg
+			barcodePtr += PKG_LEN(pkgPtr) + 2;
+			pkgPtr += PKG_LEN(pkgPtr) + 2;
+		}
+
+		// Get the last part of barcode
+		barcodePartLength = PKG_LEN(pkgPtr) - SSI_HEADER_LEN - 1;
+		memcpy(barcodePtr, &pkgPtr[INDEX_BARCODETYPE + 1], barcodePartLength);
+		barcodeLength += barcodePartLength;	// 1 byte of barcode type
+
+		printf("\e[35m");
+		for (int i = 0; i < barcodeLength; i++)
+		{
+			printf("%c", buff[i]);
+		}
+		printf("\e[0m\n");
+	}
+
+	return barcodeLength;
 }

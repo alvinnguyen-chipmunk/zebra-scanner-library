@@ -11,7 +11,7 @@
 
 #include "mlsBarcode.h"
 
-#define BUFFER_LEN	1000
+#define BUFFER_LEN	4000
 
 int main(int argc, const char * argv[])
 {
@@ -26,7 +26,7 @@ int main(int argc, const char * argv[])
 		goto EXIT;
 	}
 
-	ret = mlsBarcodeReader_ReadData(buff);
+	ret = mlsBarcodeReader_ReadData(buff, BUFFER_LEN);
 	if (ret <= 0)
 	{
 		goto EXIT;

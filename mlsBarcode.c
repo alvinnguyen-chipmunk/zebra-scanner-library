@@ -70,10 +70,10 @@ EXIT:
  * \param buff point to buffer which store data.
  * \return number of byte(s) read.
  */
-unsigned int mlsBarcodeReader_ReadData(char *buff) {
+unsigned int mlsBarcodeReader_ReadData(char *buff, int buffLength) {
 	int barcodeLen = 0;
 	int ret = 0;
-	byte recvBuff[MAX_PKG_LEN] = {0};
+	byte recvBuff[4000] = {0};
 
 	printf("Send Scan disable cmd...");
 	ret = WriteSSI(scanner, SSI_SCAN_DISABLE, NULL, 0);
@@ -135,11 +135,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff) {
 	{
 		// Extract barcode to buffer
 		assert(NULL != recvBuff);
-		DisplayPkg(recvBuff);
-		barcodeLen = recvBuff[INDEX_LEN] - SSI_HEADER_LEN	- 1;
-		assert(barcodeLen < MAX_PKG_LEN);
-		memcpy(buff, &recvBuff[INDEX_BARCODETYPE + 1], barcodeLen);
-		DisplayPkg(recvBuff);
+		barcodeLen = ExtractBarcode(recvBuff, buff, buffLength);
 	}
 
 EXIT:

@@ -59,9 +59,9 @@ typedef unsigned char byte;
  Bit 2: recserved (0x00)
  Bit 3: Parameter Change Type (0 = Temporary change | 1 = Permanent change)
  */
-#define SSI_STAT_RETRANS					0x01
-#define SSI_STAT_CONTINUATION				0x02
-#define SSI_STAT_CHANGETYPE					0x08
+#define STAT_RETRANS					0x01
+#define STAT_CONTINUATION				0x02
+#define STAT_CHANGETYPE					0x08
 
 // Actions
 #define SSI_CUSTOM_DEFAULTS_ACT_WR			0x00
