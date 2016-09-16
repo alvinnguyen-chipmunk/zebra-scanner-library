@@ -208,7 +208,6 @@ int WriteSSI(int fd, byte opcode, byte *param, byte paramLen)
 {
 	int ret = EXIT_SUCCESS;
 	byte *sendBuff = malloc( (SSI_HEADER_LEN + paramLen) * sizeof(byte) );
-	byte recvBuff[MAX_PKG_LEN];
 
 	// Flush old input queue
 	tcflush(fd, TCIFLUSH);
@@ -219,25 +218,6 @@ int WriteSSI(int fd, byte opcode, byte *param, byte paramLen)
 		perror("write");
 		ret = EXIT_FAILURE;
 		goto EXIT;
-	}
-
-	// Check ACK
-	if (SSI_CMD_ACK != opcode)
-	{
-		if (ReadSSI(fd, recvBuff, 1) <= 0)
-		{
-			printf("%s: no ACK\n", __func__);
-			ret = EXIT_FAILURE;
-		}
-		else if (SSI_CMD_NAK == recvBuff[INDEX_OPCODE])
-		{
-			printf("%s: NAK: %s\n", __func__, strNAK(recvBuff[INDEX_OPCODE]));
-		}
-		else if (SSI_CMD_ACK != recvBuff[INDEX_OPCODE])
-		{
-			printf("%s: ACK failure\n", __func__);
-			ret = EXIT_FAILURE;
-		}
 	}
 
 EXIT:
@@ -299,7 +279,6 @@ int OpenTTY(void)
 {
 	int fd = 0;
 	char *devName = getenv("ZEBRA_SCANNER");
-//	char *devName = "/dev/tty.usbmodem1421";
 
 	fd = open(devName, O_RDWR, O_NONBLOCK);
 	if (fd < 0)
@@ -370,6 +349,12 @@ EXIT:
 	return ret;
 }
 
+/*!
+ * \brief ExtractBarcode extract barcode from formatted package
+ * \return
+ * - barcode length: Success
+ * - 0: Fail
+ */
 int ExtractBarcode(byte *pkg, char *buff, const int buffLength)
 {
 	char *barcodePtr = buff;
@@ -399,4 +384,54 @@ int ExtractBarcode(byte *pkg, char *buff, const int buffLength)
 	}
 
 	return barcodeLength;
+}
+
+/*!
+ * \brief CheckACK receive ACK package after WriteSSI() and check for ACK
+ * \return
+ * - EXIT_SUCCESS: Success	ACK
+ * - EXIT_FAILURE: Fail		Unknown cause
+ * - ENAK(3)	 : Fail		NAK
+ */
+int CheckACK(int fd)
+{
+	int ret = EXIT_SUCCESS;
+	byte recvBuff[MAX_PKG_LEN];
+
+	ret = ReadSSI(fd, recvBuff, 1);
+	if ( (ret > 0) && (SSI_CMD_ACK == recvBuff[INDEX_OPCODE]) )
+	{
+		ret = EXIT_SUCCESS;
+	}
+	else if (SSI_CMD_NAK == recvBuff[INDEX_OPCODE])
+	{
+		ret = ENAK;
+		printf(" %s ", strNAK(recvBuff[INDEX_CAUSE]));
+	}
+	else
+	{
+		ret = EXIT_FAILURE;
+	}
+
+	return ret;
+}
+
+/*!
+ * \brief HandleError prints error message and indicate next step
+ */
+void PrintError(int ret)
+{
+	printf("ERROR:");
+	switch (ret) {
+		case ENAK:
+			printf(" NAK\n");
+			break;
+		case ENODEC:
+			printf(" no decode event\n");
+			break;
+
+		default:
+			printf("\n");
+			break;
+	}
 }

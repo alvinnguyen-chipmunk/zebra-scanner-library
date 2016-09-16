@@ -66,6 +66,7 @@ typedef unsigned char byte;
 #define INDEX_SRC							2
 #define INDEX_STAT							3
 #define INDEX_BARCODETYPE					4
+#define INDEX_CAUSE							4
 
 // Status bits
 /*
@@ -89,6 +90,8 @@ typedef unsigned char byte;
 #define PKG_LEN(x)		(x[INDEX_LEN])
 
 // Error
-#define ECKSUM								1
+#define ECKSUM								2
+#define ENAK								0xA0
+#define ENODEC								4
 
 #endif /* ssi_command_h */
