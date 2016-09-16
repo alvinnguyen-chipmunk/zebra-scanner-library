@@ -172,12 +172,13 @@ void DisplayPkg(byte *pkg)
 int ConfigSSI(int fd)
 {
 	int ret = EXIT_SUCCESS;
-	byte param[9] =	{
-		PARAM_BEEP_NONE,
-		PARAM_B_DEC_FORMAT	, ENABLE,
-		PARAM_B_SW_ACK		, ENABLE,
-		PARAM_B_SCAN_PARAM	, DISABLE,	// Disable to avoid accidental changes param from scanning
-		PARAM_TRIGGER_MODE	, PARAM_TRIGGER_HOST,
+	byte param[12] =	{
+						PARAM_BEEP_NONE,
+						PARAM_B_DEC_FORMAT	, ENABLE,
+						PARAM_B_SW_ACK		, ENABLE,
+						PARAM_B_SCAN_PARAM	, DISABLE,	// Disable to avoid accidental changes param from scanning
+						PARAM_TRIGGER_MODE	, PARAM_TRIGGER_PRESENT,
+		PARAM_INDEX_F0,	PARAM_B_DEC_EVENT	, ENABLE
 		};
 
 	printf("Configure SSI parameters...");
@@ -207,7 +208,6 @@ int WriteSSI(int fd, byte opcode, byte *param, byte paramLen)
 {
 	int ret = EXIT_SUCCESS;
 	byte *sendBuff = malloc( (SSI_HEADER_LEN + paramLen) * sizeof(byte) );
-	byte recvBuff[MAX_PKG_LEN];
 
 	// Flush old input queue
 	tcflush(fd, TCIFLUSH);
@@ -220,25 +220,6 @@ int WriteSSI(int fd, byte opcode, byte *param, byte paramLen)
 		goto EXIT;
 	}
 
-	// Check ACK
-	if (SSI_CMD_ACK != opcode)
-	{
-		if (ReadSSI(fd, recvBuff) <= 0)
-		{
-			printf("%s: no ACK\n", __func__);
-			ret = EXIT_FAILURE;
-		}
-		else if (SSI_CMD_NAK == recvBuff[INDEX_OPCODE])
-		{
-			printf("%s: NAK: %s\n", __func__, strNAK(recvBuff[INDEX_OPCODE]));
-		}
-		else if (SSI_CMD_ACK != recvBuff[INDEX_OPCODE])
-		{
-			printf("%s: ACK failure\n", __func__);
-			ret = EXIT_FAILURE;
-		}
-	}
-
 EXIT:
 	free(sendBuff);
 	return ret;
@@ -248,15 +229,26 @@ EXIT:
  * \brief ReadSSI read formatted package and response ACK from/to scanner via file descriptor
  * \return number of read bytes
  */
-int ReadSSI(int fd, byte *buff)
+int ReadSSI(int fd, byte *buff, const int timeout)
 {
 	int ret = 0;
 	int lastIndex = 0;
+	int oldVTIME = 0;
+	struct termios devConf;
 	byte recvBuff[MAX_PKG_LEN];
+
+	tcgetattr(fd, &devConf);
+	oldVTIME = devConf.c_cc[VTIME];
+	devConf.c_cc[VTIME] = timeout;
+	tcsetattr(fd, TCSANOW, &devConf);
 
 	do
 	{
 		ret += (int) read(fd, &recvBuff[INDEX_LEN]		, 1);// read first byte for length
+		if (ret <= 0)
+		{
+			goto EXIT;
+		}
 		ret += (int) read(fd, &recvBuff[INDEX_LEN + 1]	, recvBuff[INDEX_LEN] + 1);
 		DisplayPkg(recvBuff);
 		if ( (ret > 0) || (IsChecksumOK(recvBuff)) )
@@ -274,6 +266,8 @@ int ReadSSI(int fd, byte *buff)
 	} while (IsContinue(recvBuff));
 
 EXIT:
+	devConf.c_cc[VTIME] = oldVTIME;
+	tcsetattr(fd, TCSANOW, &devConf);
 	return ret;
 }
 
@@ -285,7 +279,6 @@ int OpenTTY(void)
 {
 	int fd = 0;
 	char *devName = getenv("ZEBRA_SCANNER");
-//	char *devName = "/dev/tty.usbmodem1421";
 
 	fd = open(devName, O_RDWR, O_NONBLOCK);
 	if (fd < 0)
@@ -356,6 +349,12 @@ EXIT:
 	return ret;
 }
 
+/*!
+ * \brief ExtractBarcode extract barcode from formatted package
+ * \return
+ * - barcode length: Success
+ * - 0: Fail
+ */
 int ExtractBarcode(byte *pkg, char *buff, const int buffLength)
 {
 	char *barcodePtr = buff;
@@ -385,4 +384,54 @@ int ExtractBarcode(byte *pkg, char *buff, const int buffLength)
 	}
 
 	return barcodeLength;
+}
+
+/*!
+ * \brief CheckACK receive ACK package after WriteSSI() and check for ACK
+ * \return
+ * - EXIT_SUCCESS: Success	ACK
+ * - EXIT_FAILURE: Fail		Unknown cause
+ * - ENAK(3)	 : Fail		NAK
+ */
+int CheckACK(int fd)
+{
+	int ret = EXIT_SUCCESS;
+	byte recvBuff[MAX_PKG_LEN];
+
+	ret = ReadSSI(fd, recvBuff, 1);
+	if ( (ret > 0) && (SSI_CMD_ACK == recvBuff[INDEX_OPCODE]) )
+	{
+		ret = EXIT_SUCCESS;
+	}
+	else if (SSI_CMD_NAK == recvBuff[INDEX_OPCODE])
+	{
+		ret = ENAK;
+		printf(" %s ", strNAK(recvBuff[INDEX_CAUSE]));
+	}
+	else
+	{
+		ret = EXIT_FAILURE;
+	}
+
+	return ret;
+}
+
+/*!
+ * \brief HandleError prints error message and indicate next step
+ */
+void PrintError(int ret)
+{
+	printf("ERROR:");
+	switch (ret) {
+		case ENAK:
+			printf(" NAK\n");
+			break;
+		case ENODEC:
+			printf(" no decode event\n");
+			break;
+
+		default:
+			printf("\n");
+			break;
+	}
 }
