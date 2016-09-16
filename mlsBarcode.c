@@ -26,7 +26,7 @@
 #include "mlsBarcode.h"
 
 typedef enum _state {START, STOP, FLUSH_QUEUE, REPLY_ACK, REPLY_NAK, GET_BARCODE, WAIT_DEC_EVENT} ssiState;
-typedef enum _bool {TRUE, FALSE} bool;
+typedef enum _bool {FALSE, TRUE} bool;
 
 static int scanner = 0;
 
@@ -105,6 +105,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
 				isInSession = FALSE;
 				printf("Send Stop session cmd...");
 				ret = WriteSSI(scanner, SSI_STOP_SESSION, NULL, 0);
+				usleep(1000);
 				if ( (ret) || (! CheckACK(scanner) ) )
 				{
 					PrintError(ret);
@@ -173,6 +174,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
 					// Extract barcode to buffer
 					assert(NULL != recvBuff);
 					barcodeLen = ExtractBarcode(recvBuff, buff, buffLength);
+					DisplayPkg(recvBuff);
 					nextState = REPLY_ACK;
 					previousState = currentState;
 				}
@@ -226,6 +228,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
 		currentState = nextState;
 	}
 
+	printf("Barcode Len = %d\n", ret);
 	return ret;
 }
 

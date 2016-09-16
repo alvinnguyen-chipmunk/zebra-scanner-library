@@ -234,23 +234,35 @@ int ReadSSI(int fd, byte *buff, const int timeout)
 	int ret = 0;
 	int lastIndex = 0;
 	int oldVTIME = 0;
+	int oldVMIN = 0;
 	struct termios devConf;
 	byte recvBuff[MAX_PKG_LEN];
 
+	// Backup old value
 	tcgetattr(fd, &devConf);
 	oldVTIME = devConf.c_cc[VTIME];
+	oldVMIN = devConf.c_cc[VMIN];
+
+	// Setup timeout
 	devConf.c_cc[VTIME] = timeout;
 	tcsetattr(fd, TCSANOW, &devConf);
 
 	do
 	{
-		ret += (int) read(fd, &recvBuff[INDEX_LEN]		, 1);// read first byte for length
+		// Read 1 first byte for length
+		ret += (int) read(fd, &recvBuff[INDEX_LEN], 1);
 		if (ret <= 0)
 		{
 			goto EXIT;
 		}
-		ret += (int) read(fd, &recvBuff[INDEX_LEN + 1]	, recvBuff[INDEX_LEN] + 1);
-		DisplayPkg(recvBuff);
+
+		// Change reading condition to ensure read enough bytes
+		devConf.c_cc[VMIN] = recvBuff[INDEX_LEN] + 2 - 1;	// read package + cksum - first_byte
+		devConf.c_cc[VTIME] = 1;	// Intermediate timeout between bytes 10ms
+		tcsetattr(fd, TCSANOW, &devConf);
+
+		// Get n next bytes (n = length + 2 ), 2 last bytes are cksum
+		ret += (int) read(fd, &recvBuff[INDEX_LEN + 1], recvBuff[INDEX_LEN] + 1);
 		if ( (ret > 0) || (IsChecksumOK(recvBuff)) )
 		{
 			WriteSSI(fd, SSI_CMD_ACK, NULL, 0);
@@ -266,7 +278,9 @@ int ReadSSI(int fd, byte *buff, const int timeout)
 	} while (IsContinue(recvBuff));
 
 EXIT:
+	// Return old value
 	devConf.c_cc[VTIME] = oldVTIME;
+	devConf.c_cc[VMIN] = oldVMIN;
 	tcsetattr(fd, TCSANOW, &devConf);
 	return ret;
 }
