@@ -1,10 +1,6 @@
 --- WAITING ---
 1. Segmentation fault at mlfsBarcode_read: ln121: memcpy()
 
-2. Change to state machine
-
-3. Change to auto scan routine
-
 5. Default Reset: Default host of USB interface is SNAPI, need to be SSI
   - Phenomenon: accidentally reset to default. Statistic until Sep 13:
   	+ Touch board (> 5 times)
@@ -21,6 +17,10 @@
 6. Implement multi-package reading
 
 --- FINISHED ---
+
+2. Change to state machine: OK (Sep 17)
+
+3. Change to auto scan routine: OK (Sep 17)
 
 4. Bug: after a failed scan session, next session will be failed 100%
   - Phenomenon: dump data of previous session in input queue
