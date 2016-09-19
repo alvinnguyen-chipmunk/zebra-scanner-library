@@ -20,7 +20,7 @@ int WriteSSI(int fd, byte opcode, byte *param, byte paramLen);
 int ReadSSI(int fd, byte *buff, const int timeout);
 int CheckACK(int fd);
 void PrintError(int ret);
-int ExtractBarcode(byte *pkg, char *buff, const int buffLength);
+int ExtractBarcode(char *buff, byte *pkg, const int buffLength);
 void DisplayPkg(byte *pkg);
 
 #endif /* ssi_utils_h */

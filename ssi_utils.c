@@ -155,7 +155,7 @@ void DisplayPkg(byte *pkg)
 
 	if ( (NULL != debug) && (NULL != pkg) )
 	{
-		for (int i = 0; i < PKG_LEN(pkg); i++)
+		for (int i = 0; i < PKG_LEN(pkg) + 2; i++)
 		{
 			printf("0x%x ", pkg[i]);
 		}
@@ -235,6 +235,7 @@ int ReadSSI(int fd, byte *buff, const int timeout)
 	int lastIndex = 0;
 	int oldVTIME = 0;
 	int oldVMIN = 0;
+	int readRequest = 0;
 	struct termios devConf;
 	byte recvBuff[MAX_PKG_LEN];
 
@@ -243,26 +244,31 @@ int ReadSSI(int fd, byte *buff, const int timeout)
 	oldVTIME = devConf.c_cc[VTIME];
 	oldVMIN = devConf.c_cc[VMIN];
 
-	// Setup timeout
-	devConf.c_cc[VTIME] = timeout;
-	tcsetattr(fd, TCSANOW, &devConf);
-
 	do
 	{
 		// Read 1 first byte for length
-		ret += (int) read(fd, &recvBuff[INDEX_LEN], 1);
+		// Setup timeout read
+		readRequest = 1;
+		devConf.c_cc[VTIME] = timeout;
+		devConf.c_cc[VMIN] = 0;
+		tcsetattr(fd, TCSANOW, &devConf);
+		ret += (int) read(fd, &recvBuff[INDEX_LEN], readRequest);
 		if (ret <= 0)
 		{
 			goto EXIT;
 		}
 
+		readRequest = recvBuff[INDEX_LEN] + 2 - 1; 	// read package + cksum - first_byte
+		printf("read request = %d\n", readRequest);
+
 		// Change reading condition to ensure read enough bytes
-		devConf.c_cc[VMIN] = recvBuff[INDEX_LEN] + 2 - 1;	// read package + cksum - first_byte
-		devConf.c_cc[VTIME] = 1;	// Intermediate timeout between bytes 10ms
+		devConf.c_cc[VTIME] = 0;
+		devConf.c_cc[VMIN] = readRequest;
 		tcsetattr(fd, TCSANOW, &devConf);
 
-		// Get n next bytes (n = length + 2 ), 2 last bytes are cksum
-		ret += (int) read(fd, &recvBuff[INDEX_LEN + 1], recvBuff[INDEX_LEN] + 1);
+		// Get n next bytes (n = length + 2 - 1), 2 last bytes are cksum
+		ret += (int) read(fd, &recvBuff[INDEX_LEN + 1], readRequest);
+
 		if ( (ret > 0) || (IsChecksumOK(recvBuff)) )
 		{
 			WriteSSI(fd, SSI_CMD_ACK, NULL, 0);
@@ -369,7 +375,7 @@ EXIT:
  * - barcode length: Success
  * - 0: Fail
  */
-int ExtractBarcode(byte *pkg, char *buff, const int buffLength)
+int ExtractBarcode(char *buff, byte *pkg, const int buffLength)
 {
 	char *barcodePtr = buff;
 	byte *pkgPtr = pkg;
