@@ -103,18 +103,19 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
 
 			case STOP:
 				isInSession = FALSE;
-				printf("Send Stop session cmd...");
-				ret = WriteSSI(scanner, SSI_STOP_SESSION, NULL, 0);
-				usleep(1000);
-				if ( (ret) || (! CheckACK(scanner) ) )
-				{
-					PrintError(ret);
-				}
-				else
-				{
+//				printf("Send Stop session cmd...");
+//				ret = WriteSSI(scanner, SSI_STOP_SESSION, NULL, 0);
+//				usleep(1000);
+//				if ( (ret) || (! CheckACK(scanner) ) )
+//				{
+//					PrintError(ret);
+//				}
+//				else
+//				{
+				/* TODO: need to research if auto detect accept STOP_SESSION */
 					ret = barcodeLen;
 					printf("OK\n");
-				}
+//				}
 				break;
 
 			case WAIT_DEC_EVENT:
@@ -173,7 +174,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
 				{
 					// Extract barcode to buffer
 					assert(NULL != recvBuff);
-					barcodeLen = ExtractBarcode(recvBuff, buff, buffLength);
+					barcodeLen = ExtractBarcode(buff, recvBuff, buffLength);
 					DisplayPkg(recvBuff);
 					nextState = REPLY_ACK;
 					previousState = currentState;
