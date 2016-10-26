@@ -81,22 +81,34 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
 	ssiState previousState = WAIT_DEC_EVENT;
 	bool isInSession = TRUE;
 	byte recvBuff[4000] = {0};
+	char *debugLevel = getenv("SSI_DEBUG");
+
 	assert( (timeout >= 0) && (timeout <= 25) );
 
 	while (isInSession)
 	{
 		switch (currentState) {
 			case START:
-				printf("Send Start session cmd...");
+				if (NULL != debugLevel)
+				{
+					printf("Send Start session cmd...");
+				}
+
 				ret = WriteSSI(scanner, SSI_START_SESSION, NULL, 0);
 				if ( (ret) || (! CheckACK(scanner) ) )
 				{
-					PrintError(ret);
+					if (NULL != debugLevel)
+					{
+						PrintError(ret);
+					}
 					nextState = STOP;
 				}
 				else
 				{
-					printf("OK\n");
+					if (NULL != debugLevel)
+					{
+						printf("OK\n");
+					}
 				}
 
 				break;
@@ -114,21 +126,34 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
 //				{
 				/* TODO: need to research if auto detect accept STOP_SESSION */
 					ret = barcodeLen;
+				if (NULL != debugLevel)
+				{
 					printf("OK\n");
+				}
 //				}
 				break;
 
 			case WAIT_DEC_EVENT:
-				printf("Wait for decode event...");
+
+				if (NULL != debugLevel)
+				{
+					printf("Wait for decode event...");
+				}
 				ret = ReadSSI(scanner, recvBuff, timeout);
 				if (ret <= 0)
 				{
-					PrintError(ret);
+					if (NULL != debugLevel)
+					{
+						PrintError(ret);
+					}
 					nextState = STOP;
 				}
 				else
 				{
-					printf("OK\n");
+					if (NULL != debugLevel)
+					{
+						printf("OK\n");
+					}
 					nextState = REPLY_ACK;
 					previousState = currentState;
 				}
@@ -143,7 +168,11 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
 				}
 				else
 				{
-					printf("OK\n");
+
+					if (NULL != debugLevel)
+					{
+						printf("OK\n");
+					}
 					switch (previousState)
 					{
 						case WAIT_DEC_EVENT:
@@ -163,7 +192,10 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
 
 			case GET_BARCODE:
 				// Receive barcode in formatted package
-				printf("Receive data: \n");
+				if (NULL != debugLevel)
+				{
+					printf("Receive data: \n");
+				}
 				ret = ReadSSI(scanner, recvBuff, timeout);
 				if (ret <= 0)
 				{
@@ -192,7 +224,10 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
 				}
 				else
 				{
-					printf("OK\n");
+					if (NULL != debugLevel)
+					{
+						printf("OK\n");
+					}
 				}
 
 				printf("Send flush queue cmd...");
@@ -205,7 +240,10 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
 				}
 				else
 				{
-					printf("OK\n");
+					if (NULL != debugLevel)
+					{
+						printf("OK\n");
+					}
 				}
 
 				printf("Send Scan enable cmd...");
@@ -229,7 +267,10 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
 		currentState = nextState;
 	}
 
-	printf("Barcode Len = %d\n", ret);
+	if (NULL != debugLevel)
+	{
+		printf("Barcode Len = %d\n", ret);
+	}
 	return ret;
 }
 

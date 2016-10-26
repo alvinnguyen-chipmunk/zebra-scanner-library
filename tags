@@ -1,0 +1,118 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+BAUDRATE	ssi.h	12;"	d
+BIN_PATH	Makefile	/^BIN_PATH=.\/image\/usr\/bin$/;"	m
+BUFFER_LEN	main.c	15;"	d	file:
+CC	Makefile	/^CC=$(CROSS_COMPILE)gcc$/;"	m
+CFLAGS	Makefile	/^CFLAGS=-std=gnu99 -Wall -g$/;"	m
+CFLAGS_LIB	Makefile	/^CFLAGS_LIB=-fPIC -shared$/;"	m
+CalculateChecksum	ssi_utils.c	/^static uint16_t CalculateChecksum(byte *pkg)$/;"	f	file:
+CheckACK	ssi_utils.c	/^int CheckACK(int fd)$/;"	f
+ConfigSSI	ssi_utils.c	/^int ConfigSSI(int fd)$/;"	f
+ConfigTTY	ssi_utils.c	/^int ConfigTTY(int fd)$/;"	f
+DISABLE	ssi.h	45;"	d
+DisplayPkg	ssi_utils.c	/^void DisplayPkg(byte *pkg)$/;"	f
+ECKSUM	ssi.h	93;"	d
+ENABLE	ssi.h	44;"	d
+ENAK	ssi.h	94;"	d
+ENODEC	ssi.h	95;"	d
+ExtractBarcode	ssi_utils.c	/^int ExtractBarcode(char *buff, byte *pkg, const int buffLength)$/;"	f
+FALSE	main.c	17;"	d	file:
+FALSE	mlsBarcode.c	/^typedef enum _bool {FALSE, TRUE} bool;$/;"	e	enum:_bool	file:
+FALSE	ssi_utils.c	30;"	d	file:
+FLUSH_QUEUE	mlsBarcode.c	/^typedef enum _state {START, STOP, FLUSH_QUEUE, REPLY_ACK, REPLY_NAK, GET_BARCODE, WAIT_DEC_EVENT} ssiState;$/;"	e	enum:_state	file:
+GET_BARCODE	mlsBarcode.c	/^typedef enum _state {START, STOP, FLUSH_QUEUE, REPLY_ACK, REPLY_NAK, GET_BARCODE, WAIT_DEC_EVENT} ssiState;$/;"	e	enum:_state	file:
+HandleSignal	main.c	/^static void HandleSignal(int sig)$/;"	f	file:
+INDEX_BARCODETYPE	ssi.h	68;"	d
+INDEX_CAUSE	ssi.h	69;"	d
+INDEX_LEN	ssi.h	64;"	d
+INDEX_OPCODE	ssi.h	65;"	d
+INDEX_SRC	ssi.h	66;"	d
+INDEX_STAT	ssi.h	67;"	d
+IsChecksumOK	ssi_utils.c	/^static int IsChecksumOK(byte *pkg)$/;"	f	file:
+IsContinue	ssi_utils.c	/^static int IsContinue(byte *pkg)$/;"	f	file:
+LIB_PATH	Makefile	/^LIB_PATH=.\/image\/usr\/lib$/;"	m
+LSB_16	ssi_utils.c	27;"	d	file:
+MAX_PKG_LEN	ssi.h	87;"	d
+MLSQRREADER_H	mlsBarcode.c	10;"	d	file:
+MLSQRREADER_H	mlsBarcode.h	2;"	d
+MSB_16	ssi_utils.c	26;"	d	file:
+NAK_BAD_CONTEXT	ssi.h	32;"	d
+NAK_CANCEL	ssi.h	34;"	d
+NAK_DENIED	ssi.h	33;"	d
+NAK_RESEND	ssi.h	31;"	d
+OpenTTY	ssi_utils.c	/^int OpenTTY(void)$/;"	f
+PARAM_BEEP_NONE	ssi.h	51;"	d
+PARAM_B_DEC_EVENT	ssi.h	49;"	d
+PARAM_B_DEC_FORMAT	ssi.h	47;"	d
+PARAM_B_SCAN_PARAM	ssi.h	46;"	d
+PARAM_B_SW_ACK	ssi.h	48;"	d
+PARAM_DEC_TIMEOUT	ssi.h	57;"	d
+PARAM_INDEX_F0	ssi.h	59;"	d
+PARAM_INDEX_F1	ssi.h	60;"	d
+PARAM_INDEX_F2	ssi.h	61;"	d
+PARAM_TRIGGER_AUTO	ssi.h	55;"	d
+PARAM_TRIGGER_AUTO_WITHLED	ssi.h	56;"	d
+PARAM_TRIGGER_HOST	ssi.h	54;"	d
+PARAM_TRIGGER_MODE	ssi.h	52;"	d
+PARAM_TRIGGER_PRESENT	ssi.h	53;"	d
+PKG_LEN	ssi.h	90;"	d
+PreparePkg	ssi_utils.c	/^static void PreparePkg(byte *pkg, byte opcode, byte *param, byte paramLen)$/;"	f	file:
+PrintError	ssi_utils.c	/^void PrintError(int ret)$/;"	f
+REPLY_ACK	mlsBarcode.c	/^typedef enum _state {START, STOP, FLUSH_QUEUE, REPLY_ACK, REPLY_NAK, GET_BARCODE, WAIT_DEC_EVENT} ssiState;$/;"	e	enum:_state	file:
+REPLY_NAK	mlsBarcode.c	/^typedef enum _state {START, STOP, FLUSH_QUEUE, REPLY_ACK, REPLY_NAK, GET_BARCODE, WAIT_DEC_EVENT} ssiState;$/;"	e	enum:_state	file:
+ReadSSI	ssi_utils.c	/^int ReadSSI(int fd, byte *buff, const int timeout)$/;"	f
+SRC	Makefile	/^SRC=main.c$/;"	m
+SRC_LIB	Makefile	/^SRC_LIB=ssi_utils.c mlsBarcode.c$/;"	m
+SSI_CKSUM_LEN	ssi.h	40;"	d
+SSI_CMD_ACK	ssi.h	21;"	d
+SSI_CMD_NAK	ssi.h	22;"	d
+SSI_CUSTOM_DEFAULTS	ssi.h	23;"	d
+SSI_CUSTOM_DEFAULTS_ACT_RESTORE	ssi.h	84;"	d
+SSI_CUSTOM_DEFAULTS_ACT_WR	ssi.h	83;"	d
+SSI_DEC_DATA	ssi.h	24;"	d
+SSI_DEFAULT_STATUS	ssi.h	39;"	d
+SSI_FLUSH_QUEUE	ssi.h	25;"	d
+SSI_HEADER_LEN	ssi.h	38;"	d
+SSI_HOST	ssi.h	37;"	d
+SSI_PARAM_SEND	ssi.h	20;"	d
+SSI_PARAM_SEND	ssi.h	26;"	d
+SSI_REQ_REVISION	ssi.h	19;"	d
+SSI_SCAN_DISABLE	ssi.h	28;"	d
+SSI_SCAN_ENABLE	ssi.h	27;"	d
+SSI_START_SESSION	ssi.h	17;"	d
+SSI_STOP_SESSION	ssi.h	18;"	d
+START	mlsBarcode.c	/^typedef enum _state {START, STOP, FLUSH_QUEUE, REPLY_ACK, REPLY_NAK, GET_BARCODE, WAIT_DEC_EVENT} ssiState;$/;"	e	enum:_state	file:
+STAT_CHANGETYPE	ssi.h	80;"	d
+STAT_CONTINUATION	ssi.h	79;"	d
+STAT_RETRANS	ssi.h	78;"	d
+STOP	mlsBarcode.c	/^typedef enum _state {START, STOP, FLUSH_QUEUE, REPLY_ACK, REPLY_NAK, GET_BARCODE, WAIT_DEC_EVENT} ssiState;$/;"	e	enum:_state	file:
+TARGET	Makefile	/^TARGET=zebra-demo$/;"	m
+TARGET_LIB	Makefile	/^TARGET_LIB=libssi.so$/;"	m
+TIMEOUT_MSEC	ssi_utils.c	33;"	d	file:
+TRUE	main.c	16;"	d	file:
+TRUE	mlsBarcode.c	/^typedef enum _bool {FALSE, TRUE} bool;$/;"	e	enum:_bool	file:
+TRUE	ssi_utils.c	29;"	d	file:
+WAIT_DEC_EVENT	mlsBarcode.c	/^typedef enum _state {START, STOP, FLUSH_QUEUE, REPLY_ACK, REPLY_NAK, GET_BARCODE, WAIT_DEC_EVENT} ssiState;$/;"	e	enum:_state	file:
+WriteSSI	ssi_utils.c	/^int WriteSSI(int fd, byte opcode, byte *param, byte paramLen)$/;"	f
+_bool	mlsBarcode.c	/^typedef enum _bool {FALSE, TRUE} bool;$/;"	g	file:
+_state	mlsBarcode.c	/^typedef enum _state {START, STOP, FLUSH_QUEUE, REPLY_ACK, REPLY_NAK, GET_BARCODE, WAIT_DEC_EVENT} ssiState;$/;"	g	file:
+bool	mlsBarcode.c	/^typedef enum _bool {FALSE, TRUE} bool;$/;"	t	typeref:enum:_bool	file:
+build	release.sh	/^function build()$/;"	f
+byte	ssi.h	/^typedef unsigned char byte;$/;"	t
+isRunning	main.c	/^static int isRunning = FALSE;$/;"	v	file:
+main	main.c	/^int main(int argc, const char * argv[])$/;"	f
+mlsBarcodeReader_Close	mlsBarcode.c	/^char mlsBarcodeReader_Close() {$/;"	f
+mlsBarcodeReader_Disable	mlsBarcode.c	/^char mlsBarcodeReader_Disable()$/;"	f
+mlsBarcodeReader_Enable	mlsBarcode.c	/^char mlsBarcodeReader_Enable()$/;"	f
+mlsBarcodeReader_Open	mlsBarcode.c	/^char mlsBarcodeReader_Open() {$/;"	f
+mlsBarcodeReader_ReadData	mlsBarcode.c	/^unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const int timeout) {$/;"	f
+scanner	mlsBarcode.c	/^static int scanner = 0;$/;"	v	file:
+ssiState	mlsBarcode.c	/^typedef enum _state {START, STOP, FLUSH_QUEUE, REPLY_ACK, REPLY_NAK, GET_BARCODE, WAIT_DEC_EVENT} ssiState;$/;"	t	typeref:enum:_state	file:
+ssi_h	ssi.h	10;"	d
+ssi_utils_h	ssi_utils.h	10;"	d
+strNAK	ssi_utils.c	/^static char *strNAK(int code)$/;"	f	file:

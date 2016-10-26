@@ -150,10 +150,9 @@ static int IsContinue(byte *pkg)
  */
 void DisplayPkg(byte *pkg)
 {
-	char *debug = NULL;
-	debug = getenv("SSI_DEBUG");
+	char *debugLevel = getenv("SSI_DEBUG");
 
-	if ( (NULL != debug) && (NULL != pkg) )
+	if ( (NULL != debugLevel) && (NULL != pkg) )
 	{
 		for (int i = 0; i < PKG_LEN(pkg) + 2; i++)
 		{
@@ -173,7 +172,7 @@ int ConfigSSI(int fd)
 {
 	int ret = EXIT_SUCCESS;
 	byte param[12] =	{
-						PARAM_BEEP_NONE,
+						0x01,
 						PARAM_B_DEC_FORMAT	, ENABLE,
 						PARAM_B_SW_ACK		, ENABLE,
 						PARAM_B_SCAN_PARAM	, DISABLE,	// Disable to avoid accidental changes param from scanning
@@ -238,6 +237,7 @@ int ReadSSI(int fd, byte *buff, const int timeout)
 	int readRequest = 0;
 	struct termios devConf;
 	byte recvBuff[MAX_PKG_LEN];
+	char *debugLevel = getenv("SSI_DEBUG");
 
 	// Backup old value
 	tcgetattr(fd, &devConf);
@@ -259,7 +259,10 @@ int ReadSSI(int fd, byte *buff, const int timeout)
 		}
 
 		readRequest = recvBuff[INDEX_LEN] + 2 - 1; 	// read package + cksum - first_byte
-		printf("read request = %d\n", readRequest);
+		if (NULL != debugLevel)
+		{
+			printf("read request = %d\n", readRequest);
+		}
 
 		// Change reading condition to ensure read enough bytes
 		devConf.c_cc[VTIME] = 0;
