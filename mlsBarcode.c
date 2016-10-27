@@ -36,10 +36,11 @@ static int scanner = 0;
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-char mlsBarcodeReader_Open() {
+char mlsBarcodeReader_Open(char *name) {
 	char ret = EXIT_SUCCESS;
 
-	ret = OpenTTY();
+	printf("DEBUG: %s\n", name);
+	ret = OpenTTY(name);
 	if (ret <= 0)
 	{
 		ret = EXIT_FAILURE;

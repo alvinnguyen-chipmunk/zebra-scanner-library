@@ -13,7 +13,7 @@
 #include <termios.h>
 #include "ssi.h"
 
-int OpenTTY();
+int OpenTTY(char *name);
 int ConfigTTY(int fd);
 int ConfigSSI(int fd);
 int WriteSSI(int fd, byte opcode, byte *param, byte paramLen);

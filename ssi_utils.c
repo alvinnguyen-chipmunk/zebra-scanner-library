@@ -298,7 +298,7 @@ EXIT:
  * \brief WriteSSI write formatted package to scanner via file descriptor
  * \return file descriptor
  */
-int OpenTTY(const char *name)
+int OpenTTY(char *name)
 {
 	int fd = 0;
 	char *devName;

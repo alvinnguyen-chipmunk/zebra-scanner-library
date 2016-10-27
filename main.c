@@ -28,7 +28,8 @@ int main(int argc, const char * argv[])
 	char buff[BUFFER_LEN];
 	memset(buff, 0, BUFFER_LEN);
 
-	ret = mlsBarcodeReader_Open();
+	printf("DEBUG: %s\n", argv[1]);
+	ret = mlsBarcodeReader_Open(argv[1]);
 	if (ret)
 	{
 		goto EXIT;
