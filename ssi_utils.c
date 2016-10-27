@@ -298,10 +298,18 @@ EXIT:
  * \brief WriteSSI write formatted package to scanner via file descriptor
  * \return file descriptor
  */
-int OpenTTY(void)
+int OpenTTY(const char *name)
 {
 	int fd = 0;
-	char *devName = getenv("ZEBRA_SCANNER");
+	char *devName;
+	if (NULL == name)
+	{
+		devName = getenv("ZEBRA_SCANNER");
+	}
+	else
+	{
+		devName = name;
+	}
 
 	fd = open(devName, O_RDWR, O_NONBLOCK);
 	if (fd < 0)
