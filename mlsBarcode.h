@@ -19,7 +19,7 @@ extern "C"
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-char mlsBarcodeReader_Open();
+char mlsBarcodeReader_Open(char *name);
 
 /*!
  * \brief mlsBarcodeReader_Enable Enable Reader for scaning QR code/Bar Code
