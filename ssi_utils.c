@@ -356,7 +356,7 @@ int ConfigTTY(int fd)
 	}
 
 	// Configure tty dev
-	devConf.c_cflag = (CRTSCTS | CS8 | CLOCAL | CREAD);
+	devConf.c_cflag = (CS8 | CLOCAL | CREAD);
 	devConf.c_iflag = 0;
 	devConf.c_oflag = 0;
 	devConf.c_lflag = 0;
