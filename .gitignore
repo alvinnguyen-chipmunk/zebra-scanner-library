@@ -12,3 +12,9 @@ autom4te.cache/
 build-aux/
 configure
 m4/
+Makefile
+barcode_demo
+config.status
+example/.dirstamp
+libtool
+*.o
