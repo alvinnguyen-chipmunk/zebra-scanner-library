@@ -1,0 +1,14 @@
+*.lo*
+*.DS*
+*._*
+*.so*
+*.a*
+*.la*
+.deps*
+.libs*
+Makefile.in
+aclocal.m4
+autom4te.cache/
+build-aux/
+configure
+m4/
