@@ -1,0 +1,62 @@
+----- TOOLS -----
+
+1. SSI_Demo (Windows only): only accept "SSI over USB CDC" interface which is used in MSI Bus System software.
+
+2. Zebre SDK C# Application: accept "SNAPI" (current default interface of scanner) and some other interfaces.
+
+----- HOW TO SETUP NEW ZEBRA BARCODE SCANNER (USB INTERFACE) -----
+
+To use brand new Zebra scanner with MSI Bus System,
+please ensure scanner is running with "SSI over USB CDC" interface.
+
+1. How to confirm the interface:
+	Open "SSI_Demo":
+		- Press "Request FW" button: confirm decoder is working in "SSI over USB CDC" interface.
+		  => FW version should be returned.
+		- Press "Pull trigger" button: confirm scanning engine is working.
+		  => LED red light should be on.
+	If scanner can not talk to "SSI_Demo" please try "Zebra SDK C# Application"
+
+2. How to turn scanner into "SSI over USB CDC":
+	Need to scan "SSI over USB CDC" barcode to re-setup module into suitable interface.
+	Barcode can be found in "PL3307 DECODER INTEGRATION GUIDE", section 8-4, page 152.
+
+	How to scan "SSI over USB CDC" barcode in this case: there are 2 options
+
+		Option-1: use C# application in Zebra SDK (can be used in case of SNAPI)
+			- C# Application should be able to find scanner in "SNAPI" mode.
+			- Pull trigger (LED red light should be on).
+			- Scan "SSI over USB CDC" barcode
+			  (after scanning, C# App should NOT be able to detect this scanner).
+			- Confirm "SSI over USB CDC" interface by using SSI_Demo (Request FW, Pull trigger).
+			- Re-scan until success.
+
+		Option-2: use special scanning mode after powering up (can be used in any cases described above).
+			Scanner is able to scan any configuration barcode within first 2sec after being powered up
+			There would be no feedback or reponse to confirm a successful scanning.
+			Please use "SSI_Demo" or "Zebra SDK" to confirm desired interface.
+			- Completely power off scanner (plugout cable).
+			- Prepare "SSI over USB CDC" barcode.
+			- Power on scanner (plugin cable).
+			- Quickly scan barcode.
+			- Re-scan until success.
+
+----- TROUBLE SHOOTING -----
+
+1. Zebra barcode accidentally stop working with MSI Bus System after being used.
+
+Phenomenon:
+
+	- No LED light on object appreance in front of scanner.
+	- After reset, still no LED light on object appearance in front of scanner. 
+	- Can be confirmed by using Zebra C# application in Zebra SDK.
+	  If there is a scanner found in SNAPI interface, that is this case.
+	  Or SSI_Demo application also does not show any response when "Request FW" or "Pull trigger".
+	- Both "SSI_Demo" and "Zebra SDK" can not be able to detect scanner.
+
+Reason:
+	- It may accidentally resets to factory setting, SNAPI.
+	- Or it may accidentally resets into CDC mode
+	  (which could NOT be detected by either "SSI_Demo" or "Zebra SDK").
+
+How to fix: please refer "HOW TO SETUP NEW ZEBRA BARCODE SCANNER (USB INTERFACE), section 2"
