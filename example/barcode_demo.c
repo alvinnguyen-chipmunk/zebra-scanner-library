@@ -28,6 +28,8 @@ int main(int argc, const char * argv[])
 	char buff[BUFFER_LEN];
 	memset(buff, 0, BUFFER_LEN);
 
+	printf("Version: %s\n", GetVersion());
+
 	printf("DEBUG: %s\n", argv[1]);
 	ret = mlsBarcodeReader_Open(argv[1]);
 	if (ret)

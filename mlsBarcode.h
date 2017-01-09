@@ -64,6 +64,13 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
  */
 char mlsBarcodeReader_Close();
 
+/*!
+ * \brief GetVersion provide software version
+ * \return string of software version
+ * - 
+ */
+char *GetVersion(void);
+
 #ifdef __cplusplus
 }
 #endif

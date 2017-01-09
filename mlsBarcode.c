@@ -29,6 +29,10 @@
 #include "ssi_utils.h"
 #include "mlsBarcode.h"
 
+#ifndef STYL_SW_VERSION
+#define STYL_SW_VERSION     "1.0"
+#endif
+
 typedef enum _state {START, STOP, FLUSH_QUEUE, REPLY_ACK, REPLY_NAK, GET_BARCODE, WAIT_DEC_EVENT} ssiState;
 typedef enum _bool {FALSE, TRUE} bool;
 
@@ -344,6 +348,16 @@ char mlsBarcodeReader_Close() {
 	}
 	
 	return error;
+}
+
+/*!
+ * \brief GetVersion provide software version
+ * \return string of software version
+ * - 
+ */
+char *GetVersion(void)
+{
+	return STYL_SW_VERSION;
 }
 
 //#ifdef __cplusplus
