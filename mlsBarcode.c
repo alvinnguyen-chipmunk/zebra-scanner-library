@@ -360,6 +360,23 @@ char *GetVersion(void)
 	return STYL_SW_VERSION;
 }
 
+/*!
+ * \brief mlsBarcodeReader_Reopen closes then opens device
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+char mlsBarcodeReader_Reopen(char *name) {
+	char error = EXIT_SUCCESS;
+
+	error = mlsBarcodeReader_Close();
+	
+	if(!error) {
+		error = mlsBarcodeReader_Open(name);
+	}
+
+	return error;
+}
 //#ifdef __cplusplus
 //}
 //#endif

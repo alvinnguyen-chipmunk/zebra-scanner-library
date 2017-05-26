@@ -71,6 +71,14 @@ char mlsBarcodeReader_Close();
  */
 char *GetVersion(void);
 
+/*!
+ * \brief mlsBarcodeReader_reopen() closes and re-opens scanner device file
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_SUCCESS: Fail
+ */
+char mlsBarcodeReader_Reopen(char *name);
+
 #ifdef __cplusplus
 }
 #endif
