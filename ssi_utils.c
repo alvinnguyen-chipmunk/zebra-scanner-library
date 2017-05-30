@@ -154,7 +154,7 @@ static int IsContinue(byte *pkg)
  */
 void DisplayPkg(byte *pkg)
 {
-	char *debugLevel = getenv("STYL_DEBUG");
+	const char *debugLevel = getenv("STYL_DEBUG");
 
 	if ( (NULL != debugLevel) && (NULL != pkg) )
 	{
@@ -175,14 +175,13 @@ void DisplayPkg(byte *pkg)
 int ConfigSSI(int fd)
 {
 	int ret = EXIT_SUCCESS;
-	byte param[12] =	{
-						0x01,
-						PARAM_B_DEC_FORMAT	, ENABLE,
-						PARAM_B_SW_ACK		, ENABLE,
-						PARAM_B_SCAN_PARAM	, DISABLE,	// Disable to avoid accidental changes param from scanning
-						PARAM_TRIGGER_MODE	, PARAM_TRIGGER_PRESENT,
-		PARAM_INDEX_F0,	PARAM_B_DEC_EVENT	, ENABLE
-		};
+	byte param[12] = { 0x01,
+			PARAM_B_DEC_FORMAT, ENABLE,
+			PARAM_B_SW_ACK, ENABLE,
+			PARAM_B_SCAN_PARAM, DISABLE,	// Disable to avoid accidental changes param from scanning
+			PARAM_TRIGGER_MODE, PARAM_TRIGGER_PRESENT,
+			PARAM_INDEX_F0,	PARAM_B_DEC_EVENT, ENABLE
+	};
 
 	printf("Configure SSI parameters...");
 	ret = WriteSSI(fd, SSI_PARAM_SEND, param, ( sizeof(param) / sizeof(*param) ) );
