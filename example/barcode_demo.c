@@ -22,15 +22,16 @@ static void HandleSignal(int sig);
 
 int main(int argc, const char * argv[])
 {
+	char buff[BUFFER_LEN];
+	const char *deviceName = argv[1];
 	int ret = EXIT_SUCCESS;
 	int barcodeLen = 0;
 	const int timeout = 10;	// 1/10 sec
-	char buff[BUFFER_LEN];
 	memset(buff, 0, BUFFER_LEN);
 
 	printf("Version: %s\n", GetVersion());
 
-	printf("DEBUG: %s\n", argv[1]);
+	printf("DEBUG: %s\n", deviceName);
 	ret = mlsBarcodeReader_Open(argv[1]);
 	if (ret)
 	{
@@ -48,6 +49,7 @@ int main(int argc, const char * argv[])
 			printf("\e[36mBarcode(%d):\n%s\e[0m\n", barcodeLen, buff);
 			memset(buff, 0, BUFFER_LEN);
 		}
+		mlsBarcodeReader_Reopen(deviceName);
 	}
 
 	printf("Finished!\n");
