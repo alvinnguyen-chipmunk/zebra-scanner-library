@@ -90,7 +90,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
 	ssiState previousState = WAIT_DEC_EVENT;
 	bool isInSession = TRUE;
 	byte recvBuff[4000] = {0};
-	char *debugLevel = getenv("SSI_DEBUG");
+	char *debugLevel = getenv("STYL_DEBUG");
 
 	assert( (timeout >= 0) && (timeout <= 25) );
 

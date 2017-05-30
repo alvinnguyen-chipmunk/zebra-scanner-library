@@ -154,7 +154,7 @@ static int IsContinue(byte *pkg)
  */
 void DisplayPkg(byte *pkg)
 {
-	char *debugLevel = getenv("SSI_DEBUG");
+	char *debugLevel = getenv("STYL_DEBUG");
 
 	if ( (NULL != debugLevel) && (NULL != pkg) )
 	{
@@ -241,7 +241,7 @@ int ReadSSI(int fd, byte *buff, const int timeout)
 	int readRequest = 0;
 	struct termios devConf;
 	byte recvBuff[MAX_PKG_LEN];
-	char *debugLevel = getenv("SSI_DEBUG");
+	char *debugLevel = getenv("STYL_DEBUG");
 
 	// Backup old value
 	tcgetattr(fd, &devConf);
