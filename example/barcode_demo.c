@@ -49,7 +49,6 @@ int main(int argc, const char * argv[])
 			printf("\e[36mBarcode(%d):\n%s\e[0m\n", barcodeLen, buff);
 			memset(buff, 0, BUFFER_LEN);
 		}
-		mlsBarcodeReader_Reopen(deviceName);
 	}
 
 	printf("Finished!\n");
