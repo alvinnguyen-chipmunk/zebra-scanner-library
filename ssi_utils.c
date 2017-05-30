@@ -154,9 +154,7 @@ static int IsContinue(byte *pkg)
  */
 void DisplayPkg(byte *pkg)
 {
-	const char *debugLevel = getenv("STYL_DEBUG");
-
-	if ( (NULL != debugLevel) && (NULL != pkg) )
+	if (NULL != pkg)
 	{
 		for (int i = 0; i < PKG_LEN(pkg) + 2; i++)
 		{
@@ -174,6 +172,7 @@ void DisplayPkg(byte *pkg)
  */
 int ConfigSSI(int fd)
 {
+	const char *debugLevel = getenv("STYL_DEBUG");
 	int ret = EXIT_SUCCESS;
 	byte param[12] = { 0x01,
 			PARAM_B_DEC_FORMAT, ENABLE,
@@ -183,7 +182,10 @@ int ConfigSSI(int fd)
 			PARAM_INDEX_F0,	PARAM_B_DEC_EVENT, ENABLE
 	};
 
-	printf("Configure SSI parameters...");
+	if (NULL != debugLevel) {
+		printf("Configure SSI parameters...");
+	}
+
 	ret = WriteSSI(fd, SSI_PARAM_SEND, param, ( sizeof(param) / sizeof(*param) ) );
 
 	if (ret)
@@ -193,7 +195,9 @@ int ConfigSSI(int fd)
 	}
 	else
 	{
-		printf("OK\n");
+		if (NULL != debugLevel) {
+			printf("OK\n");
+		}
 	}
 
 EXIT:
@@ -396,8 +400,6 @@ int ExtractBarcode(char *buff, byte *pkg, const int buffLength)
 	int barcodeLength = 0;
 	int barcodePartLength = 0;
 
-	printf("\n");
-
 	if (NULL != pkgPtr)
 	{
 		while (IsContinue(pkgPtr))
@@ -429,6 +431,7 @@ int ExtractBarcode(char *buff, byte *pkg, const int buffLength)
  */
 int CheckACK(int fd)
 {
+	const char *debugLevel = getenv("STYL_DEBUG");
 	int ret = EXIT_SUCCESS;
 	byte recvBuff[MAX_PKG_LEN];
 
@@ -440,7 +443,9 @@ int CheckACK(int fd)
 	else if (SSI_CMD_NAK == recvBuff[INDEX_OPCODE])
 	{
 		ret = ENAK;
-		printf(" %s ", strNAK(recvBuff[INDEX_CAUSE]));
+		if (NULL != debugLevel) {
+			printf(" %s ", strNAK(recvBuff[INDEX_CAUSE]));
+		}
 	}
 	else
 	{

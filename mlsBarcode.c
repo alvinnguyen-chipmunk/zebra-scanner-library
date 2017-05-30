@@ -46,8 +46,12 @@ static int scanner = 0;
  */
 char mlsBarcodeReader_Open(char *name) {
 	char ret = EXIT_SUCCESS;
+	const char *debugLevel = getenv("STYL_DEBUG");
 
-	printf("DEBUG: %s\n", name);
+	if (NULL != debugLevel) {
+		printf("DEBUG: %s\n", name);
+	}
+
 	ret = OpenTTY(name);
 	if (ret <= 0)
 	{
@@ -90,7 +94,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
 	ssiState previousState = WAIT_DEC_EVENT;
 	bool isInSession = TRUE;
 	byte recvBuff[4000] = {0};
-	char *debugLevel = getenv("STYL_DEBUG");
+	const char *debugLevel = getenv("STYL_DEBUG");
 
 	assert( (timeout >= 0) && (timeout <= 25) );
 
@@ -216,14 +220,19 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
 					// Extract barcode to buffer
 					assert(NULL != recvBuff);
 					barcodeLen = ExtractBarcode(buff, recvBuff, buffLength);
-					DisplayPkg(recvBuff);
+					if (NULL != debugLevel) {
+						DisplayPkg(recvBuff);
+					}
 					nextState = REPLY_ACK;
 					previousState = currentState;
 				}
 				break;
 
 			case FLUSH_QUEUE:
-				printf("Send Scan disable cmd...");
+				if (NULL != debugLevel) {
+					printf("Send Scan disable cmd...");
+				}
+
 				ret = WriteSSI(scanner, SSI_SCAN_DISABLE, NULL, 0);
 				if ( (ret) || (! CheckACK(scanner) ) )
 				{
@@ -239,7 +248,10 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
 					}
 				}
 
-				printf("Send flush queue cmd...");
+				if (NULL != debugLevel) {
+					printf("Send flush queue cmd...");
+				}
+
 				ret = WriteSSI(scanner, SSI_FLUSH_QUEUE, NULL, 0);
 				if ( (ret) || (! CheckACK(scanner) ) )
 				{
@@ -255,7 +267,10 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
 					}
 				}
 
-				printf("Send Scan enable cmd...");
+				if (NULL != debugLevel) {
+					printf("Send Scan enable cmd...");
+				}
+
 				ret = WriteSSI(scanner, SSI_SCAN_ENABLE, NULL, 0);
 				if ( (ret) || (! CheckACK(scanner) ) )
 				{
@@ -265,7 +280,9 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
 				}
 				else
 				{
-					printf("OK\n");
+					if (NULL != debugLevel) {
+						printf("OK\n");
+					}
 				}
 
 				break;
@@ -292,8 +309,12 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
 char mlsBarcodeReader_Enable()
 {
 	char ret = EXIT_SUCCESS;
+	const char *debugLevel = getenv("STYL_DEBUG");
+	
+	if (NULL != debugLevel) {
+		printf("Enable scanner...");
+	}
 
-	printf("Enable scanner...");
 	ret = WriteSSI(scanner, SSI_SCAN_ENABLE, NULL, 0);
 	if ( (ret) || (! CheckACK(scanner) ) )
 	{
@@ -302,7 +323,9 @@ char mlsBarcodeReader_Enable()
 	}
 	else
 	{
-		printf("OK\n");
+		if (NULL != debugLevel) {
+			printf("OK\n");
+		}
 	}
 
 	return ret;
@@ -317,8 +340,12 @@ char mlsBarcodeReader_Enable()
 char mlsBarcodeReader_Disable()
 {
 	char ret = EXIT_SUCCESS;
+	const char *debugLevel = getenv("STYL_DEBUG");
 
-	printf("Disable scanner...");
+	if (NULL != debugLevel) {
+		printf("Disable scanner...");
+	}
+
 	ret = WriteSSI(scanner, SSI_SCAN_DISABLE, NULL, 0);
 	if ( (ret) || (! CheckACK(scanner) ) )
 	{
@@ -327,7 +354,9 @@ char mlsBarcodeReader_Disable()
 	}
 	else
 	{
-		printf("OK\n");
+		if (NULL != debugLevel) {
+			printf("OK\n");
+		}
 	}
 
 	return ret;
