@@ -157,7 +157,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
 				{
 					if (NULL != debugLevel)
 					{
-						PrintError(ret);
+						printf("NOT found\n");
 					}
 					nextState = STOP;
 				}

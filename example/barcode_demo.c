@@ -32,7 +32,7 @@ int main(int argc, const char * argv[])
 	printf("Version: %s\n", GetVersion());
 
 	printf("DEBUG: %s\n", deviceName);
-	ret = mlsBarcodeReader_Open(argv[1]);
+	ret = mlsBarcodeReader_Open(deviceName);
 	if (ret)
 	{
 		goto EXIT;
