@@ -31,12 +31,14 @@ int main(int argc, const char * argv[])
 
 	printf("Version: %s\n", GetVersion());
 
-	printf("DEBUG: %s\n", deviceName);
 	ret = mlsBarcodeReader_Open(deviceName);
 	if (ret)
 	{
 		goto EXIT;
 	}
+
+	// This is to test Reopen API only, not required
+	mlsBarcodeReader_Reopen(deviceName);
 
 	isRunning = TRUE;
 	signal(SIGINT, HandleSignal);
