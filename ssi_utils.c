@@ -319,7 +319,7 @@ int OpenTTY(char *name)
 	}
 
 	fd = open(devName, O_RDWR, O_NONBLOCK);
-	if (fd < 0)
+	if (fd <= 0)
 	{
 		perror(__func__);
 	}
