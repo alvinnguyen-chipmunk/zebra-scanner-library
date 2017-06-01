@@ -702,7 +702,6 @@ EXIT:
  */
 static int OpenTTY(char *name)
 {
-	char *devName;
 	int fd = 0;
 	int lockfd = 0;
 
@@ -718,7 +717,7 @@ static int OpenTTY(char *name)
 
 	LockScanner(fd);
 
-	fd = open(devName, O_RDWR, O_NONBLOCK);
+	fd = open(name, O_RDWR);
 	if (fd <= 0)
 	{
 		perror(__func__);
