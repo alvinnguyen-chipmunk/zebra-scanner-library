@@ -1,7 +1,7 @@
 lib_LTLIBRARIES = libstylssi.la
 ACLOCAL_AMFLAGS = -I m4
 AM_CFLAGS = -std=c99
-libstylssi_la_SOURCES =  mlsBarcode.c mlsBarcode.h ssi.h ssi_utils.c ssi_utils.h
+libstylssi_la_SOURCES =  mlsBarcode.c mlsBarcode.h ssi.h
 include_HEADERS = mlsBarcode.h
 
 # Reference application
