@@ -71,6 +71,11 @@ char mlsBarcodeReader_Open(char *name) {
 	char ret = EXIT_SUCCESS;
 	const char *debugLevel = getenv("STYL_DEBUG");
 
+	if (NULL == name)
+	{
+		name = getenv("ZEBRA_SCANNER");
+	}
+
 	if (NULL != debugLevel) {
 		printf("DEBUG: %s\n", name);
 	}
@@ -702,15 +707,6 @@ static int OpenTTY(char *name)
 	if (open(LOCK_SCANNER_PATH, O_RDONLY)) {
 		printf("ERROR: device is busy");
 		return -1;
-	}
-
-	if (NULL == name)
-	{
-		devName = getenv("ZEBRA_SCANNER");
-	}
-	else
-	{
-		devName = name;
 	}
 
 	fd = open(devName, O_RDWR, O_NONBLOCK);
