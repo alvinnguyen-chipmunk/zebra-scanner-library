@@ -22,6 +22,7 @@
 #include <sys/signal.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #include "ssi.h"
 #include "mlsBarcode.h"
@@ -703,19 +704,25 @@ static int OpenTTY(char *name)
 {
 	char *devName;
 	int fd = 0;
+	int lockfd = 0;
 
-	if (open(LOCK_SCANNER_PATH, O_RDONLY)) {
-		printf("ERROR: device is busy");
+	lockfd = open(LOCK_SCANNER_PATH, O_RDWR);
+
+	if (lockfd > 0) {
+		printf("ERROR: device is busy\n");
 		return -1;
 	}
+	else {
+		close(lockfd);
+	}
+
+	LockScanner(fd);
 
 	fd = open(devName, O_RDWR, O_NONBLOCK);
 	if (fd <= 0)
 	{
 		perror(__func__);
 	}
-
-	LockScanner(fd);
 
 	return fd;
 }
@@ -724,7 +731,7 @@ static int LockScanner(int fd)
 {
 	int lockfd = 0;
 
-	lockfd = open(LOCK_SCANNER_PATH, O_WRONLY);
+	lockfd = open(LOCK_SCANNER_PATH, O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
 
 	if (lockfd <= 0) {
 		perror("Failed to lock scanner: ");
