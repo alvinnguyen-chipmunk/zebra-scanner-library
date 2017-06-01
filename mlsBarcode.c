@@ -738,7 +738,7 @@ static int LockScanner(int fd)
 	return EXIT_SUCCESS;
 }
 
-static static void UnlockScanner(void)
+static void UnlockScanner(void)
 {
 	remove(LOCK_SCANNER_PATH);
 }
