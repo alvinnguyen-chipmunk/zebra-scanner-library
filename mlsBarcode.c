@@ -72,10 +72,7 @@ char mlsBarcodeReader_Open(char *name) {
 	char ret = EXIT_SUCCESS;
 	const char *debugLevel = getenv("STYL_DEBUG");
 
-	if (NULL == name)
-	{
-		name = getenv("ZEBRA_SCANNER");
-	}
+	assert(name != NULL);
 
 	if (NULL != debugLevel) {
 		printf("DEBUG: %s\n", name);
