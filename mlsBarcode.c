@@ -735,11 +735,11 @@ static int LockScanner(int fd)
 static void UnlockScanner(void)
 {
     int ret = LOCK_SUCCESS;
-    if(flock(fd, LOCK_UN | LOCK_NB) < 0)
+    if(flock(styl_scanner_lockfile_fd, LOCK_UN | LOCK_NB) < 0)
     {
         ret = LOCK_FAIL;
     }
-    unlink(styl_scanner_lockfile_fd);
+    unlink(LOCK_SCANNER_PATH);
     return ret;
 }
 
