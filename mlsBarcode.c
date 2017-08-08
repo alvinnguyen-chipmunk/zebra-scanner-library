@@ -23,6 +23,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/file.h>
 
 #include "ssi.h"
 #include "mlsBarcode.h"
