@@ -37,10 +37,6 @@
 
 #define TIMEOUT_MSEC		50
 
-#ifndef STYL_SW_VERSION
-#define STYL_SW_VERSION     "1.0"
-#endif
-
 static uint16_t CalculateChecksum(byte *pkg);
 static void PreparePkg(byte *pkg, byte opcode, byte *param, byte paramLen);
 static int IsChecksumOK(byte *pkg);
@@ -336,7 +332,7 @@ char mlsBarcodeReader_Enable()
 {
 	char ret = EXIT_SUCCESS;
 	const char *debugLevel = getenv("STYL_DEBUG");
-	
+
 	if (NULL != debugLevel) {
 		printf("Enable scanner...");
 	}
@@ -403,18 +399,18 @@ char mlsBarcodeReader_Close() {
 	}
 
 	UnlockScanner();
-	
+
 	return error;
 }
 
 /*!
  * \brief GetVersion provide software version
  * \return string of software version
- * - 
+ * -
  */
 char *GetVersion(void)
 {
-	return STYL_SW_VERSION;
+	return VERSION;
 }
 
 /*!
@@ -427,7 +423,7 @@ char mlsBarcodeReader_Reopen(char *name) {
 	char error = EXIT_SUCCESS;
 
 	error = mlsBarcodeReader_Close();
-	
+
 	if(!error) {
 		error = mlsBarcodeReader_Open(name);
 	}
@@ -887,7 +883,7 @@ static void PrintError(int ret)
 		case ENODEC:
 			printf(" no decode event\n");
 			break;
-			
+
 		default:
 			printf("\n");
 			break;
