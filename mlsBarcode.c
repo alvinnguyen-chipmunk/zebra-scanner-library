@@ -23,6 +23,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/file.h>
 
 #include "ssi.h"
 #include "mlsBarcode.h"
@@ -38,8 +39,11 @@
 #define TIMEOUT_MSEC		50
 
 #ifndef STYL_SW_VERSION
-#define STYL_SW_VERSION     "1.0"
+    #define STYL_SW_VERSION     "1.0"
 #endif
+
+#define LOCK_FAIL       0
+#define LOCK_SUCCESS    1
 
 static uint16_t CalculateChecksum(byte *pkg);
 static void PreparePkg(byte *pkg, byte opcode, byte *param, byte paramLen);
@@ -62,6 +66,7 @@ typedef enum _state {START, STOP, FLUSH_QUEUE, REPLY_ACK, REPLY_NAK, GET_BARCODE
 
 static int scanner = 0;
 
+static int styl_scanner_lockfile_fd = -1;
 /*!
  * \brief mlsBarcodeReader_Open Open Reader descritptor file for read write
  * \return
@@ -336,7 +341,7 @@ char mlsBarcodeReader_Enable()
 {
 	char ret = EXIT_SUCCESS;
 	const char *debugLevel = getenv("STYL_DEBUG");
-	
+
 	if (NULL != debugLevel) {
 		printf("Enable scanner...");
 	}
@@ -403,14 +408,14 @@ char mlsBarcodeReader_Close() {
 	}
 
 	UnlockScanner();
-	
+
 	return error;
 }
 
 /*!
  * \brief GetVersion provide software version
  * \return string of software version
- * - 
+ * -
  */
 char *GetVersion(void)
 {
@@ -427,7 +432,7 @@ char mlsBarcodeReader_Reopen(char *name) {
 	char error = EXIT_SUCCESS;
 
 	error = mlsBarcodeReader_Close();
-	
+
 	if(!error) {
 		error = mlsBarcodeReader_Open(name);
 	}
@@ -700,19 +705,14 @@ EXIT:
 static int OpenTTY(char *name)
 {
 	int fd = 0;
-	int lockfd = 0;
 
-	lockfd = open(LOCK_SCANNER_PATH, O_RDWR);
+	styl_scanner_lockfile_fd = open(LOCK_SCANNER_PATH, O_CREAT | O_RDWR, S_IWUSR | S_IRUSR);
 
-	if (lockfd > 0) {
-		printf("ERROR: device is busy\n");
-		return -1;
-	}
-	else {
-		close(lockfd);
-	}
-
-	LockScanner(fd);
+	if(LockScanner(styl_scanner_lockfile_fd) !=  LOCK_SUCCESS)
+    {
+        printf("[STYLSSI] ERROR: Device %s is busy.\n", name);
+        return -1;
+    }
 
 	fd = open(name, O_RDWR);
 	if (fd <= 0)
@@ -725,25 +725,22 @@ static int OpenTTY(char *name)
 
 static int LockScanner(int fd)
 {
-	int lockfd = 0;
-
-	lockfd = open(LOCK_SCANNER_PATH, O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
-
-	if (lockfd <= 0) {
-		perror("Failed to lock scanner: ");
-		return EXIT_FAILURE;
-	}
-
-	write(lockfd, &fd, sizeof(fd));
-
-	close(lockfd);
-
-	return EXIT_SUCCESS;
+    if(flock(fd, LOCK_EX | LOCK_NB) < 0)
+    {
+        return LOCK_FAIL;
+    }
+    return LOCK_SUCCESS;
 }
 
 static void UnlockScanner(void)
 {
-	remove(LOCK_SCANNER_PATH);
+    int ret = LOCK_SUCCESS;
+    if(flock(styl_scanner_lockfile_fd, LOCK_UN | LOCK_NB) < 0)
+    {
+        ret = LOCK_FAIL;
+    }
+    unlink(LOCK_SCANNER_PATH);
+    return ret;
 }
 
 /*!
@@ -887,7 +884,7 @@ static void PrintError(int ret)
 		case ENODEC:
 			printf(" no decode event\n");
 			break;
-			
+
 		default:
 			printf("\n");
 			break;
