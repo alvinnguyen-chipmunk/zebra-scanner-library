@@ -399,9 +399,9 @@ char mlsBarcodeReader_Close() {
 
 	char error = EXIT_SUCCESS;
 
-    if(mlsBarcodeReader_Disable() != EXIT_SUCCESS)
+    if(mlsBarcodeReader_Disable()!=EXIT_SUCCESS)
     {
-        fprintf(stderr, "%s:%d: Disable device: FAIL", __FUNCTION__,__LINE__);
+        perror("%s:%d: Disable device: FAIL", __func__, __line__);
     }
 
 	error = close(scanner);
@@ -740,7 +740,6 @@ static void UnlockScanner(void)
     if(flock(styl_scanner_lockfile_fd, LOCK_UN | LOCK_NB) < 0)
     {
         ret = LOCK_FAIL;
-        fprintf(stderr, "%s:%d: Set unlock for device: FAIL", __FUNCTION__,__LINE__);
     }
     unlink(LOCK_SCANNER_PATH);
     return ret;
