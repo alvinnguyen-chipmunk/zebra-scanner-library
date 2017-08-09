@@ -23,7 +23,6 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/file.h>
 
 #include "ssi.h"
 #include "mlsBarcode.h"
@@ -38,8 +37,9 @@
 
 #define TIMEOUT_MSEC		50
 
-#define LOCK_FAIL       0
-#define LOCK_SUCCESS    1
+#ifndef STYL_SW_VERSION
+#define STYL_SW_VERSION     "1.0"
+#endif
 
 static uint16_t CalculateChecksum(byte *pkg);
 static void PreparePkg(byte *pkg, byte opcode, byte *param, byte paramLen);
@@ -62,7 +62,6 @@ typedef enum _state {START, STOP, FLUSH_QUEUE, REPLY_ACK, REPLY_NAK, GET_BARCODE
 
 static int scanner = 0;
 
-static int styl_scanner_lockfile_fd = -1;
 /*!
  * \brief mlsBarcodeReader_Open Open Reader descritptor file for read write
  * \return
@@ -337,7 +336,7 @@ char mlsBarcodeReader_Enable()
 {
 	char ret = EXIT_SUCCESS;
 	const char *debugLevel = getenv("STYL_DEBUG");
-
+	
 	if (NULL != debugLevel) {
 		printf("Enable scanner...");
 	}
@@ -362,7 +361,7 @@ char mlsBarcodeReader_Enable()
  * \brief mlsBarcodeReader_Disable Disable reader, Reader can't scan any QR code/bar code
  * \return
  * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
+ * - EXIT_SUCCESS: Fail
  */
 char mlsBarcodeReader_Disable()
 {
@@ -396,13 +395,7 @@ char mlsBarcodeReader_Disable()
  * - EXIT_FAILURE: Fail
  */
 char mlsBarcodeReader_Close() {
-
 	char error = EXIT_SUCCESS;
-
-    if(mlsBarcodeReader_Disable()!=EXIT_SUCCESS)
-    {
-        perror("%s:%d: Disable device: FAIL", __func__, __line__);
-    }
 
 	error = close(scanner);
 	if (error) {
@@ -410,18 +403,18 @@ char mlsBarcodeReader_Close() {
 	}
 
 	UnlockScanner();
-
+	
 	return error;
 }
 
 /*!
  * \brief GetVersion provide software version
  * \return string of software version
- * -
+ * - 
  */
 char *GetVersion(void)
 {
-	return VERSION;
+	return STYL_SW_VERSION;
 }
 
 /*!
@@ -434,7 +427,7 @@ char mlsBarcodeReader_Reopen(char *name) {
 	char error = EXIT_SUCCESS;
 
 	error = mlsBarcodeReader_Close();
-
+	
 	if(!error) {
 		error = mlsBarcodeReader_Open(name);
 	}
@@ -707,14 +700,19 @@ EXIT:
 static int OpenTTY(char *name)
 {
 	int fd = 0;
+	int lockfd = 0;
 
-	styl_scanner_lockfile_fd = open(LOCK_SCANNER_PATH, O_CREAT | O_RDWR, S_IWUSR | S_IRUSR);
+	lockfd = open(LOCK_SCANNER_PATH, O_RDWR);
 
-	if(LockScanner(styl_scanner_lockfile_fd) !=  LOCK_SUCCESS)
-    {
-        printf("[STYLSSI] ERROR: Device %s is busy.\n", name);
-        return -1;
-    }
+	if (lockfd > 0) {
+		printf("ERROR: device is busy\n");
+		return -1;
+	}
+	else {
+		close(lockfd);
+	}
+
+	LockScanner(fd);
 
 	fd = open(name, O_RDWR);
 	if (fd <= 0)
@@ -727,22 +725,25 @@ static int OpenTTY(char *name)
 
 static int LockScanner(int fd)
 {
-    if(flock(fd, LOCK_EX | LOCK_NB) < 0)
-    {
-        return LOCK_FAIL;
-    }
-    return LOCK_SUCCESS;
+	int lockfd = 0;
+
+	lockfd = open(LOCK_SCANNER_PATH, O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);
+
+	if (lockfd <= 0) {
+		perror("Failed to lock scanner: ");
+		return EXIT_FAILURE;
+	}
+
+	write(lockfd, &fd, sizeof(fd));
+
+	close(lockfd);
+
+	return EXIT_SUCCESS;
 }
 
 static void UnlockScanner(void)
 {
-    int ret = LOCK_SUCCESS;
-    if(flock(styl_scanner_lockfile_fd, LOCK_UN | LOCK_NB) < 0)
-    {
-        ret = LOCK_FAIL;
-    }
-    unlink(LOCK_SCANNER_PATH);
-    return ret;
+	remove(LOCK_SCANNER_PATH);
 }
 
 /*!
@@ -886,7 +887,7 @@ static void PrintError(int ret)
 		case ENODEC:
 			printf(" no decode event\n");
 			break;
-
+			
 		default:
 			printf("\n");
 			break;

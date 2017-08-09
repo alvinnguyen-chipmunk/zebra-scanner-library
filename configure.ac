@@ -1,4 +1,4 @@
-AC_INIT([libstylagps], [1.1])
+AC_INIT([libstylagps], [1.0], [luck.hoang@styl.solutions])
 
 dnl Must come before AM_INIT_AUTOMAKE.
 AC_CONFIG_AUX_DIR([build-aux])
