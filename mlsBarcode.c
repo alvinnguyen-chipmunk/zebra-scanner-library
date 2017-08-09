@@ -38,10 +38,6 @@
 
 #define TIMEOUT_MSEC		50
 
-#ifndef STYL_SW_VERSION
-    #define STYL_SW_VERSION     "1.0"
-#endif
-
 #define LOCK_FAIL       0
 #define LOCK_SUCCESS    1
 
@@ -366,7 +362,7 @@ char mlsBarcodeReader_Enable()
  * \brief mlsBarcodeReader_Disable Disable reader, Reader can't scan any QR code/bar code
  * \return
  * - EXIT_SUCCESS: Success
- * - EXIT_SUCCESS: Fail
+ * - EXIT_FAILURE: Fail
  */
 char mlsBarcodeReader_Disable()
 {
@@ -400,7 +396,13 @@ char mlsBarcodeReader_Disable()
  * - EXIT_FAILURE: Fail
  */
 char mlsBarcodeReader_Close() {
+
 	char error = EXIT_SUCCESS;
+
+    if(mlsBarcodeReader_Disable()!=EXIT_SUCCESS)
+    {
+        perror("%s:%d: Disable device: FAIL", __func__, __line__);
+    }
 
 	error = close(scanner);
 	if (error) {
@@ -419,7 +421,7 @@ char mlsBarcodeReader_Close() {
  */
 char *GetVersion(void)
 {
-	return STYL_SW_VERSION;
+	return VERSION;
 }
 
 /*!
