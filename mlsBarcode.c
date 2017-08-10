@@ -34,7 +34,7 @@
 #define TRUE				1
 #define FALSE				0
 
-#define LOCK_SCANNER_PATH	"/tmp/lock_scanner"
+#define LOCK_SCANNER_PATH	"/var/lock_scanner"
 
 #define TIMEOUT_MSEC		50
 

@@ -26,16 +26,33 @@ extern "C"
 #include <locale.h>
 
 
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
+
 #ifdef __RELEASE__
 #define __DEBUG__(format, ...)
 #else
 #define __DEBUG__(format, ...) fprintf (stderr, format, ## __VA_ARGS__)
 #endif // __RELEASE__
-
-#define DEBUG(format, args...) __DEBUG__("%s||%s():[%d] " format "\n",__FILE__,__FUNCTION__, __LINE__, ##args)
+#define DEBUG(format, args...) __DEBUG__("[STYLSSI-DEBUG]: %s||%s():[%d] " format "\n",__FILE__,__FUNCTION__, __LINE__, ##args)
 #define DEBUG_1(format, ...) DEBUG("\n"      format, ##__VA_ARGS__)
 #define DEBUG_0() DEBUG("\n")
-#define STYL_DEBUG(format, ...) DEBUG("\n      "format, ##__VA_ARGS__)
+#define STYL_DEBUG(format, ...) DEBUG(format, ##__VA_ARGS__)
+
+
+#define __ERROR__(format, ...) fprintf (stderr, format, ## __VA_ARGS__) ; fprintf(stderr, "%s", ANSI_COLOR_RESET)
+#define ERROR(format, args...) __ERROR__("%s [STYLSSI-ERROR]: %s():[%d] " format "%s \n",ANSI_COLOR_RED, __FUNCTION__, __LINE__, ##args, ANSI_COLOR_RED)
+#define STYL_ERROR(format, ...) ERROR(format, ##__VA_ARGS__)
+
+#define __WARNING__(format, ...) fprintf (stderr, format, ## __VA_ARGS__); fprintf(stderr, "%s", ANSI_COLOR_RESET)
+#define WARNING(format, args...) __WARNING__("%s [STYLSSI-WARNING]: %s():[%d] " format "%s \n",ANSI_COLOR_YELLOW, __FUNCTION__, __LINE__, ##args, ANSI_COLOR_YELLOW)
+#define STYL_WARNING(format, ...) WARNING(format, ##__VA_ARGS__)
+
+#define __INFO__(format, ...) fprintf (stdout, format, ## __VA_ARGS__); fprintf(stdout, "%s", ANSI_COLOR_RESET)
+#define INFO(format, args...) __INFO__("%s [STYLSSI-INFO]: %s():[%d] " format "%s \n",ANSI_COLOR_GREEN, __FUNCTION__, __LINE__, ##args, ANSI_COLOR_GREEN)
+#define STYL_INFO(format, ...) INFO(format, ##__VA_ARGS__)
 
 
 /*!
