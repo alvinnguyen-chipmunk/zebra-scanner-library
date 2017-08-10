@@ -23,7 +23,7 @@ static void HandleSignal(int sig);
 int main(int argc, const char * argv[])
 {
     char buff[BUFFER_LEN];
-    char *deviceName = argv[1];
+    const char *deviceName = argv[1];
     int ret = EXIT_SUCCESS;
     int barcodeLen = 0;
     const int timeout = 10;	// 1/10 sec
