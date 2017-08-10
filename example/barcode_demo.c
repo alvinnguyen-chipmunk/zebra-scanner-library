@@ -74,15 +74,15 @@ int main(int argc, const char * argv[])
         if (ret > 0)
         {
             barcodeLen = ret;
-            printf("\e[36mBarcode(%d):\n%s\e[0m\n", barcodeLen, buff);
+            printf("\e[36mBarcode(%d):\n%s\e[0m\n\n", barcodeLen, buff);
             memset(buff, 0, BUFFER_LEN);
         }
     }
 
-    printf("Finished!\n");
     mlsBarcodeReader_Close();
 
 EXIT:
+    printf("Finished!\n");
     return ret;
 }
 

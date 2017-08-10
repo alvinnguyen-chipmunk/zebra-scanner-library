@@ -209,13 +209,11 @@ static void DisplayPkg(byte *pkg)
 {
     if (NULL != pkg)
     {
-        printf("%s", ANSI_COLOR_GREEN);
         for (int i = 0; i < PKG_LEN(pkg) + 2; i++)
         {
-            printf("0x%x ", pkg[i]);
+            STYL_INFO_OTHER("0x%x ", pkg[i]);
         }
-        printf("\n");
-        printf("%s", ANSI_COLOR_RESET);
+        STYL_INFO_OTHER("\n");
     }
 }
 
@@ -227,7 +225,6 @@ static void DisplayPkg(byte *pkg)
  */
 static int ConfigSSI(int fd)
 {
-    const char *debugLevel = getenv("STYL_DEBUG");
     int ret = EXIT_SUCCESS;
     byte param[12] = { 0x01,
                        PARAM_B_DEC_FORMAT, ENABLE,
@@ -237,27 +234,7 @@ static int ConfigSSI(int fd)
                        PARAM_INDEX_F0,	PARAM_B_DEC_EVENT, ENABLE
                      };
 
-    if (NULL != debugLevel)
-    {
-        printf("Configure SSI parameters...");
-    }
-
     ret = WriteSSI(fd, SSI_PARAM_SEND, param, ( sizeof(param) / sizeof(*param) ) );
-
-    if (EXIT_SUCCESS!=ret)
-    {
-        printf("ERROR: %s\n", __func__);
-        goto EXIT;
-    }
-    else
-    {
-        if (NULL != debugLevel)
-        {
-            printf("OK at %d\n",__LINE__);
-        }
-    }
-
-EXIT:
     return ret;
 }
 
@@ -276,14 +253,12 @@ static int WriteSSI(int fd, byte opcode, byte *param, byte paramLen)
     tcflush(fd, TCIFLUSH);
 
     PreparePkg(sendBuff, opcode, param, paramLen);
+
     if ( write(fd, sendBuff, PKG_LEN(sendBuff) + 2) <= 0)
     {
-        perror("write");
+        STYL_ERROR("write: %d - %s", errno, strerror(errno));
         ret = EXIT_FAILURE;
-        goto EXIT;
     }
-
-EXIT:
     free(sendBuff);
     return ret;
 }
@@ -301,7 +276,6 @@ static int ReadSSI(int fd, byte *buff, const int timeout)
     int readRequest = 0;
     struct termios devConf;
     byte recvBuff[MAX_PKG_LEN];
-    char *debugLevel = getenv("STYL_DEBUG");
 
     // Backup old value
     tcgetattr(fd, &devConf);
@@ -319,14 +293,10 @@ static int ReadSSI(int fd, byte *buff, const int timeout)
         ret += (int) read(fd, &recvBuff[INDEX_LEN], readRequest);
         if (ret <= 0)
         {
-            goto EXIT;
+            break;
         }
-
-        readRequest = recvBuff[INDEX_LEN] + 2 - 1; 	// read package + cksum - first_byte
-        if (NULL != debugLevel)
-        {
-            printf("read request = %d\n", readRequest);
-        }
+        // read package + cksum - first_byte
+        readRequest = recvBuff[INDEX_LEN] + 2 - 1;
         // Change reading condition to ensure read enough bytes
         devConf.c_cc[VTIME] = 0;
         devConf.c_cc[VMIN] = readRequest;
@@ -342,9 +312,8 @@ static int ReadSSI(int fd, byte *buff, const int timeout)
         }
         else
         {
-            printf("%s: ERROR", __func__);
             ret = -1;
-            goto EXIT;
+            break;
         }
     }
     while (IsContinue(recvBuff));
@@ -368,17 +337,21 @@ static int OpenTTY(const char *name)
     int fd = 0;
 
     styl_scanner_lockfile_fd = open(LOCK_SCANNER_PATH, O_CREAT | O_RDWR, S_IWUSR | S_IRUSR);
+    if(styl_scanner_lockfile_fd < 0)
+    {
+        STYL_ERROR("Scanner lockfile: open: %d - %s",errno, strerror(errno));
+    }
 
     if(LockScanner(styl_scanner_lockfile_fd) !=  LOCK_SUCCESS)
     {
-        printf("[STYLSSI] ERROR: Device %s is busy.\n", name);
+        STYL_ERROR("Device %s is busy.\n", name);
         return -1;
     }
 
     fd = open(name, O_RDWR);
     if (fd <= 0)
     {
-        perror(__func__);
+        STYL_ERROR("Cannot open Scanner device: %s\n", name);
     }
 
     return fd;
@@ -394,7 +367,7 @@ static int CloseTTY()
     error = close(scanner);
     if (error<0)
     {
-        STYL_ERROR("%s", strerror(errno));
+        STYL_ERROR("close %d - %s", errno, strerror(errno));
     }
     UnlockScanner();
     return EXIT_SUCCESS;
@@ -415,7 +388,7 @@ static int UnlockScanner(void)
     if(flock(styl_scanner_lockfile_fd, LOCK_UN | LOCK_NB) < 0)
     {
         ret = LOCK_FAIL;
-        fprintf(stderr, "%s:%d: Set unlock for device: FAIL", __FUNCTION__,__LINE__);
+        STYL_ERROR("Unlock Scanner: flock %d - %s", errno, strerror(errno));
     }
     unlink(LOCK_SCANNER_PATH);
     return ret;
@@ -437,7 +410,7 @@ static int ConfigTTY(int fd)
     flags = fcntl(fd, F_GETFL);
     if (0 > flags)
     {
-        perror("F_GETFL");
+        STYL_ERROR("fcntl 'F_GETFL': %d - %s", errno, strerror(errno));
         ret = EXIT_FAILURE;
         goto EXIT;
     }
@@ -447,7 +420,7 @@ static int ConfigTTY(int fd)
     ret = fcntl(fd, F_SETFL, flags);
     if (ret)
     {
-        perror("F_SETFL");
+        STYL_ERROR("fcntl 'F_SETFL': %d - %s", errno, strerror(errno));
         ret = EXIT_FAILURE;
         goto EXIT;
     }
@@ -464,7 +437,7 @@ static int ConfigTTY(int fd)
     ret = cfsetspeed(&devConf, BAUDRATE);
     if (ret)
     {
-        perror("Set speed");
+        STYL_ERROR("cfsetspeed 'BAUDRATE': %d - %s", errno, strerror(errno));
         ret = EXIT_FAILURE;
         goto EXIT;
     }
@@ -472,7 +445,7 @@ static int ConfigTTY(int fd)
     ret = tcsetattr(fd, TCSANOW, &devConf);
     if (ret)
     {
-        perror("Set attribute");
+        STYL_ERROR("tcsetattr 'TCSANOW': %d - %s", errno, strerror(errno));
         ret = EXIT_FAILURE;
         goto EXIT;
     }
@@ -494,41 +467,24 @@ static int ExtractBarcode(char *buff, byte *pkg, const int buffLength)
     int barcodeLength = 0;
     int barcodePartLength = 0;
 
-    DEBUG_0();
     if (NULL != pkgPtr)
     {
-        DEBUG_0();
         while (IsContinue(pkgPtr))
         {
-            DEBUG_0();
             barcodePartLength = PKG_LEN(pkgPtr) - SSI_HEADER_LEN - 1;
-            DEBUG_0();
             memcpy(barcodePtr, &pkgPtr[INDEX_BARCODETYPE + 1], barcodePartLength);
-            DEBUG_0();
             barcodeLength += barcodePartLength;	// 1 byte of barcode type
-            DEBUG_0();
-
             // Point to next pkg
             barcodePtr += PKG_LEN(pkgPtr) + 2;
-            DEBUG_0();
             pkgPtr += PKG_LEN(pkgPtr) + 2;
-            DEBUG_0();
         }
 
         // Get the last part of barcode
-        DEBUG_0();
         barcodePartLength = PKG_LEN(pkgPtr) - SSI_HEADER_LEN - 1;
-        DEBUG_0();
-        DEBUG_1("barcodePartLength: %d", barcodePartLength);
-        DEBUG_1("barcodePtr: %s", barcodePtr);
-        DEBUG_1("&pkgPtr[INDEX_BARCODETYPE + 1]: %s", &pkgPtr[INDEX_BARCODETYPE + 1]);
         if(barcodePartLength >= 0)
             memcpy(barcodePtr, &pkgPtr[INDEX_BARCODETYPE + 1], barcodePartLength);
-        DEBUG_0();
         barcodeLength += barcodePartLength;	// 1 byte of barcode type
-        DEBUG_0();
     }
-    DEBUG_0();
     return barcodeLength;
 }
 
@@ -541,7 +497,6 @@ static int ExtractBarcode(char *buff, byte *pkg, const int buffLength)
  */
 static int CheckACK(int fd)
 {
-    const char *debugLevel = getenv("STYL_DEBUG");
     int ret = EXIT_SUCCESS;
     byte recvBuff[MAX_PKG_LEN];
     ret = ReadSSI(fd, recvBuff, 1);
@@ -552,10 +507,6 @@ static int CheckACK(int fd)
     else if (SSI_CMD_NAK == recvBuff[INDEX_OPCODE])
     {
         ret = ENAK;
-        if (NULL != debugLevel)
-        {
-            printf(" %s ", strNAK(recvBuff[INDEX_CAUSE]));
-        }
     }
     else
     {
@@ -597,17 +548,10 @@ static void PrintError(int ret)
 char mlsBarcodeReader_Open(const char *name)
 {
     char ret = EXIT_SUCCESS;
-    const char *debugLevel = getenv("STYL_DEBUG");
 
     assert(name != NULL);
 
-//    memset(LOCK_SCANNER_PATH, '\0', sizeof(LOCK_SCANNER_PATH));
-//    strcpy(LOCK_SCANNER_PATH, getenv("HOME"));
-
-    if (NULL != debugLevel)
-    {
-        printf("DEBUG: %s\n", name);
-    }
+    STYL_INFO("Scanner port: %s", name);
 
     ret = OpenTTY(name);
     if (ret <= 0)
@@ -693,7 +637,6 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
     ssiState previousState = WAIT_DEC_EVENT;
     int isInSession = TRUE;
     byte recvBuff[4000] = {0};
-    const char *debugLevel = getenv("STYL_DEBUG");
 
     assert( (timeout >= 0) && (timeout <= 25) );
 
@@ -701,12 +644,8 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
     {
         switch (currentState)
         {
+        #if 0
         case START:
-            if (NULL != debugLevel)
-            {
-                printf("Send Start session cmd...");
-            }
-
             ret = WriteSSI(scanner, SSI_START_SESSION, NULL, 0);
             if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
             {
@@ -716,48 +655,36 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
                 }
                 nextState = STOP;
             }
-            else
-            {
-                if (NULL != debugLevel)
-                {
-                    printf("OK at %d\n",__LINE__);
-                }
-            }
-
             break;
-
+        #endif // 0
         case STOP:
             isInSession = FALSE;
-//				printf("Send Stop session cmd...");
-//				ret = WriteSSI(scanner, SSI_STOP_SESSION, NULL, 0);
-//				usleep(1000);
-//				if ( (ret) || (! CheckACK(scanner) ) )
-//				{
-//					PrintError(ret);
-//				}
-//				else
-//				{
-            /* TODO: need to research if auto detect accept STOP_SESSION */
+            #if 0
+			printf("Send Stop session cmd...");
+			ret = WriteSSI(scanner, SSI_STOP_SESSION, NULL, 0);
+			usleep(1000);
+			if ( (ret) || (! CheckACK(scanner) ) )
+			{
+				PrintError(ret);
+			}
+			else
+			{
+                ret = barcodeLen;
+			}
+			#else
+			/* TODO: need to research if auto detect accept STOP_SESSION */
             ret = barcodeLen;
-            if (NULL != debugLevel)
-            {
-                printf("OK at %d\n",__LINE__);
-            }
-//				}
+			#endif // 0
             break;
 
         case WAIT_DEC_EVENT:
-            STYL_DEBUG_BEGIN("Wait for decode event...");
             ret = ReadSSI(scanner, recvBuff, timeout);
             if (ret <= 0)
             {
-                STYL_DEBUG_END("NOT found\n");
                 nextState = STOP;
             }
             else
             {
-                STYL_DEBUG_END("OK\n");
-                STYL_INFO("WAIT_DEC_EVENT: recvBuff: %x", recvBuff);
                 nextState = REPLY_ACK;
                 previousState = currentState;
             }
@@ -772,19 +699,12 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
             }
             else
             {
-
-                if (NULL != debugLevel)
-                {
-                    printf("OK at %d\n",__LINE__);
-                }
                 switch (previousState)
                 {
                 case WAIT_DEC_EVENT:
-                    DEBUG_0();
                     nextState = GET_BARCODE;
                     break;
                 case GET_BARCODE:
-                    DEBUG_0();
                     nextState = STOP;
                 default:
                     break;
@@ -792,118 +712,41 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
             }
             previousState = currentState;
             break;
-
+        #if 0
         case REPLY_NAK:
             break;
-
+        #endif // 0
         case GET_BARCODE:
             // Receive barcode in formatted package
-            if (NULL != debugLevel)
-            {
-                printf("Receive data: \n");
-            }
-            DEBUG_0();
             ret = ReadSSI(scanner, recvBuff, timeout);
-            DEBUG_0();
             if (ret <= 0)
             {
-                DEBUG_0();
                 buff = NULL;
                 nextState = STOP;
             }
             else
             {
-                DEBUG_0();
                 // Extract barcode to buffer
                 assert(NULL != recvBuff);
-                DEBUG_0();
                 barcodeLen = ExtractBarcode(buff, recvBuff, buffLength);
-                DEBUG_0();
-                if (NULL != debugLevel)
-                {
-                    DEBUG_0();
-                    DisplayPkg(recvBuff);
-                }
-                DEBUG_0();
+                DisplayPkg(recvBuff);
                 nextState = REPLY_ACK;
-                DEBUG_0();
                 previousState = currentState;
             }
             break;
-
+        #if 0
         case FLUSH_QUEUE:
-            if (NULL != debugLevel)
-            {
-                printf("Send Scan disable cmd...");
-            }
-
-            ret = WriteSSI(scanner, SSI_SCAN_DISABLE, NULL, 0);
-            if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
-            {
-                PrintError(ret);
-                nextState = STOP;
-                break;
-            }
-            else
-            {
-                if (NULL != debugLevel)
-                {
-                    printf("OK at %d\n",__LINE__);
-                }
-            }
-
-            if (NULL != debugLevel)
-            {
-                printf("Send flush queue cmd...");
-            }
-
-            ret = WriteSSI(scanner, SSI_FLUSH_QUEUE, NULL, 0);
-            if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
-            {
-                PrintError(ret);
-                nextState = STOP;
-                break;
-            }
-            else
-            {
-                if (NULL != debugLevel)
-                {
-                    printf("OK at %d\n",__LINE__);
-                }
-            }
-
-            if (NULL != debugLevel)
-            {
-                printf("Send Scan enable cmd...");
-            }
-
-            ret = WriteSSI(scanner, SSI_SCAN_ENABLE, NULL, 0);
-            if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
-            {
-                PrintError(ret);
-                nextState = STOP;
-                break;
-            }
-            else
-            {
-                if (NULL != debugLevel)
-                {
-                    printf("OK at %d\n",__LINE__);
-                }
-            }
-
+            /* TODO: need to research why disable - flush - enable don't work */
             break;
-
+        #endif // 0
         default:
             break;
         }
         currentState = nextState;
     }
 
-    if (NULL != debugLevel)
-    {
-        printf("Barcode Len = %d\n", ret);
-    }
+    STYL_WARNING("Barcode Len = %d\n", ret);
+
     return ret;
 }
 
@@ -933,19 +776,11 @@ char mlsBarcodeReader_Reopen(const char *name)
 char mlsBarcodeReader_Enable()
 {
     char ret = EXIT_SUCCESS;
-    const char *debugLevel = getenv("STYL_DEBUG");
-
-    STYL_INFO("Do enable for scanner device ...");
-
     ret = WriteSSI(scanner, SSI_SCAN_ENABLE, NULL, 0);
     if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
     {
         PrintError(ret);
         ret = EXIT_FAILURE;
-    }
-    else
-    {
-        STYL_INFO("Enabled device");
     }
     return ret;
 }
@@ -959,21 +794,12 @@ char mlsBarcodeReader_Enable()
 char mlsBarcodeReader_Disable()
 {
     char ret = EXIT_SUCCESS;
-    const char *debugLevel = getenv("STYL_DEBUG");
-
-    STYL_INFO("Do disable for scanner device ...");
-
     ret = WriteSSI(scanner, SSI_SCAN_DISABLE, NULL, 0);
     if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
     {
         PrintError(ret);
         ret = EXIT_FAILURE;
     }
-    else
-    {
-        STYL_INFO("Disable device");
-    }
-
     return ret;
 }
 
@@ -986,18 +812,11 @@ char mlsBarcodeReader_Disable()
 char mlsBarcodeReader_Flush()
 {
     char ret = EXIT_SUCCESS;
-    STYL_DEBUG_BEGIN("Send flush queue cmd...");
-
     ret = WriteSSI(scanner, SSI_FLUSH_QUEUE, NULL, 0);
-
     if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
     {
         PrintError(ret);
         ret = EXIT_FAILURE;
-    }
-    else
-    {
-        STYL_DEBUG_END("OK\n");
     }
     return ret;
 }
