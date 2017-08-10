@@ -1,14 +1,25 @@
 /*******************************************************************************
- (C) Copyright 2009 Styl Solutions Co., Ltd. , All rights reserved *
- *
- This source code and any compilation or derivative thereof is the sole *
- property of Styl Solutions Co., Ltd. and is provided pursuant to a *
- Software License Agreement. This code is the proprietary information *
- of Styl Solutions Co., Ltd and is confidential in nature. Its use and *
- dissemination by any party other than Styl Solutions Co., Ltd is *
- strictly limited by the confidential information provisions of the *
- Agreement referenced above. *
+ *  (C) Copyright 2009 STYL Solutions Co., Ltd. , All rights reserved       *
+ *                                                                             *
+ *  This source code and any compilation or derivative thereof is the sole     *
+ *  property of STYL Solutions Co., Ltd. and is provided pursuant to a      *
+ *  Software License Agreement.  This code is the proprietary information      *
+ *  of STYL Solutions Co., Ltd and is confidential in nature.  Its use and  *
+ *  dissemination by any party other than STYL Solutions Co., Ltd is        *
+ *  strictly limited by the confidential information provisions of the         *
+ *  Agreement referenced above.                                                *
  ******************************************************************************/
+
+/**
+ * @file    mlsBarcode.c
+ * @brief   C library - get data from qrcode/barcode scanner
+ *
+ * Long description.
+ * @date    13/07/2017
+ * @author  luck.hoang alvin.nguyen
+ */
+
+/********** Include section ***************************************************/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -28,467 +39,61 @@
 #include "ssi.h"
 #include "mlsBarcode.h"
 
-#define MSB_16(x)		(x >> 8)
-#define LSB_16(x)		(x & UINT8_MAX)
+/********** Local Type definition section *************************************/
+
+typedef enum _state
+{
+    START,
+    STOP,
+    FLUSH_QUEUE,
+    REPLY_ACK,
+    REPLY_NAK,
+    GET_BARCODE,
+    WAIT_DEC_EVENT
+} ssiState;
+
+/********** Local Constant and compile switch definition section **************/
+
+static int scanner = 0;
+
+static int styl_scanner_lockfile_fd = -1;
+
+/********** Local Macro definition section ************************************/
+
+#define MSB_16(x)		    (x >> 8)
+#define LSB_16(x)		    (x & UINT8_MAX)
 
 #define TRUE				1
 #define FALSE				0
 
-#define LOCK_SCANNER_PATH	"/var/lock_scanner"
+#define LOCK_SCANNER_PATH	"/tmp/lock_scanner"
 
 #define TIMEOUT_MSEC		50
 
-#define LOCK_FAIL       0
-#define LOCK_SUCCESS    1
+#define LOCK_FAIL           0
+#define LOCK_SUCCESS        1
 
-static uint16_t CalculateChecksum(byte *pkg);
-static void PreparePkg(byte *pkg, byte opcode, byte *param, byte paramLen);
-static int IsChecksumOK(byte *pkg);
-static int IsContinue(byte *pkg);
-static char *strNAK(int code);
-static int LockScanner(int fd);
-static int UnlockScanner(void);
-static int OpenTTY(const char *name);
-static int CloseTTY();
-static int ConfigTTY(int fd);
-static int ConfigSSI(int fd);
-static int WriteSSI(int fd, byte opcode, byte *param, byte paramLen);
-static int ReadSSI(int fd, byte *buff, const int timeout);
-static int CheckACK(int fd);
-static void PrintError(int ret);
-static int ExtractBarcode(char *buff, byte *pkg, const int buffLength);
-static void DisplayPkg(byte *pkg);
+/********** Local (static) variable declaration section ***********************/
 
-typedef enum _state {START, STOP, FLUSH_QUEUE, REPLY_ACK, REPLY_NAK, GET_BARCODE, WAIT_DEC_EVENT} ssiState;
+static uint16_t     CalculateChecksum       (byte *pkg);
+static void         PreparePkg              (byte *pkg, byte opcode, byte *param, byte paramLen);
+static int          IsChecksumOK            (byte *pkg);
+static int          IsContinue              (byte *pkg);
+static char         *strNAK                 (int code);
+static int          LockScanner             (int fd);
+static int          UnlockScanner           (void);
+static int          OpenTTY                 (const char *name);
+static int          CloseTTY                ();
+static int          ConfigTTY               (int fd);
+static int          ConfigSSI               (int fd);
+static int          WriteSSI                (int fd, byte opcode, byte *param, byte paramLen);
+static int          ReadSSI                 (int fd, byte *buff, const int timeout);
+static int          CheckACK                (int fd);
+static void         PrintError              (int ret);
+static int          ExtractBarcode          (char *buff, byte *pkg, const int buffLength);
+static void         DisplayPkg              (byte *pkg);
 
-static int scanner = 0;
-
-//static char LOCK_SCANNER_PATH[128];
-
-static int styl_scanner_lockfile_fd = -1;
-/*!
- * \brief mlsBarcodeReader_Open Open Reader descritptor file for read write
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-char mlsBarcodeReader_Open(const char *name)
-{
-    char ret = EXIT_SUCCESS;
-    const char *debugLevel = getenv("STYL_DEBUG");
-
-    assert(name != NULL);
-
-//    memset(LOCK_SCANNER_PATH, '\0', sizeof(LOCK_SCANNER_PATH));
-//    strcpy(LOCK_SCANNER_PATH, getenv("HOME"));
-
-    if (NULL != debugLevel)
-    {
-        printf("DEBUG: %s\n", name);
-    }
-
-    ret = OpenTTY(name);
-    if (ret <= 0)
-    {
-        ret = EXIT_FAILURE;
-        goto EXIT;
-    }
-    else
-    {
-        scanner = ret;
-    }
-
-    ret = (char) ConfigTTY(scanner);
-    if (ret)
-    {
-        STYL_ERROR("Can not configure TTY for device");
-        goto ERROR;
-    }
-
-    ret = (char) ConfigSSI(scanner);
-    if (ret)
-    {
-        STYL_ERROR("Can not configure SSI for device");
-        goto ERROR;
-    }
-
-    /* Flush buffer of device*/
-    if(mlsBarcodeReader_Flush() != EXIT_SUCCESS)
-    {
-        STYL_ERROR("Can not flush buffer of device");
-        goto ERROR;
-    }
-    STYL_INFO("Flushed buffer of device");
-
-    /* Enable device to scanning */
-    if(mlsBarcodeReader_Enable() != EXIT_SUCCESS)
-    {
-        STYL_ERROR("Can not enable device to scanning");
-        goto ERROR;
-    }
-    STYL_INFO("Enabled device to scanning");
-
-EXIT:
-    return ret;
-ERROR:
-    CloseTTY();
-    scanner = -1;
-    return EXIT_FAILURE;
-}
-
-/*!
- * \brief mlsBarcodeReader_ReadData Reader data from descriptor file (blocking read)
- * \param buff point to buffer which store data.
- * \return number of byte(s) read.
- */
-unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const int timeout)
-{
-    int barcodeLen = 0;
-    int ret = 0;
-    ssiState currentState = WAIT_DEC_EVENT;
-    ssiState nextState = WAIT_DEC_EVENT;
-    ssiState previousState = WAIT_DEC_EVENT;
-    int isInSession = TRUE;
-    byte recvBuff[4000] = {0};
-    const char *debugLevel = getenv("STYL_DEBUG");
-
-    assert( (timeout >= 0) && (timeout <= 25) );
-
-    while (isInSession)
-    {
-        switch (currentState)
-        {
-        case START:
-            if (NULL != debugLevel)
-            {
-                printf("Send Start session cmd...");
-            }
-
-            ret = WriteSSI(scanner, SSI_START_SESSION, NULL, 0);
-            if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
-            {
-                if (NULL != debugLevel)
-                {
-                    PrintError(ret);
-                }
-                nextState = STOP;
-            }
-            else
-            {
-                if (NULL != debugLevel)
-                {
-                    printf("OK at %d\n",__LINE__);
-                }
-            }
-
-            break;
-
-        case STOP:
-            isInSession = FALSE;
-//				printf("Send Stop session cmd...");
-//				ret = WriteSSI(scanner, SSI_STOP_SESSION, NULL, 0);
-//				usleep(1000);
-//				if ( (ret) || (! CheckACK(scanner) ) )
-//				{
-//					PrintError(ret);
-//				}
-//				else
-//				{
-            /* TODO: need to research if auto detect accept STOP_SESSION */
-            ret = barcodeLen;
-            if (NULL != debugLevel)
-            {
-                printf("OK at %d\n",__LINE__);
-            }
-//				}
-            break;
-
-        case WAIT_DEC_EVENT:
-            STYL_DEBUG_BEGIN("Wait for decode event...");
-            ret = ReadSSI(scanner, recvBuff, timeout);
-            if (ret <= 0)
-            {
-                STYL_DEBUG_END("NOT found\n");
-                nextState = STOP;
-            }
-            else
-            {
-                STYL_DEBUG_END("OK\n");
-                STYL_INFO("WAIT_DEC_EVENT: recvBuff: %x", recvBuff);
-                nextState = REPLY_ACK;
-                previousState = currentState;
-            }
-            break;
-
-        case REPLY_ACK:
-            ret = WriteSSI(scanner, SSI_CMD_ACK, NULL, 0);
-            if (EXIT_SUCCESS!=ret)
-            {
-                PrintError(ret);
-                nextState = STOP;
-            }
-            else
-            {
-
-                if (NULL != debugLevel)
-                {
-                    printf("OK at %d\n",__LINE__);
-                }
-                switch (previousState)
-                {
-                case WAIT_DEC_EVENT:
-                    DEBUG_0();
-                    nextState = GET_BARCODE;
-                    break;
-                case GET_BARCODE:
-                    DEBUG_0();
-                    nextState = STOP;
-                default:
-                    break;
-                }
-            }
-            previousState = currentState;
-            break;
-
-        case REPLY_NAK:
-            break;
-
-        case GET_BARCODE:
-            // Receive barcode in formatted package
-            if (NULL != debugLevel)
-            {
-                printf("Receive data: \n");
-            }
-            DEBUG_0();
-            ret = ReadSSI(scanner, recvBuff, timeout);
-            DEBUG_0();
-            if (ret <= 0)
-            {
-                DEBUG_0();
-                buff = NULL;
-                nextState = STOP;
-            }
-            else
-            {
-                DEBUG_0();
-                // Extract barcode to buffer
-                assert(NULL != recvBuff);
-                DEBUG_0();
-                barcodeLen = ExtractBarcode(buff, recvBuff, buffLength);
-                DEBUG_0();
-                if (NULL != debugLevel)
-                {
-                    DEBUG_0();
-                    DisplayPkg(recvBuff);
-                }
-                DEBUG_0();
-                nextState = REPLY_ACK;
-                DEBUG_0();
-                previousState = currentState;
-            }
-            break;
-
-        case FLUSH_QUEUE:
-            if (NULL != debugLevel)
-            {
-                printf("Send Scan disable cmd...");
-            }
-
-            ret = WriteSSI(scanner, SSI_SCAN_DISABLE, NULL, 0);
-            if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
-            {
-                PrintError(ret);
-                nextState = STOP;
-                break;
-            }
-            else
-            {
-                if (NULL != debugLevel)
-                {
-                    printf("OK at %d\n",__LINE__);
-                }
-            }
-
-            if (NULL != debugLevel)
-            {
-                printf("Send flush queue cmd...");
-            }
-
-            ret = WriteSSI(scanner, SSI_FLUSH_QUEUE, NULL, 0);
-            if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
-            {
-                PrintError(ret);
-                nextState = STOP;
-                break;
-            }
-            else
-            {
-                if (NULL != debugLevel)
-                {
-                    printf("OK at %d\n",__LINE__);
-                }
-            }
-
-            if (NULL != debugLevel)
-            {
-                printf("Send Scan enable cmd...");
-            }
-
-            ret = WriteSSI(scanner, SSI_SCAN_ENABLE, NULL, 0);
-            if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
-            {
-                PrintError(ret);
-                nextState = STOP;
-                break;
-            }
-            else
-            {
-                if (NULL != debugLevel)
-                {
-                    printf("OK at %d\n",__LINE__);
-                }
-            }
-
-            break;
-
-        default:
-            break;
-        }
-        currentState = nextState;
-    }
-
-    if (NULL != debugLevel)
-    {
-        printf("Barcode Len = %d\n", ret);
-    }
-    return ret;
-}
-
-/*!
- * \brief mlsBarcodeReader_Flush Flush buffer of scanner
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-char mlsBarcodeReader_Flush()
-{
-    char ret = EXIT_SUCCESS;
-    STYL_DEBUG_BEGIN("Send flush queue cmd...");
-
-    ret = WriteSSI(scanner, SSI_FLUSH_QUEUE, NULL, 0);
-
-    if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
-    {
-        PrintError(ret);
-        ret = EXIT_FAILURE;
-    }
-    else
-    {
-        STYL_DEBUG_END("OK\n");
-    }
-    return ret;
-}
-
-/*!
- * \brief mlsBarcodeReader_Enable Enable Reader for scaning QR code/Bar Code
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-char mlsBarcodeReader_Enable()
-{
-    char ret = EXIT_SUCCESS;
-    const char *debugLevel = getenv("STYL_DEBUG");
-
-    STYL_INFO("Do enable for scanner device ...");
-
-    ret = WriteSSI(scanner, SSI_SCAN_ENABLE, NULL, 0);
-    if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
-    {
-        PrintError(ret);
-        ret = EXIT_FAILURE;
-    }
-    else
-    {
-        STYL_INFO("Enabled device");
-    }
-    return ret;
-}
-
-/*!
- * \brief mlsBarcodeReader_Disable Disable reader, Reader can't scan any QR code/bar code
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-char mlsBarcodeReader_Disable()
-{
-    char ret = EXIT_SUCCESS;
-    const char *debugLevel = getenv("STYL_DEBUG");
-
-    STYL_INFO("Do disable for scanner device ...");
-
-    ret = WriteSSI(scanner, SSI_SCAN_DISABLE, NULL, 0);
-    if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
-    {
-        PrintError(ret);
-        ret = EXIT_FAILURE;
-    }
-    else
-    {
-        STYL_INFO("Disable device");
-    }
-
-    return ret;
-}
-
-/*!
- * \brief mlsBarcodeReader_close close Reader file descriptor
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-char mlsBarcodeReader_Close()
-{
-    char error = EXIT_SUCCESS;
-
-    /* Enable device to scanning */
-    if(mlsBarcodeReader_Disable() != EXIT_SUCCESS)
-    {
-        STYL_ERROR("Can not disable scanner device");
-    }
-    STYL_INFO("Disabled scanner device");
-
-    error = CloseTTY();
-    return error;
-}
-
-/*!
- * \brief GetVersion provide software version
- * \return string of software version
- * -
- */
-char *GetVersion(void)
-{
-    return VERSION;
-}
-
-/*!
- * \brief mlsBarcodeReader_Reopen closes then opens device
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-char mlsBarcodeReader_Reopen(const char *name)
-{
-    char error = EXIT_SUCCESS;
-    error = mlsBarcodeReader_Close();
-    if(EXIT_SUCCESS==error)
-    {
-        error = mlsBarcodeReader_Open(name);
-    }
-    return error;
-}
+/********** Local (static) function definition section ************************/
 
 /*!
  * \brief strNAK generate NAK message based on code
@@ -980,3 +585,431 @@ static void PrintError(int ret)
         break;
     }
 }
+
+/********** Global function definition section ********************************/
+
+/*!
+ * \brief mlsBarcodeReader_Open Open Reader descritptor file for read write
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+char mlsBarcodeReader_Open(const char *name)
+{
+    char ret = EXIT_SUCCESS;
+    const char *debugLevel = getenv("STYL_DEBUG");
+
+    assert(name != NULL);
+
+//    memset(LOCK_SCANNER_PATH, '\0', sizeof(LOCK_SCANNER_PATH));
+//    strcpy(LOCK_SCANNER_PATH, getenv("HOME"));
+
+    if (NULL != debugLevel)
+    {
+        printf("DEBUG: %s\n", name);
+    }
+
+    ret = OpenTTY(name);
+    if (ret <= 0)
+    {
+        ret = EXIT_FAILURE;
+        goto EXIT;
+    }
+    else
+    {
+        scanner = ret;
+    }
+
+    ret = (char) ConfigTTY(scanner);
+    if (ret)
+    {
+        STYL_ERROR("Can not configure TTY for device");
+        goto ERROR;
+    }
+
+    ret = (char) ConfigSSI(scanner);
+    if (ret)
+    {
+        STYL_ERROR("Can not configure SSI for device");
+        goto ERROR;
+    }
+
+    /* Flush buffer of device*/
+    if(mlsBarcodeReader_Flush() != EXIT_SUCCESS)
+    {
+        STYL_ERROR("Can not flush buffer of device");
+        goto ERROR;
+    }
+    STYL_INFO("Flushed buffer of device");
+
+    /* Enable device to scanning */
+    if(mlsBarcodeReader_Enable() != EXIT_SUCCESS)
+    {
+        STYL_ERROR("Can not enable device to scanning");
+        goto ERROR;
+    }
+    STYL_INFO("Enabled device to scanning");
+
+EXIT:
+    return ret;
+ERROR:
+    CloseTTY();
+    scanner = -1;
+    return EXIT_FAILURE;
+}
+
+/*!
+ * \brief mlsBarcodeReader_close close Reader file descriptor
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+char mlsBarcodeReader_Close()
+{
+    char error = EXIT_SUCCESS;
+
+    /* Enable device to scanning */
+    if(mlsBarcodeReader_Disable() != EXIT_SUCCESS)
+    {
+        STYL_ERROR("Can not disable scanner device");
+    }
+    STYL_INFO("Disabled scanner device");
+
+    error = CloseTTY();
+    return error;
+}
+
+/*!
+ * \brief mlsBarcodeReader_ReadData Reader data from descriptor file (blocking read)
+ * \param buff point to buffer which store data.
+ * \return number of byte(s) read.
+ */
+unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const int timeout)
+{
+    int barcodeLen = 0;
+    int ret = 0;
+    ssiState currentState = WAIT_DEC_EVENT;
+    ssiState nextState = WAIT_DEC_EVENT;
+    ssiState previousState = WAIT_DEC_EVENT;
+    int isInSession = TRUE;
+    byte recvBuff[4000] = {0};
+    const char *debugLevel = getenv("STYL_DEBUG");
+
+    assert( (timeout >= 0) && (timeout <= 25) );
+
+    while (isInSession)
+    {
+        switch (currentState)
+        {
+        case START:
+            if (NULL != debugLevel)
+            {
+                printf("Send Start session cmd...");
+            }
+
+            ret = WriteSSI(scanner, SSI_START_SESSION, NULL, 0);
+            if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
+            {
+                if (NULL != debugLevel)
+                {
+                    PrintError(ret);
+                }
+                nextState = STOP;
+            }
+            else
+            {
+                if (NULL != debugLevel)
+                {
+                    printf("OK at %d\n",__LINE__);
+                }
+            }
+
+            break;
+
+        case STOP:
+            isInSession = FALSE;
+//				printf("Send Stop session cmd...");
+//				ret = WriteSSI(scanner, SSI_STOP_SESSION, NULL, 0);
+//				usleep(1000);
+//				if ( (ret) || (! CheckACK(scanner) ) )
+//				{
+//					PrintError(ret);
+//				}
+//				else
+//				{
+            /* TODO: need to research if auto detect accept STOP_SESSION */
+            ret = barcodeLen;
+            if (NULL != debugLevel)
+            {
+                printf("OK at %d\n",__LINE__);
+            }
+//				}
+            break;
+
+        case WAIT_DEC_EVENT:
+            STYL_DEBUG_BEGIN("Wait for decode event...");
+            ret = ReadSSI(scanner, recvBuff, timeout);
+            if (ret <= 0)
+            {
+                STYL_DEBUG_END("NOT found\n");
+                nextState = STOP;
+            }
+            else
+            {
+                STYL_DEBUG_END("OK\n");
+                STYL_INFO("WAIT_DEC_EVENT: recvBuff: %x", recvBuff);
+                nextState = REPLY_ACK;
+                previousState = currentState;
+            }
+            break;
+
+        case REPLY_ACK:
+            ret = WriteSSI(scanner, SSI_CMD_ACK, NULL, 0);
+            if (EXIT_SUCCESS!=ret)
+            {
+                PrintError(ret);
+                nextState = STOP;
+            }
+            else
+            {
+
+                if (NULL != debugLevel)
+                {
+                    printf("OK at %d\n",__LINE__);
+                }
+                switch (previousState)
+                {
+                case WAIT_DEC_EVENT:
+                    DEBUG_0();
+                    nextState = GET_BARCODE;
+                    break;
+                case GET_BARCODE:
+                    DEBUG_0();
+                    nextState = STOP;
+                default:
+                    break;
+                }
+            }
+            previousState = currentState;
+            break;
+
+        case REPLY_NAK:
+            break;
+
+        case GET_BARCODE:
+            // Receive barcode in formatted package
+            if (NULL != debugLevel)
+            {
+                printf("Receive data: \n");
+            }
+            DEBUG_0();
+            ret = ReadSSI(scanner, recvBuff, timeout);
+            DEBUG_0();
+            if (ret <= 0)
+            {
+                DEBUG_0();
+                buff = NULL;
+                nextState = STOP;
+            }
+            else
+            {
+                DEBUG_0();
+                // Extract barcode to buffer
+                assert(NULL != recvBuff);
+                DEBUG_0();
+                barcodeLen = ExtractBarcode(buff, recvBuff, buffLength);
+                DEBUG_0();
+                if (NULL != debugLevel)
+                {
+                    DEBUG_0();
+                    DisplayPkg(recvBuff);
+                }
+                DEBUG_0();
+                nextState = REPLY_ACK;
+                DEBUG_0();
+                previousState = currentState;
+            }
+            break;
+
+        case FLUSH_QUEUE:
+            if (NULL != debugLevel)
+            {
+                printf("Send Scan disable cmd...");
+            }
+
+            ret = WriteSSI(scanner, SSI_SCAN_DISABLE, NULL, 0);
+            if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
+            {
+                PrintError(ret);
+                nextState = STOP;
+                break;
+            }
+            else
+            {
+                if (NULL != debugLevel)
+                {
+                    printf("OK at %d\n",__LINE__);
+                }
+            }
+
+            if (NULL != debugLevel)
+            {
+                printf("Send flush queue cmd...");
+            }
+
+            ret = WriteSSI(scanner, SSI_FLUSH_QUEUE, NULL, 0);
+            if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
+            {
+                PrintError(ret);
+                nextState = STOP;
+                break;
+            }
+            else
+            {
+                if (NULL != debugLevel)
+                {
+                    printf("OK at %d\n",__LINE__);
+                }
+            }
+
+            if (NULL != debugLevel)
+            {
+                printf("Send Scan enable cmd...");
+            }
+
+            ret = WriteSSI(scanner, SSI_SCAN_ENABLE, NULL, 0);
+            if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
+            {
+                PrintError(ret);
+                nextState = STOP;
+                break;
+            }
+            else
+            {
+                if (NULL != debugLevel)
+                {
+                    printf("OK at %d\n",__LINE__);
+                }
+            }
+
+            break;
+
+        default:
+            break;
+        }
+        currentState = nextState;
+    }
+
+    if (NULL != debugLevel)
+    {
+        printf("Barcode Len = %d\n", ret);
+    }
+    return ret;
+}
+
+/*!
+ * \brief mlsBarcodeReader_Reopen closes then opens device
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+char mlsBarcodeReader_Reopen(const char *name)
+{
+    char error = EXIT_SUCCESS;
+    error = mlsBarcodeReader_Close();
+    if(EXIT_SUCCESS==error)
+    {
+        error = mlsBarcodeReader_Open(name);
+    }
+    return error;
+}
+
+/*!
+ * \brief mlsBarcodeReader_Enable Enable Reader for scaning QR code/Bar Code
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+char mlsBarcodeReader_Enable()
+{
+    char ret = EXIT_SUCCESS;
+    const char *debugLevel = getenv("STYL_DEBUG");
+
+    STYL_INFO("Do enable for scanner device ...");
+
+    ret = WriteSSI(scanner, SSI_SCAN_ENABLE, NULL, 0);
+    if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
+    {
+        PrintError(ret);
+        ret = EXIT_FAILURE;
+    }
+    else
+    {
+        STYL_INFO("Enabled device");
+    }
+    return ret;
+}
+
+/*!
+ * \brief mlsBarcodeReader_Disable Disable reader, Reader can't scan any QR code/bar code
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+char mlsBarcodeReader_Disable()
+{
+    char ret = EXIT_SUCCESS;
+    const char *debugLevel = getenv("STYL_DEBUG");
+
+    STYL_INFO("Do disable for scanner device ...");
+
+    ret = WriteSSI(scanner, SSI_SCAN_DISABLE, NULL, 0);
+    if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
+    {
+        PrintError(ret);
+        ret = EXIT_FAILURE;
+    }
+    else
+    {
+        STYL_INFO("Disable device");
+    }
+
+    return ret;
+}
+
+/*!
+ * \brief mlsBarcodeReader_Flush Flush buffer of scanner
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+char mlsBarcodeReader_Flush()
+{
+    char ret = EXIT_SUCCESS;
+    STYL_DEBUG_BEGIN("Send flush queue cmd...");
+
+    ret = WriteSSI(scanner, SSI_FLUSH_QUEUE, NULL, 0);
+
+    if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
+    {
+        PrintError(ret);
+        ret = EXIT_FAILURE;
+    }
+    else
+    {
+        STYL_DEBUG_END("OK\n");
+    }
+    return ret;
+}
+
+/*!
+ * \brief GetVersion provide software version
+ * \return string of software version
+ * -
+ */
+char *GetVersion(void)
+{
+    return VERSION;
+}
+
+/**@}*/
