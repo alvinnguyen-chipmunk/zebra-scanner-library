@@ -46,8 +46,8 @@ AM_CONDITIONAL([DEBUG], [test x$debug = xtrue])
 AC_ARG_ENABLE([console],
 [  --enable-console    Let print information and warning to console.],
 [case "${enableval}" in
-  yes) debug=true ;;
-  no)  debug=false ;;
+  yes) console=true ;;
+  no)  console=false ;;
   *) AC_MSG_ERROR([bad value ${enableval} for --enable-console]) ;;
 esac],[console=false])
 
