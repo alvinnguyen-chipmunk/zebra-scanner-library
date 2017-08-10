@@ -351,7 +351,7 @@ static int OpenTTY(const char *name)
     fd = open(name, O_RDWR);
     if (fd <= 0)
     {
-        STYL_ERROR("Cannot open Scanner device: %s\n", name);
+        STYL_ERROR("Open Scanner device %s: open %d - %s\n", name, errno, strerror(errno));
     }
 
     return fd;
