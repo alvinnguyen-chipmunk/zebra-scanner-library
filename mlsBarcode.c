@@ -34,7 +34,7 @@
 #define TRUE				1
 #define FALSE				0
 
-#define LOCK_SCANNER_PATH	"/var/lock_scanner"
+#define LOCK_SCANNER_PATH	"/tmp/lock_scanner"
 
 #define TIMEOUT_MSEC		50
 
@@ -144,7 +144,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
             }
 
             ret = WriteSSI(scanner, SSI_START_SESSION, NULL, 0);
-            if ( (ret) || (! CheckACK(scanner) ) )
+            if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
             {
                 if (NULL != debugLevel)
                 {
@@ -210,7 +210,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
 
         case REPLY_ACK:
             ret = WriteSSI(scanner, SSI_CMD_ACK, NULL, 0);
-            if (ret)
+            if (EXIT_SUCCESS!=ret)
             {
                 PrintError(ret);
                 nextState = STOP;
@@ -272,7 +272,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
             }
 
             ret = WriteSSI(scanner, SSI_SCAN_DISABLE, NULL, 0);
-            if ( (ret) || (! CheckACK(scanner) ) )
+            if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
             {
                 PrintError(ret);
                 nextState = STOP;
@@ -292,7 +292,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
             }
 
             ret = WriteSSI(scanner, SSI_FLUSH_QUEUE, NULL, 0);
-            if ( (ret) || (! CheckACK(scanner) ) )
+            if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
             {
                 PrintError(ret);
                 nextState = STOP;
@@ -312,7 +312,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
             }
 
             ret = WriteSSI(scanner, SSI_SCAN_ENABLE, NULL, 0);
-            if ( (ret) || (! CheckACK(scanner) ) )
+            if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
             {
                 PrintError(ret);
                 nextState = STOP;
@@ -358,7 +358,7 @@ char mlsBarcodeReader_Enable()
     }
 
     ret = WriteSSI(scanner, SSI_SCAN_ENABLE, NULL, 0);
-    if ( (ret) || (! CheckACK(scanner) ) )
+    if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
     {
         PrintError(ret);
         ret = EXIT_FAILURE;
@@ -391,7 +391,7 @@ char mlsBarcodeReader_Disable()
     }
 
     ret = WriteSSI(scanner, SSI_SCAN_DISABLE, NULL, 0);
-    if ( (ret) || (! CheckACK(scanner) ) )
+    if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
     {
         PrintError(ret);
         ret = EXIT_FAILURE;
@@ -606,7 +606,7 @@ static int ConfigSSI(int fd)
 
     ret = WriteSSI(fd, SSI_PARAM_SEND, param, ( sizeof(param) / sizeof(*param) ) );
 
-    if (ret)
+    if (EXIT_SUCCESS!=ret)
     {
         printf("ERROR: %s\n", __func__);
         goto EXIT;
