@@ -12,7 +12,7 @@
 
 /**
  * @file    mlsBarcode.c
- * @brief   C library - get data from qrcode/barcode scanner
+ * @brief   Simple example use C library to get data from qrcode/barcode scanner
  *
  * Long description.
  * @date    13/07/2017
