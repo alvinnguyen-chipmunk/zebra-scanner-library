@@ -11,4 +11,4 @@ Description: A library to scanning qrcode/barcode
 Requires:  
 Version: @VERSION@
 Libs: -L${libdir} -lstylssi
-Cflags: -I${includedir}/libstylssi
+Cflags: -I${includedir}

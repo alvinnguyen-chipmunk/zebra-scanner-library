@@ -17,7 +17,7 @@ else
 DEBUG_CFLAGS = -D__RELEASE__
 endif
 
-STYLSCANNER_includedir = $(includedir)/libstylssi
+STYLSCANNER_includedir = $(includedir)
 STYLSCANNER_SOURCES = ssi.h mlsBarcode.h mlsBarcode.c
 STYLSCANNER_include_HEADERS = mlsBarcode.h
 STYLSCANNER_CFLAGS = $(DEBUG_CFLAGS) $(CONSOLE_CFLAGS) -std=c99 
