@@ -66,7 +66,7 @@ static int styl_scanner_lockfile_fd = -1;
 #define TRUE				1
 #define FALSE				0
 
-#define LOCK_SCANNER_PATH	"/var/lock_scanner"
+#define LOCK_SCANNER_PATH	"/tmp/lock_scanner"
 
 #define TIMEOUT_MSEC		50
 
@@ -351,7 +351,7 @@ static int OpenTTY(const char *name)
     fd = open(name, O_RDWR);
     if (fd <= 0)
     {
-        STYL_ERROR("Open Scanner device %s: open %d - %s\n", name, errno, strerror(errno));
+        STYL_ERROR("Open Scanner device %s: open: %d - %s\n", name, errno, strerror(errno));
     }
 
     return fd;
@@ -367,7 +367,7 @@ static int CloseTTY()
     error = close(scanner);
     if (error<0)
     {
-        STYL_ERROR("close %d - %s", errno, strerror(errno));
+        STYL_ERROR("close: %d - %s", errno, strerror(errno));
     }
     UnlockScanner();
     return EXIT_SUCCESS;
@@ -388,7 +388,7 @@ static int UnlockScanner(void)
     if(flock(styl_scanner_lockfile_fd, LOCK_UN | LOCK_NB) < 0)
     {
         ret = LOCK_FAIL;
-        STYL_ERROR("Unlock Scanner: flock %d - %s", errno, strerror(errno));
+        STYL_ERROR("Unlock Scanner: flock: %d - %s", errno, strerror(errno));
     }
     unlink(LOCK_SCANNER_PATH);
     return ret;
