@@ -46,6 +46,9 @@ extern "C"
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_BLUE    "\x1b[34m"
+#define ANSI_COLOR_MAGENTA "\x1b[35m"
+#define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
 #ifdef __RELEASE__
@@ -67,6 +70,7 @@ extern "C"
 #define __ERROR__(format, ...) fprintf (stderr, format, ## __VA_ARGS__) ; fprintf(stderr, "%s", ANSI_COLOR_RESET)
 #define ERROR(format, args...) __ERROR__("%s [STYLSSI-ERROR]: %s():[%d] " format "%s \n",ANSI_COLOR_RED, __FUNCTION__, __LINE__, ##args, ANSI_COLOR_RED)
 #define STYL_ERROR(format, ...) ERROR(format, ##__VA_ARGS__)
+#define STYL_ERROR_INLINE(format, ...) __ERROR__("%s" format "%s", ANSI_COLOR_RED, ##__VA_ARGS__, ANSI_COLOR_RED)
 
 #ifndef __CONSOLE__
 #define __WARNING__(format, ...)
@@ -75,6 +79,7 @@ extern "C"
 #endif // __CONSOLE__
 #define WARNING(format, args...) __WARNING__("%s [STYLSSI-WARNING]: %s():[%d] " format "%s \n",ANSI_COLOR_YELLOW, __FUNCTION__, __LINE__, ##args, ANSI_COLOR_YELLOW)
 #define STYL_WARNING(format, ...) WARNING(format, ##__VA_ARGS__)
+#define STYL_WARNING_INLINE(format, ...) __WARNING__("%s" format "%s", ANSI_COLOR_YELLOW, ##__VA_ARGS__, ANSI_COLOR_YELLOW)
 
 #ifndef __CONSOLE__
 #define __INFO__(format, ...)
@@ -83,6 +88,8 @@ extern "C"
 #endif // __CONSOLE__
 #define INFO(format, args...) __INFO__("%s [STYLSSI-INFO]: %s():[%d] " format "%s \n",ANSI_COLOR_GREEN, __FUNCTION__, __LINE__, ##args, ANSI_COLOR_GREEN)
 #define STYL_INFO(format, ...) INFO(format, ##__VA_ARGS__)
+#define STYL_INFO_INLINE(format, ...) __INFO__("%s" format "%s", ANSI_COLOR_GREEN, ##__VA_ARGS__, ANSI_COLOR_GREEN)
+#define STYL_INFO_OTHER(format, ...) __INFO__("%s" format "%s", ANSI_COLOR_BLUE, ##__VA_ARGS__, ANSI_COLOR_BLUE)
 
 /********** Function declaration section **************************************/
 
