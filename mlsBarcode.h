@@ -46,11 +46,19 @@ extern "C"
 #define ERROR(format, args...) __ERROR__("%s [STYLSSI-ERROR]: %s():[%d] " format "%s \n",ANSI_COLOR_RED, __FUNCTION__, __LINE__, ##args, ANSI_COLOR_RED)
 #define STYL_ERROR(format, ...) ERROR(format, ##__VA_ARGS__)
 
+#ifdef __CONSOLE__
+#define __WARNING__(format, ...)
+#else
 #define __WARNING__(format, ...) fprintf (stderr, format, ## __VA_ARGS__); fprintf(stderr, "%s", ANSI_COLOR_RESET)
+#endif // __CONSOLE__
 #define WARNING(format, args...) __WARNING__("%s [STYLSSI-WARNING]: %s():[%d] " format "%s \n",ANSI_COLOR_YELLOW, __FUNCTION__, __LINE__, ##args, ANSI_COLOR_YELLOW)
 #define STYL_WARNING(format, ...) WARNING(format, ##__VA_ARGS__)
 
+#ifdef __CONSOLE__
+#define __INFO__(format, ...)
+#else
 #define __INFO__(format, ...) fprintf (stdout, format, ## __VA_ARGS__); fprintf(stdout, "%s", ANSI_COLOR_RESET)
+#endif // __CONSOLE__
 #define INFO(format, args...) __INFO__("%s [STYLSSI-INFO]: %s():[%d] " format "%s \n",ANSI_COLOR_GREEN, __FUNCTION__, __LINE__, ##args, ANSI_COLOR_GREEN)
 #define STYL_INFO(format, ...) INFO(format, ##__VA_ARGS__)
 
