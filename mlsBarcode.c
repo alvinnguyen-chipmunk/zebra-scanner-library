@@ -66,7 +66,7 @@ static int styl_scanner_lockfile_fd = -1;
 #define TRUE				1
 #define FALSE				0
 
-#define LOCK_SCANNER_PATH	"/tmp/lock_scanner"
+#define LOCK_SCANNER_PATH	"/var/lock_scanner"
 
 #define TIMEOUT_MSEC		50
 
