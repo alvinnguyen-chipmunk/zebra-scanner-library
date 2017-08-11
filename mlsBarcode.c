@@ -235,6 +235,7 @@ static int ConfigSSI(int fd)
                      };
 
     ret = WriteSSI(fd, SSI_PARAM_SEND, param, ( sizeof(param) / sizeof(*param) ) );
+
     return ret;
 }
 
@@ -378,7 +379,9 @@ static int CloseTTY()
 
 static int LockScanner(int fd)
 {
-    if(flock(fd, LOCK_EX | LOCK_NB) < 0)
+    int ret = flock(fd, LOCK_EX | LOCK_NB);
+    STYL_DEBUG("Ret value: %d", ret);
+    if(ret < 0)
     {
         return LOCK_FAIL;
     }
@@ -548,30 +551,27 @@ static void PrintError(int ret)
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-char mlsBarcodeReader_Open(const char *name)
+int mlsBarcodeReader_Open(const char *name)
 {
-    char ret = EXIT_SUCCESS;
+    int ret = EXIT_SUCCESS;
 
-    assert(name != NULL);
+    //assert(name != NULL);
+    if(name == NULL)
+        return EXIT_FAILURE;
 
     STYL_INFO("Scanner port: %s", name);
 
-    ret = OpenTTY(name);
-    STYL_DEBUG("OpenTTY ret: %d", ret);
-    if (ret <= 0)
+    scanner = OpenTTY(name);
+    STYL_DEBUG("OpenTTY scanner: %d", scanner);
+    if (scanner <= 0)
     {
         DEBUG_1();
+        scanner = -1;
         ret = EXIT_FAILURE;
         goto EXIT;
     }
-    else
-    {
-        DEBUG_1();
-        scanner = ret;
-    }
 
-    ret = (char) ConfigTTY(scanner);
-    if (ret)
+    if(ConfigTTY(scanner) != EXIT_SUCCESS)
     {
         DEBUG_1();
         STYL_ERROR("Can not configure TTY for device");
@@ -580,10 +580,8 @@ char mlsBarcodeReader_Open(const char *name)
 
     DEBUG_1();
 
-    ret = (char) ConfigSSI(scanner);
-    if (ret)
+    if(ConfigSSI(scanner) != EXIT_SUCCESS)
     {
-        DEBUG_1();
         STYL_ERROR("Can not configure SSI for device");
         goto ERROR;
     }
@@ -626,9 +624,9 @@ ERROR:
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-char mlsBarcodeReader_Close()
+int mlsBarcodeReader_Close()
 {
-    char error = EXIT_SUCCESS;
+    int error = EXIT_SUCCESS;
 
     /* Enable device to scanning */
     if(mlsBarcodeReader_Disable() != EXIT_SUCCESS)
@@ -774,9 +772,9 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-char mlsBarcodeReader_Reopen(const char *name)
+int mlsBarcodeReader_Reopen(const char *name)
 {
-    char error = EXIT_SUCCESS;
+    int error = EXIT_SUCCESS;
     error = mlsBarcodeReader_Close();
     if(EXIT_SUCCESS==error)
     {
@@ -791,9 +789,9 @@ char mlsBarcodeReader_Reopen(const char *name)
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-char mlsBarcodeReader_Enable()
+int mlsBarcodeReader_Enable()
 {
-    char ret = EXIT_SUCCESS;
+    int ret = EXIT_SUCCESS;
     ret = WriteSSI(scanner, SSI_SCAN_ENABLE, NULL, 0);
     if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
     {
@@ -809,9 +807,9 @@ char mlsBarcodeReader_Enable()
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-char mlsBarcodeReader_Disable()
+int mlsBarcodeReader_Disable()
 {
-    char ret = EXIT_SUCCESS;
+    int ret = EXIT_SUCCESS;
     ret = WriteSSI(scanner, SSI_SCAN_DISABLE, NULL, 0);
     if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
     {
@@ -827,9 +825,9 @@ char mlsBarcodeReader_Disable()
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-char mlsBarcodeReader_Flush()
+int mlsBarcodeReader_Flush()
 {
-    char ret = EXIT_SUCCESS;
+    int ret = EXIT_SUCCESS;
     ret = WriteSSI(scanner, SSI_FLUSH_QUEUE, NULL, 0);
     if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
     {
