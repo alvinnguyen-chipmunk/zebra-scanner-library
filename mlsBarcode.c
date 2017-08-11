@@ -336,28 +336,21 @@ EXIT:
 static int OpenTTY(const char *name)
 {
     int fd = 0;
-    DEBUG_1();
     styl_scanner_lockfile_fd = open(LOCK_SCANNER_PATH, O_CREAT | O_RDWR, S_IWUSR | S_IRUSR);
     if(styl_scanner_lockfile_fd < 0)
     {
-        DEBUG_1();
         STYL_ERROR("Scanner lockfile: open: %d - %s",errno, strerror(errno));
     }
-    DEBUG_1();
     if(LockScanner(styl_scanner_lockfile_fd) !=  LOCK_SUCCESS)
     {
-        DEBUG_1();
         STYL_ERROR("Device %s is busy.\n", name);
         return -1;
     }
-    DEBUG_1();
     fd = open(name, O_RDWR);
     if (fd <= 0)
     {
-        DEBUG_1();
         STYL_ERROR("Open Scanner device %s: open: %d - %s\n", name, errno, strerror(errno));
     }
-    DEBUG_1();
     return fd;
 }
 
@@ -380,7 +373,6 @@ static int CloseTTY()
 static int LockScanner(int fd)
 {
     int ret = flock(fd, LOCK_EX | LOCK_NB);
-    STYL_DEBUG("Ret value: %d", ret);
     if(ret < 0)
     {
         return LOCK_FAIL;
@@ -562,10 +554,8 @@ int mlsBarcodeReader_Open(const char *name)
     STYL_INFO("Scanner port: %s", name);
 
     scanner = OpenTTY(name);
-    STYL_DEBUG("OpenTTY scanner: %d", scanner);
     if (scanner <= 0)
     {
-        DEBUG_1();
         scanner = -1;
         ret = EXIT_FAILURE;
         goto EXIT;
@@ -573,12 +563,9 @@ int mlsBarcodeReader_Open(const char *name)
 
     if(ConfigTTY(scanner) != EXIT_SUCCESS)
     {
-        DEBUG_1();
         STYL_ERROR("Can not configure TTY for device");
         goto ERROR;
     }
-
-    DEBUG_1();
 
     if(ConfigSSI(scanner) != EXIT_SUCCESS)
     {
@@ -586,33 +573,25 @@ int mlsBarcodeReader_Open(const char *name)
         goto ERROR;
     }
 
-    DEBUG_1();
-
     /* Flush buffer of device*/
     if(mlsBarcodeReader_Flush() != EXIT_SUCCESS)
     {
-        DEBUG_1();
         STYL_ERROR("Can not flush buffer of device");
         goto ERROR;
     }
-    DEBUG_1();
     STYL_INFO("Flushed buffer of device");
 
     /* Enable device to scanning */
     if(mlsBarcodeReader_Enable() != EXIT_SUCCESS)
     {
-        DEBUG_1();
         STYL_ERROR("Can not enable device to scanning");
         goto ERROR;
     }
-    DEBUG_1();
     STYL_INFO("Enabled device to scanning");
 
 EXIT:
-    DEBUG_1();
     return ret;
 ERROR:
-    DEBUG_1();
     CloseTTY();
     scanner = -1;
     return EXIT_FAILURE;
