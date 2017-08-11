@@ -58,7 +58,7 @@ int main(int argc, const char * argv[])
     printf("Version: %s\n", GetVersion());
 
     ret = mlsBarcodeReader_Open(deviceName);
-    if (ret)
+    if (ret!=EXIT_SUCCESS)
     {
         goto EXIT;
     }

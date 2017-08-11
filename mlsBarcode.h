@@ -99,7 +99,7 @@ extern "C"
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-char mlsBarcodeReader_Open(const char *name);
+int mlsBarcodeReader_Open(const char *name);
 
 /*!
  * \brief mlsBarcodeReader_Enable Enable Reader for scaning QR code/Bar Code
@@ -107,7 +107,7 @@ char mlsBarcodeReader_Open(const char *name);
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-char mlsBarcodeReader_Enable();
+int mlsBarcodeReader_Enable();
 
 /*!
  * \brief mlsBarcodeReader_Disable Disable reader, Reader can't scan any QR code/bar code
@@ -115,7 +115,7 @@ char mlsBarcodeReader_Enable();
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-char mlsBarcodeReader_Disable();
+int mlsBarcodeReader_Disable();
 
 /*!
  * \brief mlsBarcodeReader_ReadData Reader data from descriptor file (blocking read)
@@ -130,7 +130,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-char mlsBarcodeReader_Close();
+int mlsBarcodeReader_Close();
 
 /*!
  * \brief GetVersion provide software version
@@ -145,7 +145,7 @@ char *GetVersion(void);
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-char mlsBarcodeReader_Reopen(const char *name);
+int mlsBarcodeReader_Reopen(const char *name);
 
 /*!
  * \brief mlsBarcodeReader_Flush Flush buffer of scanner
@@ -153,7 +153,7 @@ char mlsBarcodeReader_Reopen(const char *name);
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-char mlsBarcodeReader_Flush();
+int mlsBarcodeReader_Flush();
 
 #ifdef __cplusplus
 }
