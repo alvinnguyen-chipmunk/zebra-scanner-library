@@ -38,9 +38,15 @@ libstylssi_a_include_HEADERS = $(STYLSCANNER_include_HEADERS)
 libstylssi_a_includedir = $(STYLSCANNER_includedir)
 libstylssi_a_CFLAGS = $(STYLSCANNER_CFLAGS)
 
-######################### STYL SCANNER COMMON VARIABLE ############################
+######################### STYL SCANNER EXAMPLE ####################################
 bin_PROGRAMS = barcode_demo
 barcode_demo_SOURCES = example/barcode_demo.c
 barcode_demo_CFLAGS = $(DEBUG_CFLAGS) -std=c99 -I$(top_srcdir)/src
 barcode_demo_LDADD = libstylssi.la
-#barcode_demo_LDFLAGS = -lstylssi -L./../src
+#barcode_demo_LDFLAGS = -lstylssi -L./../srcbarcode_demo_LDFLAGS = -lstylssi -L./../src
+
+########################## STYL SCANNER TEST ######################################
+bin_PROGRAMS += barcode_test
+barcode_test_SOURCES = example/barcode_test.c
+barcode_test_CFLAGS = $(DEBUG_CFLAGS) -std=c99 -I$(top_srcdir)/src
+barcode_test_LDADD = libstylssi.la

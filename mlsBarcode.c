@@ -30,6 +30,7 @@
 #include <string.h>
 #include <termios.h>
 #include <assert.h>
+#include <time.h>
 #include <sys/signal.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -67,11 +68,14 @@ static int styl_scanner_lockfile_fd = -1;
 #define FALSE				0
 
 #define LOCK_SCANNER_PATH	"/tmp/lock_scanner"
+#define LOCK_SCANNER_PATH	"/tmp/lock_scanner"
 
 #define TIMEOUT_MSEC		50
 
 #define LOCK_FAIL           0
 #define LOCK_SUCCESS        1
+
+#define LOGPATH        ".stylscanner/decode_log"
 
 /********** Local (static) variable declaration section ***********************/
 
@@ -92,6 +96,7 @@ static int          CheckACK                (int fd);
 static void         PrintError              (int ret);
 static int          ExtractBarcode          (char *buff, byte *pkg, const int buffLength);
 static void         DisplayPkg              (byte *pkg);
+static void         Write2File              (char *decodeData, int len);
 
 /********** Local (static) function definition section ************************/
 
@@ -535,6 +540,44 @@ static void PrintError(int ret)
     }
 }
 
+/*!
+ * \brief Write2File prints decode data to file
+ */
+static void Write2File (char *decodeData, int len)
+{
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    char timeBuff[1024];
+    memset(timeBuff, 0, 1024);
+    sprintf (timeBuff, "\n[%d-%d-%d %d:%d:%d SGT] :  ", tm.tm_year + 1900,
+                                               tm.tm_mon + 1,
+                                               tm.tm_mday,
+                                               tm.tm_hour,
+                                               tm.tm_min,
+                                               tm.tm_sec);
+
+    const char * homeDir = getenv("HOME");
+    char logFullPath[1024];
+    memset(logFullPath, 0, 1024);
+    sprintf (logFullPath, "%s/%s", homeDir, LOGPATH);
+
+    int fd = open(logFullPath, O_APPEND | O_RDWR | O_CREAT, S_IWUSR | S_IRUSR);
+    if(fd < 0)
+    {
+        STYL_ERROR("open: %d - %s",errno, strerror(errno));
+    }
+    else if (write(fd, timeBuff, strlen(timeBuff)) <= 0)
+    {
+        STYL_ERROR("write: %d - %s", errno, strerror(errno));
+    }
+    else if (write(fd, decodeData, len) <= 0)
+    {
+        STYL_ERROR("write: %d - %s", errno, strerror(errno));
+    }
+
+    close(fd);
+}
+
 /********** Global function definition section ********************************/
 
 /*!
@@ -680,6 +723,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
             }
             else
             {
+                DisplayPkg(recvBuff);
                 nextState = REPLY_ACK;
                 previousState = currentState;
             }
@@ -815,6 +859,67 @@ int mlsBarcodeReader_Flush()
     }
     return ret;
 }
+
+/*!
+ * \brief mlsBarcodeReader_Test Test subroutine
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+int mlsBarcodeReader_Test()
+{
+    int ret = EXIT_SUCCESS;
+    byte recvBuff[4096] = {0};
+    const int timeout = 10;	// 1/10 sec
+    char buff[4096];
+    memset(buff, 0, 4096);
+    int barcodeLen = 0;
+
+    ret = WriteSSI(scanner, SSI_START_DECODE, NULL, 0);
+
+    STYL_DEBUG("ret: %d", ret);
+
+    if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
+    {
+        DEBUG_1();
+        PrintError(ret);
+        ret = EXIT_FAILURE;
+    }
+
+    STYL_DEBUG("********** WAITING EVENT (ReadSSI #1)");
+    ret = ReadSSI(scanner, recvBuff, timeout);
+    if (ret > 0)
+    {
+        STYL_DEBUG("********** READ DECODE DATA (ReadSSI #2)");
+        ret = ReadSSI(scanner, recvBuff, timeout);
+        if (ret > 0)
+        {
+            // Extract barcode to buffer
+            assert(NULL != recvBuff);
+            barcodeLen = ExtractBarcode(buff, recvBuff, 4096);
+            DisplayPkg(recvBuff);
+            printf("\e[36mBarcode(%d):\n%s\e[0m\n\n", barcodeLen, buff);
+            Write2File(buff, barcodeLen);
+            ret = EXIT_SUCCESS;
+        }
+        else
+        {
+            sleep(2);
+            ret = WriteSSI(scanner, SSI_STOP_DECODE, NULL, 0);
+            STYL_DEBUG("ret: %d", ret);
+            if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
+            {
+                DEBUG_1();
+                PrintError(ret);
+                ret = EXIT_FAILURE;
+            }
+            DEBUG_1();
+        }
+    }
+
+    return ret;
+}
+
 
 /*!
  * \brief GetVersion provide software version

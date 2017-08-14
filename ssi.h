@@ -19,17 +19,17 @@ typedef unsigned char byte;
 
 // Commands
 #define SSI_START_SESSION					0xE4
-#define SSI_STOP_SESSION					0xE5
-#define SSI_REQ_REVISION					0xA3
+#define SSI_STOP_SESSION					     0xE5
+#define SSI_REQ_REVISION					     0xA3
 #define SSI_PARAM_SEND						0xC6
-#define SSI_CMD_ACK							0xD0
+#define SSI_CMD_ACK							0xD0          
 #define SSI_CMD_NAK							0xD1
 #define SSI_CUSTOM_DEFAULTS					0x12
 #define SSI_DEC_DATA						0xF3
 #define SSI_FLUSH_QUEUE						0xD2
 #define SSI_PARAM_SEND						0xC6
 #define SSI_SCAN_ENABLE						0xE9
-#define SSI_SCAN_DISABLE					0xEA
+#define SSI_SCAN_DISABLE					     0xEA
 
 // NAK Code
 #define NAK_RESEND							0x01
@@ -43,10 +43,16 @@ typedef unsigned char byte;
 #define SSI_DEFAULT_STATUS					0x00
 #define SSI_CKSUM_LEN						0x02
 
+// Other command
+#define SSI_LED_OFF                               0xE8
+#define SSI_LED_ON                                0xE7
+#define SSI_START_DECODE                          0xE4
+#define SSI_STOP_DECODE                           0xE5
+
 // Param:
 // PARAM_B_*: bool value parameters
 #define ENABLE								0x01
-#define DISABLE								0x00
+#define DISABLE							0x00
 #define PARAM_B_SCAN_PARAM					0xEC
 #define PARAM_B_DEC_FORMAT					0xEE
 #define PARAM_B_SW_ACK						0x9F

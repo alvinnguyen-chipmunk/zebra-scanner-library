@@ -155,6 +155,14 @@ int mlsBarcodeReader_Reopen(const char *name);
  */
 int mlsBarcodeReader_Flush();
 
+/*!
+ * \brief mlsBarcodeReader_Test Test subroutine
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+int mlsBarcodeReader_Test();
+
 #ifdef __cplusplus
 }
 #endif

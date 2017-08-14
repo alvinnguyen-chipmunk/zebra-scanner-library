@@ -11,7 +11,7 @@
  ******************************************************************************/
 
 /**
- * @file    mlsBarcode.c
+ * @file    barcode_demo.c
  * @brief   Simple example use C library to get data from qrcode/barcode scanner
  *
  * Long description.
