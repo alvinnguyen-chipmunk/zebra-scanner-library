@@ -1,0 +1,11 @@
+[Unit]
+Description=STYL Yellowfin Scanner Test
+Requires=dbus.service
+After=styl-system-startup.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/barcode_test /dev/scanner
+
+[Install]
+WantedBy=multi-user.target
