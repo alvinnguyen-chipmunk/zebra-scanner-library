@@ -1,4 +1,4 @@
-AC_INIT([libstylscanner], [1.2], [alvin.nguyen@styl.solutions])
+AC_INIT([libstylscanner], [1.3], [alvin.nguyen@styl.solutions])
 AC_CONFIG_SRCDIR([configure.ac])
 
 dnl Must come before AM_INIT_AUTOMAKE.
@@ -52,6 +52,16 @@ AC_ARG_ENABLE([console],
 esac],[console=false])
 
 AM_CONDITIONAL([CONSOLE], [test x$console = xtrue])
+
+AC_ARG_ENABLE([systemd],
+[  --enable-systemd    Run application under systemd.],
+[case "${enableval}" in
+  yes) systemd=true ;;
+  no)  systemd=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-systemd]) ;;
+esac],[systemd=false])
+
+AM_CONDITIONAL([SYSTEMD], [test x$systemd = xtrue])
 
 dnl ================================================================
 

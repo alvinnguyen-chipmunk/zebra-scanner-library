@@ -59,6 +59,7 @@ static int scanner = 0;
 
 static int styl_scanner_lockfile_fd = -1;
 
+static int testCount = 0;
 /********** Local Macro definition section ************************************/
 
 #define MSB_16(x)		    (x >> 8)
@@ -310,14 +311,25 @@ static int ReadSSI(int fd, byte *buff, const int timeout)
         // Get n next bytes (n = length + 2 - 1), 2 last bytes are cksum
         ret += (int) read(fd, &recvBuff[INDEX_LEN + 1], readRequest);
 
-        if ( (ret > 0) || (IsChecksumOK(recvBuff)) )
+        if(ret <= 0)
         {
-            WriteSSI(fd, SSI_CMD_ACK, NULL, 0);
+            STYL_ERROR("read: %d - %s", errno, strerror(errno));
+            ret = -1;
+            break;
+        }
+
+        if (IsChecksumOK(recvBuff))
+        {
+            if(WriteSSI(fd, SSI_CMD_ACK, NULL, 0) != EXIT_SUCCESS)
+            {
+                STYL_ERROR("Send ACK for checksum fail.");
+            }
             memcpy(&buff[lastIndex], recvBuff, PKG_LEN(recvBuff) + 2);
             lastIndex += PKG_LEN(recvBuff) + 2;
         }
         else
         {
+            STYL_ERROR("Checksum fail!");
             ret = -1;
             break;
         }
@@ -542,6 +554,7 @@ static void PrintError(int ret)
 
 /*!
  * \brief Write2File prints decode data to file
+ * \return None
  */
 static void Write2File (char *decodeData, int len)
 {
@@ -556,7 +569,12 @@ static void Write2File (char *decodeData, int len)
                                                tm.tm_min,
                                                tm.tm_sec);
 
+    #ifdef __SYSTEMD__
+    const char * homeDir = "/home/root";
+    #else
     const char * homeDir = getenv("HOME");
+    #endif // __SYSTEMD__
+
     char logFullPath[1024];
     memset(logFullPath, 0, 1024);
     sprintf (logFullPath, "%s/%s", homeDir, LOGPATH);
@@ -577,6 +595,7 @@ static void Write2File (char *decodeData, int len)
 
     close(fd);
 }
+
 
 /********** Global function definition section ********************************/
 
@@ -869,11 +888,25 @@ int mlsBarcodeReader_Flush()
 int mlsBarcodeReader_Test()
 {
     int ret = EXIT_SUCCESS;
-    byte recvBuff[4096] = {0};
+    int ret_2 = EXIT_SUCCESS;
+
     const int timeout = 10;	// 1/10 sec
+    int barcodeLen = 0;
+    byte recvBuff[4096] = {0};
+
     char buff[4096];
     memset(buff, 0, 4096);
-    int barcodeLen = 0;
+
+    char tmp[64];
+    memset(tmp, 0, 64);
+
+
+    testCount++;
+    int n = sprintf(tmp, "****************** %d ****************", testCount);
+    Write2File(tmp, n);
+
+    Write2File("[1] - More one time", strlen("[1] - More one time"));
+    STYL_ERROR("\n\n[1] - More one time");
 
     ret = WriteSSI(scanner, SSI_START_DECODE, NULL, 0);
 
@@ -884,6 +917,8 @@ int mlsBarcodeReader_Test()
         DEBUG_1();
         PrintError(ret);
         ret = EXIT_FAILURE;
+        Write2File("[2] - Write start decode fail", strlen("[2] - Write start decode fail"));
+        STYL_ERROR("[2] - Write start decode fail");
     }
 
     STYL_DEBUG("********** WAITING EVENT (ReadSSI #1)");
@@ -904,17 +939,28 @@ int mlsBarcodeReader_Test()
         }
         else
         {
-            sleep(2);
-            ret = WriteSSI(scanner, SSI_STOP_DECODE, NULL, 0);
-            STYL_DEBUG("ret: %d", ret);
-            if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
-            {
-                DEBUG_1();
-                PrintError(ret);
-                ret = EXIT_FAILURE;
-            }
-            DEBUG_1();
+            ret = EXIT_FAILURE;
+            PrintError(ret);
+            Write2File("[3] - Read decode data fail", strlen("[3] - Read decode date fail"));
+            STYL_ERROR("[3] - Read decode data fail");
         }
+    }
+    else
+    {
+        ret = EXIT_FAILURE;
+        PrintError(ret);
+        Write2File("[4] - Read event data fail", strlen("[4] - Read event data fail"));
+        STYL_ERROR("[4] - Read event data fail");
+    }
+
+    ret_2 = WriteSSI(scanner, SSI_STOP_DECODE, NULL, 0);
+    STYL_DEBUG("ret_2: %d", ret_2);
+    if ( (EXIT_SUCCESS!=ret_2) || (EXIT_SUCCESS!=CheckACK(scanner)) )
+    {
+        DEBUG_1();
+        PrintError(ret_2);
+        Write2File("[5] - Write stop decode fail", strlen("[5] - Write stop decode fail"));
+        STYL_ERROR("[5] - Write stop decode fail");
     }
 
     return ret;

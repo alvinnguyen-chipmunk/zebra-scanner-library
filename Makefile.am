@@ -5,6 +5,12 @@ ACLOCAL_AMFLAGS = -I m4
 pkgconfig_DATA = libstylssi.pc
 pkgconfigdir = $(libdir)/pkgconfig
 
+if SYSTEMD
+SYSTEMD_CFLAGS = -D__SYSTEMD__
+else
+SYSTEMD_CFLAGS =
+endif
+
 if CONSOLE
 CONSOLE_CFLAGS = -D__CONSOLE__
 else
@@ -20,7 +26,7 @@ endif
 STYLSCANNER_includedir = $(includedir)
 STYLSCANNER_SOURCES = ssi.h mlsBarcode.h mlsBarcode.c
 STYLSCANNER_include_HEADERS = mlsBarcode.h
-STYLSCANNER_CFLAGS = $(DEBUG_CFLAGS) $(CONSOLE_CFLAGS) -std=c99 
+STYLSCANNER_CFLAGS = $(DEBUG_CFLAGS) $(CONSOLE_CFLAGS) $(SYSTEMD_CFLAGS) -std=c99 
 STYLSCANNER_LDFLAGS = 
 
 ####################### STYL SCANNER SSI LIBTOOL LIBRARY ##########################
