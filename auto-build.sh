@@ -10,7 +10,7 @@ FULL_PKG_NAME=""
 #---------------------------------------------------------------------------------
 # Build and install binutils
 #---------------------------------------------------------------------------------
-config_stylscanner()
+_configure_()
 {
 	if [ "$OS_TYPE" = "NA" ]; then
 		OS_TYPE=$(expr substr "$(lsb_release -i)" 17 33)
@@ -39,7 +39,7 @@ config_stylscanner()
 	fi
 }
 
-make_stylscanner()
+_make_()
 {
 	
 	mkdir -p $FOLDER && cd $FOLDER
@@ -68,7 +68,7 @@ create_install_sh()
 
 TYPE_PACK_OP="-D"
 
-package_stylscanner()
+_package_()
 {
 	create_install_sh
 
@@ -191,14 +191,14 @@ do
 	PRE_PAR=$PARAM
 done
 IS_DO=$FALSE
-config_stylscanner
+_configure_
 
 if [ $IS_MAKE -eq $TRUE ]; then
 	IS_DO=$TRUE
-	make_stylscanner
+	_make_
 elif [ $IS_PACKAGE -eq $TRUE ]; then
 	IS_DO=$TRUE
-	package_stylscanner
+	_package_
 fi
 if [ $IS_DO -eq $FALSE ]; then
 	_help_
