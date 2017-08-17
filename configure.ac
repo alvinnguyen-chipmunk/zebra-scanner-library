@@ -2,9 +2,13 @@ AC_INIT([libstylscanner], [1.3], [alvin.nguyen@styl.solutions])
 AC_CONFIG_SRCDIR([configure.ac])
 
 dnl Must come before AM_INIT_AUTOMAKE.
+
+# Auxiliary files go "build-aux" directory
 AC_CONFIG_AUX_DIR([build-aux])
 
-AM_INIT_AUTOMAKE([-Wall subdir-objects])
+# Init recursive automake
+AM_INIT_AUTOMAKE([-Wall])
+
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_ENABLE_SHARED
@@ -65,7 +69,7 @@ AM_CONDITIONAL([SYSTEMD], [test x$systemd = xtrue])
 
 dnl ================================================================
 
-AC_CONFIG_FILES([ Makefile])
+AC_CONFIG_FILES([ Makefile src/Makefile examples/Makefile])
 AC_OUTPUT([ libstylssi.pc])
 
 
