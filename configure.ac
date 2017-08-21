@@ -70,7 +70,7 @@ AM_CONDITIONAL([SYSTEMD], [test x$systemd = xtrue])
 dnl ================================================================
 
 AC_CONFIG_FILES([ Makefile src/Makefile examples/Makefile])
-AC_OUTPUT([ libstylssi.pc])
+AC_OUTPUT([ stylssi.pc])
 
 
 dnl ================================================================

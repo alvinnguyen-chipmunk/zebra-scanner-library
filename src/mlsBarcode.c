@@ -972,7 +972,7 @@ int mlsBarcodeReader_Test()
  * \return string of software version
  * -
  */
-char *GetVersion(void)
+const char *GetVersion(void)
 {
     return VERSION;
 }

@@ -137,7 +137,7 @@ int mlsBarcodeReader_Close();
  * \return string of software version
  * -
  */
-char *GetVersion(void);
+const char *GetVersion(void);
 
 /*!
  * \brief mlsBarcodeReader_reopen() closes and re-opens scanner device file
