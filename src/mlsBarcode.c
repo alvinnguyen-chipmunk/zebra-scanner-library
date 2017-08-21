@@ -69,7 +69,6 @@ static int testCount = 0;
 #define FALSE				0
 
 #define LOCK_SCANNER_PATH	"/tmp/lock_scanner"
-#define LOCK_SCANNER_PATH	"/tmp/lock_scanner"
 
 #define TIMEOUT_MSEC		50
 
@@ -98,6 +97,10 @@ static void         PrintError              (int ret);
 static int          ExtractBarcode          (char *buff, byte *pkg, const int buffLength);
 static void         DisplayPkg              (byte *pkg);
 static void         Write2File              (char *decodeData, int len);
+
+static int          mlsBarcodeReader_Enable ();
+static int          mlsBarcodeReader_Disable();
+static int          mlsBarcodeReader_Flush  ();
 
 /********** Local (static) function definition section ************************/
 
@@ -596,6 +599,60 @@ static void Write2File (char *decodeData, int len)
     close(fd);
 }
 
+/*!
+ * \brief mlsBarcodeReader_Enable Enable Reader for scaning QR code/Bar Code
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+static int mlsBarcodeReader_Enable()
+{
+    int ret = EXIT_SUCCESS;
+    ret = WriteSSI(scanner, SSI_SCAN_ENABLE, NULL, 0);
+    if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
+    {
+        PrintError(ret);
+        ret = EXIT_FAILURE;
+    }
+    return ret;
+}
+
+/*!
+ * \brief mlsBarcodeReader_Disable Disable reader, Reader can't scan any QR code/bar code
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+static int mlsBarcodeReader_Disable()
+{
+    int ret = EXIT_SUCCESS;
+    ret = WriteSSI(scanner, SSI_SCAN_DISABLE, NULL, 0);
+    if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
+    {
+        PrintError(ret);
+        ret = EXIT_FAILURE;
+    }
+    return ret;
+}
+
+/*!
+ * \brief mlsBarcodeReader_Flush Flush buffer of scanner
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+static int mlsBarcodeReader_Flush()
+{
+    int ret = EXIT_SUCCESS;
+    ret = WriteSSI(scanner, SSI_FLUSH_QUEUE, NULL, 0);
+    if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
+    {
+        PrintError(ret);
+        ret = EXIT_FAILURE;
+    }
+    return ret;
+}
+
 
 /********** Global function definition section ********************************/
 
@@ -611,7 +668,10 @@ int mlsBarcodeReader_Open(const char *name)
 
     //assert(name != NULL);
     if(name == NULL)
+    {
+        STYL_ERROR("Not found device path.");
         return EXIT_FAILURE;
+    }
 
     STYL_INFO("Scanner port: %s", name);
 
@@ -825,59 +885,6 @@ int mlsBarcodeReader_Reopen(const char *name)
     return error;
 }
 
-/*!
- * \brief mlsBarcodeReader_Enable Enable Reader for scaning QR code/Bar Code
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-int mlsBarcodeReader_Enable()
-{
-    int ret = EXIT_SUCCESS;
-    ret = WriteSSI(scanner, SSI_SCAN_ENABLE, NULL, 0);
-    if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
-    {
-        PrintError(ret);
-        ret = EXIT_FAILURE;
-    }
-    return ret;
-}
-
-/*!
- * \brief mlsBarcodeReader_Disable Disable reader, Reader can't scan any QR code/bar code
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-int mlsBarcodeReader_Disable()
-{
-    int ret = EXIT_SUCCESS;
-    ret = WriteSSI(scanner, SSI_SCAN_DISABLE, NULL, 0);
-    if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
-    {
-        PrintError(ret);
-        ret = EXIT_FAILURE;
-    }
-    return ret;
-}
-
-/*!
- * \brief mlsBarcodeReader_Flush Flush buffer of scanner
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-int mlsBarcodeReader_Flush()
-{
-    int ret = EXIT_SUCCESS;
-    ret = WriteSSI(scanner, SSI_FLUSH_QUEUE, NULL, 0);
-    if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
-    {
-        PrintError(ret);
-        ret = EXIT_FAILURE;
-    }
-    return ret;
-}
 
 /*!
  * \brief mlsBarcodeReader_Test Test subroutine

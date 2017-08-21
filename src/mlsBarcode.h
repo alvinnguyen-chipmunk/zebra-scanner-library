@@ -107,21 +107,7 @@ int mlsBarcodeReader_Open(const char *name);
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-int mlsBarcodeReader_Enable();
 
-/*!
- * \brief mlsBarcodeReader_Disable Disable reader, Reader can't scan any QR code/bar code
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-int mlsBarcodeReader_Disable();
-
-/*!
- * \brief mlsBarcodeReader_ReadData Reader data from descriptor file (blocking read)
- * \param buff point to buffer which store data.
- * \return number of byte(s) read.
- */
 unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const int timeout);
 
 /*!
@@ -146,14 +132,6 @@ const char *GetVersion(void);
  * - EXIT_FAILURE: Fail
  */
 int mlsBarcodeReader_Reopen(const char *name);
-
-/*!
- * \brief mlsBarcodeReader_Flush Flush buffer of scanner
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-int mlsBarcodeReader_Flush();
 
 /*!
  * \brief mlsBarcodeReader_Test Test subroutine
