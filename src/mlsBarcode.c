@@ -550,7 +550,7 @@ static void PrintError(int ret)
         break;
 
     default:
-        printf("\n");
+        printf(" unknown\n");
         break;
     }
 }
@@ -561,6 +561,8 @@ static void PrintError(int ret)
  */
 static void Write2File (char *decodeData, int len)
 {
+    #if 1
+    #else
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
     char timeBuff[1024];
@@ -597,6 +599,7 @@ static void Write2File (char *decodeData, int len)
     }
 
     close(fd);
+    #endif // 0
 }
 
 /*!
@@ -892,7 +895,7 @@ int mlsBarcodeReader_Reopen(const char *name)
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-int mlsBarcodeReader_Test()
+int mlsBarcodeReader_Test(char * testString)
 {
     int ret = EXIT_SUCCESS;
     int ret_2 = EXIT_SUCCESS;
@@ -904,35 +907,22 @@ int mlsBarcodeReader_Test()
     char buff[4096];
     memset(buff, 0, 4096);
 
-    char tmp[64];
-    memset(tmp, 0, 64);
-
-
-    testCount++;
-    int n = sprintf(tmp, "****************** %d ****************", testCount);
-    Write2File(tmp, n);
-
-    Write2File("[1] - More one time", strlen("[1] - More one time"));
-    STYL_ERROR("\n\n[1] - More one time");
+    STYL_INFO("    [1] - More one time");
 
     ret = WriteSSI(scanner, SSI_START_DECODE, NULL, 0);
 
-    STYL_DEBUG("ret: %d", ret);
-
     if ( (EXIT_SUCCESS!=ret) || (EXIT_SUCCESS!=CheckACK(scanner)) )
     {
-        DEBUG_1();
         PrintError(ret);
         ret = EXIT_FAILURE;
-        Write2File("[2] - Write start decode fail", strlen("[2] - Write start decode fail"));
-        STYL_ERROR("[2] - Write start decode fail");
+        STYL_ERROR("    [2] - Write start decode fail");
     }
 
-    STYL_DEBUG("********** WAITING EVENT (ReadSSI #1)");
+    STYL_WARNING("********** WAITING EVENT (ReadSSI #1)");
     ret = ReadSSI(scanner, recvBuff, timeout);
     if (ret > 0)
     {
-        STYL_DEBUG("********** READ DECODE DATA (ReadSSI #2)");
+        STYL_WARNING("********** READ DECODE DATA (ReadSSI #2)");
         ret = ReadSSI(scanner, recvBuff, timeout);
         if (ret > 0)
         {
@@ -941,33 +931,34 @@ int mlsBarcodeReader_Test()
             barcodeLen = ExtractBarcode(buff, recvBuff, 4096);
             DisplayPkg(recvBuff);
             printf("\e[36mBarcode(%d):\n%s\e[0m\n\n", barcodeLen, buff);
-            Write2File(buff, barcodeLen);
-            ret = EXIT_SUCCESS;
+            if (strcmp(testString, buff) == 0)
+            {
+                ret = EXIT_SUCCESS;
+            }
+            else
+            {
+                ret = EXIT_FAILURE;
+            }
         }
         else
         {
             ret = EXIT_FAILURE;
             PrintError(ret);
-            Write2File("[3] - Read decode data fail", strlen("[3] - Read decode date fail"));
-            STYL_ERROR("[3] - Read decode data fail");
+            STYL_ERROR("    [3] - Read decode data fail");
         }
     }
     else
     {
         ret = EXIT_FAILURE;
         PrintError(ret);
-        Write2File("[4] - Read event data fail", strlen("[4] - Read event data fail"));
-        STYL_ERROR("[4] - Read event data fail");
+        STYL_ERROR("    [4] - Read event data fail");
     }
 
     ret_2 = WriteSSI(scanner, SSI_STOP_DECODE, NULL, 0);
-    STYL_DEBUG("ret_2: %d", ret_2);
     if ( (EXIT_SUCCESS!=ret_2) || (EXIT_SUCCESS!=CheckACK(scanner)) )
     {
-        DEBUG_1();
         PrintError(ret_2);
-        Write2File("[5] - Write stop decode fail", strlen("[5] - Write stop decode fail"));
-        STYL_ERROR("[5] - Write stop decode fail");
+        STYL_ERROR("    [5] - Write stop decode fail");
     }
 
     return ret;

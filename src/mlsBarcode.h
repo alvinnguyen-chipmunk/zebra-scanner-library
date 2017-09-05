@@ -135,11 +135,12 @@ int mlsBarcodeReader_Reopen(const char *name);
 
 /*!
  * \brief mlsBarcodeReader_Test Test subroutine
+ * \param testString: A known barcode/qrcode
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-int mlsBarcodeReader_Test();
+int mlsBarcodeReader_Test(char * testString);
 
 #ifdef __cplusplus
 }

@@ -1,4 +1,4 @@
-AC_INIT([libstylscanner], [1.0], [alvin.nguyen@styl.solutions])
+AC_INIT([libstylscanner], [2.0.0], [alvin.nguyen@styl.solutions])
 AC_CONFIG_SRCDIR([configure.ac])
 
 dnl Must come before AM_INIT_AUTOMAKE.

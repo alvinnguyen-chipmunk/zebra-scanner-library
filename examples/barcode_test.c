@@ -70,7 +70,7 @@ int main(int argc, const char * argv[])
     signal(SIGINT, HandleSignal);
     while (isRunning)
     {
-        ret = mlsBarcodeReader_Test();
+        ret = mlsBarcodeReader_Test("http://www.styl.com.sg");
         if (ret == EXIT_SUCCESS)
             printf("[BARCODE_TEST]: Testing OK !\n");
         else
