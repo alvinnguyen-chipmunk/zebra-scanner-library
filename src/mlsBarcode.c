@@ -675,7 +675,7 @@ int mlsBarcodeReader_Open(const char *name)
 
     if(name == NULL)
     {
-        STYL_ERROR("Device path is not give. Auto-detect enable.");
+        STYL_WARNING("Device path is not give. Auto-detect enable.");
         deviceNode = mlsDeviceGetNode(SCANNER_SUBSYSTEM, SCANNER_VENDOR_ID, SCANNER_PRODUCT_ID);
     }
     else
