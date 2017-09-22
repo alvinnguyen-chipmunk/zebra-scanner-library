@@ -1,0 +1,9 @@
+Scanner SSI library developer and credits list
+===================================
+
+Alvin Nguyen <alvin.nguyen@styl.solutions>
+
+- Maintainer and overall author
+- GNU automake/autoconf support
+- The stuff borrowed from systemd
+- Quite a lot of additions.
