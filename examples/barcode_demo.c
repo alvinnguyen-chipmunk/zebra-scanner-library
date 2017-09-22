@@ -55,7 +55,9 @@ int main(int argc, const char * argv[])
     const int timeout = 10;	// 1/10 sec
     memset(buff, 0, BUFFER_LEN);
 
-    printf("Version: %s\n", GetVersion());
+    printf("Version: %s\n", mlsBarcodeReader_GetVersion());
+
+    printf("Device: %s\n", mlsBarcodeReader_GetDevice());
 
     ret = mlsBarcodeReader_Open(deviceName);
     if (ret!=EXIT_SUCCESS)

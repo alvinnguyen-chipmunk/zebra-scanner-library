@@ -5,12 +5,6 @@ else
 SYSTEMD_CFLAGS =
 endif
 
-if CONSOLE
-CONSOLE_CFLAGS = -D__CONSOLE__
-else
-CONSOLE_CFLAGS = 
-endif
-
 if DEBUG
 DEBUG_CFLAGS = -g -ggdb
 else
@@ -18,10 +12,10 @@ DEBUG_CFLAGS = -D__RELEASE__
 endif
 
 STYLSCANNER_includedir = $(includedir)
-STYLSCANNER_SOURCES = ssi.h mlsBarcode.h mlsBarcode.c
+STYLSCANNER_SOURCES = ssi.h mlsUtils.h mlsDevice.c mlsDevice.h mlsBarcode.h mlsBarcode.c
 STYLSCANNER_include_HEADERS = mlsBarcode.h
-STYLSCANNER_CFLAGS = $(DEBUG_CFLAGS) $(CONSOLE_CFLAGS) $(SYSTEMD_CFLAGS) -std=c99 
-STYLSCANNER_LDFLAGS = 
+STYLSCANNER_CFLAGS = $(DEBUG_CFLAGS) $(SYSTEMD_CFLAGS) $(LIBUDEV_CFLAGS)-std=c99
+STYLSCANNER_LDFLAGS = $(LIBUDEV_LIBS)
 
 ####################### STYL SCANNER SSI LIBTOOL LIBRARY ##########################
 lib_LTLIBRARIES = libstylssi.la

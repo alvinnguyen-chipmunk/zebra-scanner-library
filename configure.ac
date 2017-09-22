@@ -35,6 +35,14 @@ AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 AC_STRUCT_TM
 
+# LIBUDEV checks
+udev_module="libudev"
+PKG_CHECK_MODULES(LIBUDEV, [$udev_module])
+AC_SUBST(LIBUDEV_CFLAGS)
+AC_SUBST(LIBUDEV_LIBS)
+LIBUDEV_VERSION=`$PKG_CONFIG --modversion ${udev_module}`
+
+
 dnl ================================================================
 
 AC_ARG_ENABLE([debug],
@@ -46,16 +54,6 @@ AC_ARG_ENABLE([debug],
 esac],[debug=false])
 
 AM_CONDITIONAL([DEBUG], [test x$debug = xtrue])
-
-AC_ARG_ENABLE([console],
-[  --enable-console    Let print information and warning to console.],
-[case "${enableval}" in
-  yes) console=true ;;
-  no)  console=false ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --enable-console]) ;;
-esac],[console=false])
-
-AM_CONDITIONAL([CONSOLE], [test x$console = xtrue])
 
 AC_ARG_ENABLE([systemd],
 [  --enable-systemd    Run application under systemd.],
@@ -78,8 +76,8 @@ dnl ================================================================
 echo "----------------------------------------------------------------"
 echo "----------------------------------------------------------------"
 echo ""
-echo "Install STYL SSI LIBRARY in           : ${prefix}"
-
+echo "Install STYL SSI LIBRARY in     : ${prefix}"
+echo "Using UDEV library version      : ${LIBUDEV_VERSION}"
 echo ""
 echo "Configuration is done OK."
 echo ""

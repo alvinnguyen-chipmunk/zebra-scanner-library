@@ -39,6 +39,8 @@
 
 #include "ssi.h"
 #include "mlsBarcode.h"
+#include "mlsUtils.h"
+#include "mlsDevice.h"
 
 /********** Local Type definition section *************************************/
 
@@ -669,16 +671,21 @@ int mlsBarcodeReader_Open(const char *name)
 {
     int ret = EXIT_SUCCESS;
 
-    //assert(name != NULL);
+    const char *deviceNode;
+
     if(name == NULL)
     {
-        STYL_ERROR("Not found device path.");
-        return EXIT_FAILURE;
+        STYL_ERROR("Device path is not give. Auto-detect enable.");
+        deviceNode = mlsDeviceGetNode(SCANNER_SUBSYSTEM, SCANNER_VENDOR_ID, SCANNER_PRODUCT_ID);
+    }
+    else
+    {
+        deviceNode = name;
     }
 
-    STYL_INFO("Scanner port: %s", name);
+    STYL_INFO(" ** Scanner port: %s", deviceNode);
 
-    scanner = OpenTTY(name);
+    scanner = OpenTTY(deviceNode);
     if (scanner <= 0)
     {
         scanner = -1;
@@ -704,7 +711,6 @@ int mlsBarcodeReader_Open(const char *name)
         STYL_ERROR("Can not flush buffer of device");
         goto ERROR;
     }
-    STYL_INFO("Flushed buffer of device");
 
     /* Enable device to scanning */
     if(mlsBarcodeReader_Enable() != EXIT_SUCCESS)
@@ -712,7 +718,6 @@ int mlsBarcodeReader_Open(const char *name)
         STYL_ERROR("Can not enable device to scanning");
         goto ERROR;
     }
-    STYL_INFO("Enabled device to scanning");
 
 EXIT:
     return ret;
@@ -737,7 +742,6 @@ int mlsBarcodeReader_Close()
     {
         STYL_ERROR("Can not disable scanner device");
     }
-    STYL_INFO("Disabled scanner device");
 
     error = CloseTTY();
     return error;
@@ -966,13 +970,22 @@ int mlsBarcodeReader_Test(char * testString)
 
 
 /*!
- * \brief GetVersion provide software version
+ * \brief mlsBarcodeReader_GetVersion provide software version
  * \return string of software version
  * -
  */
-const char *GetVersion(void)
+const char *mlsBarcodeReader_GetVersion(void)
 {
     return VERSION;
+}
+
+/*!
+ * \brief mlsBarcodeReader_GetDevice - Get the device node file name of the udev device
+ * \return 	the device node file name of the udev device, or NULL if no device node exists
+ */
+const char *mlsBarcodeReader_GetDevice(void)
+{
+    return mlsDeviceGetNode(SCANNER_SUBSYSTEM, SCANNER_VENDOR_ID, SCANNER_PRODUCT_ID);
 }
 
 /**@}*/

@@ -15,5 +15,5 @@ barcode_demo_LDADD = -lstylssi -L./../src
 ########################## STYL SCANNER TEST ######################################
 bin_PROGRAMS += barcode_test
 barcode_test_SOURCES = barcode_test.c
-barcode_test_CFLAGS = $(DEBUG_CFLAGS) -std=c99 -I$(top_srcdir)/src
-barcode_test_LDADD = -lstylssi -L./../src
+barcode_test_CFLAGS = $(DEBUG_CFLAGS) -std=c99 -I$(top_srcdir)/src $(LIBUDEV_CFLAGS)
+barcode_test_LDADD = -lstylssi -L./../src $(LIBUDEV_LIBS)

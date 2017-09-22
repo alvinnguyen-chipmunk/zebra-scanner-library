@@ -8,7 +8,7 @@ localedir=@localedir@
 
 Name: STYL SCANNER SSI
 Description: A library to scanning qrcode/barcode
-Requires:  
+Requires: libudev 
 Version: @VERSION@
 Libs: -L${libdir} -lstylssi
 Cflags: -I${includedir}/styl
