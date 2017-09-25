@@ -24,6 +24,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <unistd.h>
+#include <string.h>
+#include <pthread.h>
 
 #include "mlsBarcode.h"
 
@@ -64,13 +67,13 @@ int main(int argc, const char * argv[])
     }
 
     // This is to test Reopen API only, not required
-    mlsBarcodeReader_Reopen(deviceName);
+//    mlsBarcodeReader_Reopen(deviceName);
 
     isRunning = TRUE;
     signal(SIGINT, HandleSignal);
     while (isRunning)
     {
-        ret = mlsBarcodeReader_Test("http://www.styl.com.sg");
+//        ret = mlsBarcodeReader_Test("http://www.styl.com.sg");
         if (ret == EXIT_SUCCESS)
             printf("[BARCODE_TEST]: Testing OK !\n");
         else

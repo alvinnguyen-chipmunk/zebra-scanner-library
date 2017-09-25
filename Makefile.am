@@ -2,6 +2,8 @@
 
 SUBDIRS = src examples
 
+AUTOMAKE_OPTIONS = 1.7
+
 ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST = autogen.sh stylssi.pc.in

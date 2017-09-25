@@ -6,12 +6,11 @@ dnl Must come before AM_INIT_AUTOMAKE.
 # Auxiliary files go "build-aux" directory
 AC_CONFIG_AUX_DIR([build-aux])
 
-# Init recursive automake
-AM_INIT_AUTOMAKE([-Wall])
-
+AM_INIT_AUTOMAKE([-Wall subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_ENABLE_SHARED
+AC_ENABLE_STATIC
 
 AC_PROG_CC
 AM_PROG_CC_C_O
@@ -42,6 +41,12 @@ AC_SUBST(LIBUDEV_CFLAGS)
 AC_SUBST(LIBUDEV_LIBS)
 LIBUDEV_VERSION=`$PKG_CONFIG --modversion ${udev_module}`
 
+# Glib-2.0 checks
+glib_modules="glib-2.0"
+PKG_CHECK_MODULES([GLIB], [$glib_modules])
+AC_SUBST(GLIB_CFLAGS)
+AC_SUBST(GLIB_LIBS)
+GLIB_VERSION=`$PKG_CONFIG --modversion ${glib_modules}`
 
 dnl ================================================================
 
@@ -68,6 +73,7 @@ echo "----------------------------------------------------------------"
 echo ""
 echo "Install STYL SSI LIBRARY in     : ${prefix}"
 echo "Using UDEV library version      : ${LIBUDEV_VERSION}"
+echo "Using GLIB version              : ${GLIB_VERSION}"
 echo ""
 echo "Configuration is done OK."
 echo ""

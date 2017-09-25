@@ -23,7 +23,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <signal.h>
+#include <pthread.h>
 
 #include "mlsBarcode.h"
 
@@ -62,28 +64,28 @@ int main(int argc, const char * argv[])
     ret = mlsBarcodeReader_Open(deviceName);
     if (ret!=EXIT_SUCCESS)
     {
-        goto EXIT;
+        goto __exit;
     }
 
     // This is to test Reopen API only, not required
-    mlsBarcodeReader_Reopen(deviceName);
+//    mlsBarcodeReader_Reopen(deviceName);
 
-    isRunning = TRUE;
-    signal(SIGINT, HandleSignal);
-    while (isRunning)
-    {
-        ret = mlsBarcodeReader_ReadData(buff, BUFFER_LEN, timeout);
-        if (ret > 0)
-        {
-            barcodeLen = ret;
-            printf("\e[36mBarcode(%d):\n%s\e[0m\n\n", barcodeLen, buff);
-            memset(buff, 0, BUFFER_LEN);
-        }
-    }
-
+//    isRunning = TRUE;
+//    signal(SIGINT, HandleSignal);
+//    while (isRunning)
+//    {
+//        ret = mlsBarcodeReader_ReadData(buff, BUFFER_LEN, timeout);
+//        if (ret > 0)
+//        {
+//            barcodeLen = ret;
+//            printf("\e[36mBarcode(%d):\n%s\e[0m\n\n", barcodeLen, buff);
+//            memset(buff, 0, BUFFER_LEN);
+//        }
+//    }
+//
     mlsBarcodeReader_Close();
 
-EXIT:
+__exit:
     printf("Finished!\n");
     return ret;
 }
