@@ -60,6 +60,16 @@ esac],[debug=false])
 
 AM_CONDITIONAL([DEBUG], [test x$debug = xtrue])
 
+AC_ARG_ENABLE([release],
+[  --enable-release    Do not show position of alert information line],
+[case "${enableval}" in
+  yes) release=true ;;
+  no)  release=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-release]) ;;
+esac],[release=false])
+
+AM_CONDITIONAL([RELEASE], [test x$release = xtrue])
+
 dnl ================================================================
 
 AC_CONFIG_FILES([ Makefile src/Makefile examples/Makefile])

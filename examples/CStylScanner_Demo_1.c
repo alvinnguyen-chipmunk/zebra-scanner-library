@@ -33,7 +33,7 @@
 /********** Local Constant and compile switch definition section **************/
 /********** Local Macro definition section ************************************/
 
-#define BUFFER_LEN	4000
+#define BUFFER_LEN	4096
 #define TRUE		1
 #define FALSE		0
 
@@ -70,19 +70,20 @@ int main(int argc, const char * argv[])
     // This is to test Reopen API only, not required
 //    mlsBarcodeReader_Reopen(deviceName);
 
-//    isRunning = TRUE;
-//    signal(SIGINT, HandleSignal);
-//    while (isRunning)
-//    {
-//        ret = mlsBarcodeReader_ReadData(buff, BUFFER_LEN, timeout);
-//        if (ret > 0)
-//        {
-//            barcodeLen = ret;
-//            printf("\e[36mBarcode(%d):\n%s\e[0m\n\n", barcodeLen, buff);
-//            memset(buff, 0, BUFFER_LEN);
-//        }
-//    }
-//
+    isRunning = TRUE;
+    signal(SIGINT, HandleSignal);
+
+    while (isRunning)
+    {
+        ret = mlsBarcodeReader_ReadData(buff, BUFFER_LEN, timeout);
+        if (ret > 0)
+        {
+            barcodeLen = ret;
+            printf("\e[36mBarcode(%d):\n%s\e[0m\n\n", barcodeLen, buff);
+            memset(buff, 0, BUFFER_LEN);
+        }
+    }
+
     mlsBarcodeReader_Close();
 
 __exit:

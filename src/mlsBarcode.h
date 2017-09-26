@@ -57,22 +57,20 @@ const char *mlsBarcodeReader_GetVersion(void);
  */
 int mlsBarcodeReader_Open(const char *name);
 
-/*!
- * \brief mlsBarcodeReader_Manual_Open: Open Reader descriptor file for read write manually.
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-int mlsBarcodeReader_Manual_Open(const char *name);
+///*!
+// * \brief mlsBarcodeReader_Manual_Open: Open Reader descriptor file for read write manually.
+// * \return
+// * - EXIT_SUCCESS: Success
+// * - EXIT_FAILURE: Fail
+// */
+//int mlsBarcodeReader_Manual_Open(const char *name);
 
 /*!
- * \brief mlsBarcodeReader_Enable Enable Reader for scanning QR code/Bar Code.
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
+ * \brief mlsBarcodeReader_ReadData Reader data from descriptor file (blocking read)
+ * \param buff point to buffer which store data.
+ * \return number of byte(s) read.
  */
-
-unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const int timeout);
+unsigned int mlsBarcodeReader_ReadData(char *buffer, const int buffLength, const int timeout);
 
 /*!
  * \brief mlsBarcodeReader_close close Reader file descriptor.
@@ -81,24 +79,6 @@ unsigned int mlsBarcodeReader_ReadData(char *buff, const int buffLength, const i
  * - EXIT_FAILURE: Fail
  */
 int mlsBarcodeReader_Close();
-
-/*!
- * \brief mlsBarcodeReader_reopen() closes and re-opens scanner device file
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-int mlsBarcodeReader_Reopen(const char *name);
-
-/*!
- * \brief mlsBarcodeReader_Test Test subroutine
- * \param testString: A known barcode/qrcode
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-int mlsBarcodeReader_Test(char * testString);
-
 
 #ifdef __cplusplus
 }
