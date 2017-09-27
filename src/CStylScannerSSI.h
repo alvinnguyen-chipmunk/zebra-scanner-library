@@ -60,10 +60,18 @@ gint StylScannerSSI_CheckACK(gint pFile);
 /*!
  * \brief StylScannerSSI_IsContinue: check package's type
  * \return
- * - TRUE  : Is last package in multiple packages stream
- * - FALSE : Is intermediate package in multiple packages stream
+ * - 0  : Is last package in multiple packages stream
+ * - 1 : Is intermediate package in multiple packages stream
  */
 gint StylScannerSSI_IsContinue(byte *package);
+
+/*!
+ * \brief StylScannerSSI_CorrectPackage: check package's is correct
+ * \return
+ * - 1 : Receive package is correct
+ * - 0 : Receive package is incorrect
+ */
+gint StylScannerSSI_CorrectPackage(byte *package);
 
 #ifdef __cplusplus
 }

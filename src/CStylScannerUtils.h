@@ -99,7 +99,8 @@ typedef unsigned char byte;
 #define SSI_CMD_SCAN_DISABLE                0xEA
 
 /* ************** Devices ID **************************/
-#define SSI_ID_HOST							0x04
+#define SSI_ID_HOST                         0x04
+#define SSI_ID_DECODER                      0x00
 
 /* ************** Field length ************************/
 #define SSI_LEN_HEADER						0x04
@@ -150,6 +151,9 @@ typedef unsigned char byte;
 #define PACKAGE_LEN_MAXIMUM                257
 #define PACKAGE_LEN_ACK_MAXIMUM            8
 
+/* ************** TTY configure **************************/
+#define TTY_BUFF_MAXSIZE                    0xFF
+#define TTY_TIMEOUT                         300 /* mili-seconds */
 /********** Function declaration section **************************************/
 
 #ifdef __cplusplus

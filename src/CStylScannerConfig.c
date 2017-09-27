@@ -25,6 +25,7 @@
 #include <sys/file.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <termios.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -49,6 +50,7 @@ static gint StylScannerLockfile_FD  = -1;
 static gint         StylScannerConfig_LockDevice            (gint pFile, gboolean isLock);
 
 /********** Local (static) function definition section ************************/
+
 /*!
  * \brief StylScannerConfig_LockDevice: Lock or unlock device
  * \return
@@ -100,7 +102,7 @@ gint StylScannerConfig_OpenTTY(gchar *deviceNode)
     }
     else
     {
-        pFile = open(deviceNode, O_RDWR);
+        pFile = open(deviceNode, O_RDWR | O_NOCTTY | O_NDELAY | O_NONBLOCK);
         if (pFile <= 0)
         {
             STYL_ERROR("Open Scanner device %s: open: %d - %s\n", deviceNode, errno, strerror(errno));
@@ -137,62 +139,79 @@ gint StylScannerConfig_CloseTTY(gint pFile)
 }
 
 /*!
- * \brief StylScannerConfig_ConfigTTY: Do configure for SSI port type.
+ * \brief StylScannerConfig_ConfigTTY: Do configure for SSI port.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
 gint StylScannerConfig_ConfigTTY(gint pFile)
 {
-    gint    ret             = EXIT_SUCCESS;
-    gint    flags           = 0;
-    struct  termios         devConf;
+    speed_t br_speed = BAUDRATE;
+    gint mcs = 0;
+    /* ********** Check serial port is valid ********** */
+    STYL_INFO("serialPort: %d\n", pFile);
+    if(pFile <= 0)
+        return EXIT_FAILURE;
+    /* ********** Check serial port is valid ********** */
+    struct termios serial_opt;
+    /* ********** Set file descriptor ***************** */
+    tcgetattr(pFile, &serial_opt);
+    /* ********** Set baudrate ************************ */
+    cfsetispeed(&serial_opt, br_speed);
 
-    /* ********** Set flags for blocking mode and sync for writing ******** */
-    flags = fcntl(pFile, F_GETFL);
-    if (0 > flags)
+    /* ********** Set parity: yes ********************* */
+    serial_opt.c_cflag |= PARENB;
+    /* ********** Set parity value: no **************** */
+    serial_opt.c_cflag &= ~PARENB;
+    /* ********** Set parity value: odd **************** */
+    //serial_opt.c_cflag |= PARODD;
+    /* ********** Set parity value: even *************** */
+    //serial_opt.c_cflag &= ~PARODD;
+    /* ********** Set stop bit is: 1 ******************* */
+    serial_opt.c_cflag &= ~CSTOPB;
+    /* ********** Set stop bit is: 2 ******************* */
+    //serial_opt.c_cflag |= CSTOPB;
+
+    /** ********************************************** **/
+    /* *********** Reset data bits ********************* */
+    serial_opt.c_cflag &= ~CSIZE;
+    /* *********** Disable hardware flow control ******* */
+    serial_opt.c_cflag &=~CRTSCTS;
+    /* *********** Set data bits is: 8 ***************** */
+    serial_opt.c_cflag |= CS8;
+    serial_opt.c_cflag |= (CLOCAL | CREAD);
+
+    serial_opt.c_iflag &= ~(BRKINT|PARMRK|IGNPAR|ISTRIP|INLCR|IGNCR|ICRNL|IXON|IXOFF|IXANY|INPCK);
+    serial_opt.c_lflag=0;
+    serial_opt.c_oflag=0;
+
+    serial_opt.c_cc[VTIME] = 1;
+    serial_opt.c_cc[VMIN] = TTY_BUFF_MAXSIZE;
+
+    /* ********** Configure for file descriptor ******** */
+    ioctl(pFile, TIOCMGET, &mcs);
+    mcs |= TIOCM_RTS;
+    ioctl(pFile, TIOCMSET, &mcs);
+
+    /* ********** Flush file descriptor ******** */
+    tcflush(pFile, TCIFLUSH);
+    if (tcsetattr(pFile, TCSANOW, &serial_opt)==-1)
     {
-        STYL_ERROR("fcntl for 'F_GETFL': %d - %s", errno, strerror(errno));
-        ret = EXIT_FAILURE;
-        goto __exit;
+        close(pFile);
+        return EXIT_FAILURE;
     }
-    flags |= (O_FSYNC);
-    flags &= ~(O_NDELAY | O_ASYNC);
-
-    if (fcntl(pFile, F_SETFL, flags))
+    else
     {
-        STYL_ERROR("fcntl for 'F_SETFL': %d - %s", errno, strerror(errno));
-        ret = EXIT_FAILURE;
-        goto __exit;
+        fcntl(pFile, F_SETFL, O_NONBLOCK);
+        if(pFile > 0)
+        {
+            STYL_INFO("Setup for TTY port was success.");
+            return EXIT_SUCCESS;
+        }
+        else
+            return EXIT_FAILURE;
     }
-
-    /* ********** Configure TTY device ************************************ */
-    devConf.c_cflag = (CS8 | CLOCAL | CREAD);
-    devConf.c_iflag = 0;
-    devConf.c_oflag = 0;
-    devConf.c_lflag = 0;
-    devConf.c_cc[VMIN] = 0;
-    devConf.c_cc[VTIME] = TIMEOUT_MSEC;	// read non-blocking flush dump data. See blocking read timeout later
-
-    /* ********** Portability ************************************ */
-    /* Use cfsetspeed instead of CBAUD since c_cflag/CBAUD is not in POSIX */
-    if (cfsetspeed(&devConf, BAUDRATE))
-    {
-        STYL_ERROR("cfsetspeed set 'BAUDRATE': %d - %s", errno, strerror(errno));
-        ret = EXIT_FAILURE;
-        goto __exit;
-    }
-
-    /* ********** ... ************************************ */
-    if (tcsetattr(pFile, TCSANOW, &devConf))
-    {
-        STYL_ERROR("tcsetattr 'TCSANOW': %d - %s", errno, strerror(errno));
-        ret = EXIT_FAILURE;
-        goto __exit;
-    }
-
-__exit:
-    return ret;
+    return EXIT_FAILURE;
 }
 
 /*!

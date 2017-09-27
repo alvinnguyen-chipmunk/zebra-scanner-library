@@ -54,7 +54,7 @@ gint StylScannerConfig_OpenTTY(gchar *deviceNode);
 gint StylScannerConfig_CloseTTY(gint pFile);
 
 /*!
- * \brief StylScannerConfig_ConfigTTY: Do configure for SSI port type.
+ * \brief StylScannerConfig_ConfigTTY: Do configure for SSI port.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail

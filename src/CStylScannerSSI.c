@@ -41,8 +41,118 @@
 static void     StylScannerSSI_PreparePackage           (byte *package, byte opcode, byte *param, byte paramLen);
 static uint16_t StylScannerSSI_CalculateChecksum        (byte *package, gint length);
 static gint     StylScannerSSI_IsChecksumOK             (byte *package);
-
+static gint     StylScannerSSI_SerialRead               (gint pFile, byte* buffer, guint sizeBuffer, guint timeout_ms);
+static gint     StylScannerSSI_SerialWrite              (gint pFile, byte* buffer, guint sizeBuffer, guint timeout_ms);
 /********** Local (static) function definition section ************************/
+
+/*!
+ * \brief StylScannerSSI_SerialRead: read data from serial port
+ * \return
+ * - number of readed bytes or O if no byte was readed
+ */
+static gint StylScannerSSI_SerialRead(gint pFile, byte* buffer, guint sizeBuffer, guint timeout_ms)
+{
+    /*  Initialize the file descriptor set.*/
+    fd_set  fds;
+    FD_ZERO (&fds);
+    FD_SET  (pFile, &fds);
+
+    /* Initialize the timeout. */
+    struct timeval tv;
+    tv.tv_sec  = (timeout_ms + sizeBuffer) / 1000;
+    tv.tv_usec = ((timeout_ms % 1000) +sizeBuffer) * 1000;
+
+
+    gint nbytes = 0;
+    while (nbytes < sizeBuffer)
+    {
+        /*See if there is data available. */
+        gint rc = select (pFile + 1, &fds, NULL, NULL, &tv);
+        /* TODO: Recalculate timeout here! */
+        if (rc < 0)
+        {
+            /* ********* Error during select call **************** */
+            STYL_ERROR("select: %d - %s", errno, strerror(errno));
+            return 0;
+        }
+        else if (rc == 0)
+        {
+            /* ********* Timeout ********************************* */
+            break;
+        }
+
+        /* ********* Read the available data. ******************** */
+        gint n = read (pFile, buffer + nbytes, sizeBuffer - nbytes);
+        if (n < 0)
+        {
+            /* ********* Error during select call **************** */
+            STYL_ERROR("read: %d - %s", errno, strerror(errno));
+            return 0;
+        }
+        else if (n == 0)
+            break; /* EOF reached. */
+
+        /* Increase the number of bytes read. */
+        nbytes += n;
+    }
+    /* ********* Return the number of bytes read. ***************** */
+    return nbytes;
+}
+
+/*!
+ * \brief StylScannerSSI_SerialWrite: write data to serial port
+ * \return
+ * - number of readed bytes or O if no byte was readed
+ */
+ //unsigned int PM_UART::sendBuff(unsigned char* buff, unsigned int len, unsigned int timeout_ms)
+static gint StylScannerSSI_SerialWrite(gint pFile, byte* buffer, guint sizeBuffer, guint timeout_ms)
+{
+    guint   sizeSent    = 0;
+    guint   n           = 0;
+    struct  timeval     tv ;
+    fd_set  sset;
+
+    FD_ZERO(&sset);
+    FD_SET(pFile, &sset);
+
+    tv.tv_sec = (timeout_ms + sizeBuffer) / 1000;
+    tv.tv_usec =((timeout_ms % 1000) + sizeBuffer) * 1000;
+
+    while (sizeSent < sizeBuffer)
+    {
+        switch (select(pFile + 1, NULL, &sset, NULL, &tv))
+        {
+        case -1:
+            STYL_ERROR("select: %d - %s", errno, strerror(errno));
+            return 0;
+        case 0:
+            STYL_ERROR("select: %d - %s", errno, strerror(errno));
+            return -1;
+        default:
+            if (FD_ISSET(pFile, &sset) != 0)
+            {
+                n = write(pFile, buffer + sizeSent, sizeBuffer - sizeSent);
+                if (n <= 0)
+                {
+                    STYL_ERROR("write: %d - %s", errno, strerror(errno));
+                    return 0;
+                }
+            }
+            else
+            {
+                return 0;
+            }
+
+            break;
+        }
+
+        sizeSent += n;
+    }
+
+    STYL_INFO("Serial sent %d bytes", sizeSent);
+
+    return sizeSent;
+}
 
 /*!
  * \brief StylScannerSSI_IsChecksumOK: check 2 last bytes for checksum
@@ -64,13 +174,25 @@ static gint StylScannerSSI_IsChecksumOK(byte *package)
 /*!
  * \brief StylScannerSSI_IsContinue: check package's type
  * \return
- * - TRUE  : Is last package in multiple packages stream
- * - FALSE : Is intermediate package in multiple packages stream
+ * - 0  : Is last package in multiple packages stream
+ * - 1 : Is intermediate package in multiple packages stream
  */
 gint StylScannerSSI_IsContinue(byte *package)
 {
     return (SSI_PARAM_STATUS_CONTINUATION & package[PKG_INDEX_STAT]);
 }
+
+/*!
+ * \brief StylScannerSSI_CorrectPackage: check package's is correct
+ * \return
+ * - 1 : Receive package is correct
+ * - 0 : Receive package is incorrect
+ */
+gint StylScannerSSI_CorrectPackage(byte *package)
+{
+    return !(SSI_ID_DECODER | package[PKG_INDEX_SRC]);
+}
+
 
 /*!
  * \brief PreparePkg: generate package from input opcode and params
@@ -140,34 +262,16 @@ gint StylScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint t
     gint retValue = 0;
     gint temp = 0;
     gint readRequest;
-    unsigned char MAX_VMIN = 255;
     byte recvBuff[PACKAGE_LEN_MAXIMUM];
-    struct termios devConf;
-
-    gint oldVTIME = 0;
-    gint oldVMIN  = 0;
-
     gint lastIndex = 0;
 
     memset(&recvBuff, 0, PACKAGE_LEN_MAXIMUM);
 
-    STYL_INFO("MAX_VMIN: %x", MAX_VMIN);
-
-    /* Backup for configure of termios */
-    tcgetattr(pFile, &devConf);
-    oldVTIME = devConf.c_cc[VTIME];
-    oldVMIN  = devConf.c_cc[VMIN];
-
     do
     {
-        /* Change reading condition for only 1 byte */
-        devConf.c_cc[VTIME] = timeout;
-        devConf.c_cc[VMIN] = 0;
-        tcsetattr(pFile, TCSANOW, &devConf);
-
         /* Read 1 first byte for length */
         readRequest = 1;
-        retValue += (gint)read(pFile, &recvBuff[PKG_INDEX_LEN], readRequest);
+        retValue += StylScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN], readRequest, TTY_TIMEOUT);
         STYL_INFO("retValue: %d", retValue);
         if(retValue <= 0)
         {
@@ -186,18 +290,12 @@ gint StylScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint t
             readRequest = recvBuff[PKG_INDEX_LEN] + SSI_LEN_CHECKSUM - 1; /* 1 is byte read before */
             STYL_INFO("Rest byte is: %d", readRequest);
 
-            /* Change reading condition for ensure read enough bytes */
-            /* However only except 127 */
-            STYL_ERROR("oldVTIME: %d", oldVTIME);
-            devConf.c_cc[VTIME] = oldVTIME;
-            devConf.c_cc[VMIN] = MAX_VMIN;
-            tcsetattr(pFile, TCSANOW, &devConf);
-
-            temp = (gint) read(pFile, &recvBuff[PKG_INDEX_LEN + 1], readRequest);
+            temp = StylScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN + 1], readRequest, TTY_TIMEOUT);
+            STYL_INFO("");
+            StylScannerPackage_Display(recvBuff, PACKAGE_LEN(recvBuff) + SSI_LEN_CHECKSUM);
             STYL_INFO("temp: %d", temp);
             if(temp != readRequest)
             {
-                STYL_ERROR("read: %d - %s", errno, strerror(errno));
                 retValue = 0;
                 goto __error;
             }
@@ -205,8 +303,14 @@ gint StylScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint t
             {
                 retValue += temp;
                 STYL_INFO("retValue: %d", retValue);
-                STYL_INFO("");
-                StylScannerPackage_Display(recvBuff, PACKAGE_LEN(recvBuff) + SSI_LEN_CHECKSUM);
+
+                if(!StylScannerSSI_CorrectPackage(recvBuff))
+                {
+                    STYL_ERROR("********** Receive a invalid package");
+                    retValue = 0;
+                    goto __error;
+                }
+
                 if (StylScannerSSI_IsChecksumOK(recvBuff))
                 {
                     /* Send ACK for buffer received */
@@ -230,7 +334,7 @@ gint StylScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint t
                 }
                 else
                 {
-                    STYL_ERROR("Checksum fail!");
+                    STYL_ERROR("*********** Checksum fail!");
                     retValue = 0;
                     goto __error;
                 }
@@ -242,19 +346,9 @@ gint StylScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint t
 //    STYL_INFO("");
 //    StylScannerPackage_Display(buffer, retValue);
 
-    /* Restore value configure of file descriptor */
-    devConf.c_cc[VTIME] = oldVTIME;
-    devConf.c_cc[VMIN]  = oldVMIN;
-    tcsetattr(pFile, TCSANOW, &devConf);
-
     return retValue;
 
 __error:
-    /* Restore value configure of file descriptor */
-    devConf.c_cc[VTIME] = oldVTIME;
-    devConf.c_cc[VMIN]  = oldVMIN;
-    tcsetattr(pFile, TCSANOW, &devConf);
-
     STYL_INFO("Error! Send NAK to scanner");
     if(StylScannerSSI_Write(pFile, SSI_CMD_NAK, NULL, 0) != EXIT_SUCCESS)
     {
@@ -272,6 +366,7 @@ __error:
 gint StylScannerSSI_Write(gint pFile, byte opcode, byte *param, byte paramLen)
 {
     gint retValue = EXIT_SUCCESS;
+    gint sizeSend = 0;
 
     gint  bufferSize    = (SSI_LEN_HEADER + SSI_LEN_CHECKSUM + paramLen) * sizeof(byte);
     byte *bufferContent = malloc(bufferSize);
@@ -286,9 +381,10 @@ gint StylScannerSSI_Write(gint pFile, byte opcode, byte *param, byte paramLen)
     StylScannerPackage_Display(bufferContent, bufferSize);
 
     STYL_WARNING("PACKAGE_LEN(bufferContent) + SSI_LEN_CHECKSUM: %d", PACKAGE_LEN(bufferContent) + SSI_LEN_CHECKSUM);
-    if ( write(pFile, bufferContent, PACKAGE_LEN(bufferContent) + SSI_LEN_CHECKSUM) <= 0)
+    sizeSend = PACKAGE_LEN(bufferContent) + SSI_LEN_CHECKSUM;
+    if(StylScannerSSI_SerialWrite(pFile, bufferContent, sizeSend, TTY_TIMEOUT) != sizeSend)
     {
-        STYL_ERROR("write: %d - %s", errno, strerror(errno));
+        STYL_ERROR("Send data to scanner got problem.");
         retValue = EXIT_FAILURE;
     }
     free(bufferContent);
@@ -321,3 +417,4 @@ gint StylScannerSSI_CheckACK(gint pFile)
     return retValue;
 }
 /**@}*/
+

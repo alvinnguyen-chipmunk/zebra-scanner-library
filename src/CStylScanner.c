@@ -163,6 +163,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buffer, const int buffLength, const
 
     STYL_INFO("Invoke StylScannerSSI_Read");
     retValue = StylScannerSSI_Read(StylScanner_FD, recvBuff, buffLength, timeout);
+
     if ( (retValue > 0) && (SSI_CMD_DECODE_DATA == recvBuff[PKG_INDEX_OPCODE]) )
     {
         StylScannerPackage_Display(recvBuff, retValue);
@@ -170,9 +171,11 @@ unsigned int mlsBarcodeReader_ReadData(char *buffer, const int buffLength, const
     }
     else
     {
+        retValue = 0;
         STYL_WARNING("Nothing is received.");
     }
 
+__error:
     return retValue;
 }
 
