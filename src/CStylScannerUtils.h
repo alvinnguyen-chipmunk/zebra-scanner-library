@@ -151,6 +151,8 @@ typedef unsigned char byte;
 #define PACKAGE_LEN_MAXIMUM                257
 #define PACKAGE_LEN_ACK_MAXIMUM            8
 
+#define DATA_SYMBOL_LEN_MAXIMUM            32
+
 /* ************** TTY configure **************************/
 #define TTY_BUFF_MAXSIZE                    0xFF
 #define TTY_TIMEOUT                         300 /* mili-seconds */

@@ -159,7 +159,11 @@ unsigned int mlsBarcodeReader_ReadData(char *buffer, const int buffLength, const
     if( (timeout <= 0) || (timeout >= 25) )
         return 0;
 
-    byte recvBuff[buffLength];
+    byte  recvBuff[buffLength];
+    gchar symbolBuff[DATA_SYMBOL_LEN_MAXIMUM];
+
+    memset(recvBuff,   0, buffLength             );
+    memset(symbolBuff, 0, DATA_SYMBOL_LEN_MAXIMUM);
 
     STYL_INFO("Invoke StylScannerSSI_Read");
     retValue = StylScannerSSI_Read(StylScanner_FD, recvBuff, buffLength, timeout);
@@ -167,7 +171,8 @@ unsigned int mlsBarcodeReader_ReadData(char *buffer, const int buffLength, const
     if ( (retValue > 0) && (SSI_CMD_DECODE_DATA == recvBuff[PKG_INDEX_OPCODE]) )
     {
         StylScannerPackage_Display(recvBuff, retValue);
-        retValue = StylScannerPackage_Extract(buffer, recvBuff, buffLength);
+        retValue = StylScannerPackage_Extract((gchar *)buffer, symbolBuff, recvBuff, (const gint)buffLength);
+        STYL_INFO("Code Type: %s", symbolBuff);
     }
     else
     {

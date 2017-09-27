@@ -48,7 +48,7 @@ void StylScannerPackage_Display(byte *package, gint length);
  * - barcode length: Success
  * - 0             : Fail
  */
-gint StylScannerPackage_Extract(char *buffer, byte *package, const int buffLength);
+gint StylScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *package, const gint buffLength);
 
 #ifdef __cplusplus
 }
