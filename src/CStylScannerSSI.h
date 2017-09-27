@@ -73,6 +73,15 @@ gint StylScannerSSI_IsContinue(byte *package);
  */
 gint StylScannerSSI_CorrectPackage(byte *package);
 
+
+/*!
+ * \brief StylScannerSSI_SendCommand: Send a command then check ACK
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+gint StylScannerSSI_SendCommand(gint pFile, byte opCode);
+
 #ifdef __cplusplus
 }
 #endif

@@ -69,29 +69,6 @@ gint StylScannerConfig_ConfigTTY(gint pFile);
  */
 gint StylScannerConfig_ConfigSSI(gint pFile);
 
-/*!
- * \brief StylScannerConfig_Flush: Flush buffer of scanner
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-gint StylScannerConfig_Flush(gint pFile);
-
-/*!
- * \brief StylScannerConfig__Enable: Enable Reader for scaning QR code/Bar Code
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-gint StylScannerConfig_Enable(gint pFile);
-
-/*!
- * \brief StylScannerConfig__Disable: Disable reader, Reader can't scan any QR code/bar code
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-gint StylScannerConfig_Disable(gint pFile);
 
 #ifdef __cplusplus
 }

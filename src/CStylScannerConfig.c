@@ -119,13 +119,13 @@ gint StylScannerConfig_OpenTTY(gchar *deviceNode)
  */
 gint StylScannerConfig_CloseTTY(gint pFile)
 {
-        /* Enable device to scanning */
-    if(StylScannerConfig_Disable(pFile) != EXIT_SUCCESS)
+    /* Disable device for scanning */
+    if(StylScannerSSI_SendCommand(pFile, SSI_CMD_SCAN_DISABLE) != EXIT_SUCCESS)
     {
         STYL_ERROR("Can not disable scanner device");
     }
 
-    if(StylScannerConfig_Flush(pFile) != EXIT_SUCCESS)
+    if(StylScannerSSI_SendCommand(pFile, SSI_CMD_FLUSH_QUEUE) != EXIT_SUCCESS)
     {
         STYL_ERROR("Can not flush buffer of device");
     }
@@ -256,51 +256,4 @@ gint StylScannerConfig_ConfigSSI(gint pFile)
     return retValue;
 }
 
-/*!
- * \brief StylScannerConfig_Flush: Flush buffer of scanner
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-gint StylScannerConfig_Flush(gint pFile)
-{
-    gint retValue = EXIT_SUCCESS;
-    retValue = StylScannerSSI_Write(pFile, SSI_CMD_FLUSH_QUEUE, NULL, 0);
-    if(retValue==EXIT_SUCCESS)
-        retValue = StylScannerSSI_CheckACK(pFile);
-
-    return retValue;
-}
-
-/*!
- * \brief StylScannerConfig__Enable: Enable Reader for scaning QR code/Bar Code
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-gint StylScannerConfig_Enable(gint pFile)
-{
-    int retValue = EXIT_SUCCESS;
-    retValue = StylScannerSSI_Write(pFile, SSI_CMD_SCAN_ENABLE, NULL, 0);
-    if(retValue==EXIT_SUCCESS)
-        retValue = StylScannerSSI_CheckACK(pFile);
-
-    return retValue;
-}
-
-/*!
- * \brief StylScannerConfig__Disable: Disable reader, Reader can't scan any QR code/bar code
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-gint StylScannerConfig_Disable(gint pFile)
-{
-    int retValue = EXIT_SUCCESS;
-    retValue = StylScannerSSI_Write(pFile, SSI_CMD_SCAN_DISABLE, NULL, 0);
-    if(retValue==EXIT_SUCCESS)
-        retValue = StylScannerSSI_CheckACK(pFile);
-
-    return retValue;
-}
 /**@}*/

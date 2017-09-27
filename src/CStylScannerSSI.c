@@ -260,7 +260,7 @@ static uint16_t StylScannerSSI_CalculateChecksum(byte *package, gint length)
 gint StylScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout)
 {
     gint retValue = 0;
-    gint temp = 0;
+    gint sizeReceived = 0;
     gint readRequest;
     byte recvBuff[PACKAGE_LEN_MAXIMUM];
     gint lastIndex = 0;
@@ -287,21 +287,23 @@ gint StylScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint t
                 break;
             }
             /* Read rest of byte of package */
+            STYL_ERROR("recvBuff[PKG_INDEX_LEN]: %x", recvBuff[PKG_INDEX_LEN]);
+            STYL_ERROR("SSI_LEN_CHECKSUM: %x", SSI_LEN_CHECKSUM);
             readRequest = recvBuff[PKG_INDEX_LEN] + SSI_LEN_CHECKSUM - 1; /* 1 is byte read before */
             STYL_INFO("Rest byte is: %d", readRequest);
 
-            temp = StylScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN + 1], readRequest, TTY_TIMEOUT);
+            sizeReceived = StylScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN + 1], readRequest, TTY_TIMEOUT);
             STYL_INFO("");
-            StylScannerPackage_Display(recvBuff, PACKAGE_LEN(recvBuff) + SSI_LEN_CHECKSUM);
-            STYL_INFO("temp: %d", temp);
-            if(temp != readRequest)
+            StylScannerPackage_Display(recvBuff, NO_GIVEN);
+            STYL_INFO("sizeReceived: %d", sizeReceived);
+            if(sizeReceived != readRequest)
             {
                 retValue = 0;
                 goto __error;
             }
             else
             {
-                retValue += temp;
+                retValue += sizeReceived;
                 STYL_INFO("retValue: %d", retValue);
 
                 if(!StylScannerSSI_CorrectPackage(recvBuff))
@@ -343,16 +345,13 @@ gint StylScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint t
     }
     while(StylScannerSSI_IsContinue(recvBuff));
 
-//    STYL_INFO("");
-//    StylScannerPackage_Display(buffer, retValue);
-
     return retValue;
 
 __error:
     STYL_INFO("Error! Send NAK to scanner");
     if(StylScannerSSI_Write(pFile, SSI_CMD_NAK, NULL, 0) != EXIT_SUCCESS)
     {
-        STYL_ERROR("Send NAK to scanner");
+        STYL_ERROR("Send NAK to scanner got problem.");
     }
     return retValue;
 }
@@ -416,5 +415,23 @@ gint StylScannerSSI_CheckACK(gint pFile)
 
     return retValue;
 }
+
+
+/*!
+ * \brief StylScannerSSI_SendCommand: Send a command then check ACK
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+gint StylScannerSSI_SendCommand(gint pFile, byte opCode)
+{
+    gint retValue = EXIT_SUCCESS;
+    retValue = StylScannerSSI_Write(pFile, opCode, NULL, 0);
+    if(retValue==EXIT_SUCCESS)
+        retValue = StylScannerSSI_CheckACK(pFile);
+
+    return retValue;
+}
+
 /**@}*/
 

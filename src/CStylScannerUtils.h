@@ -97,6 +97,9 @@ typedef unsigned char byte;
 #define SSI_CMD_FLUSH_QUEUE                 0xD2
 #define SSI_CMD_SCAN_ENABLE                 0xE9
 #define SSI_CMD_SCAN_DISABLE                0xEA
+#define SSI_CMD_SESSION_START               0xE4
+#define SSI_CMD_SESSION_STOP                0xE5
+
 
 /* ************** Devices ID **************************/
 #define SSI_ID_HOST                         0x04
@@ -153,6 +156,7 @@ typedef unsigned char byte;
 
 #define DATA_SYMBOL_LEN_MAXIMUM            32
 
+#define NO_GIVEN                           -1
 /* ************** TTY configure **************************/
 #define TTY_BUFF_MAXSIZE                    0xFF
 #define TTY_TIMEOUT                         300 /* mili-seconds */

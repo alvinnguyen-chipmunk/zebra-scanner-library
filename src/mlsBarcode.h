@@ -66,6 +66,14 @@ int mlsBarcodeReader_Open(const char *name);
 //int mlsBarcodeReader_Manual_Open(const char *name);
 
 /*!
+ * \brief mlsBarcodeReader_reopen() closes and re-opens scanner device file
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+int mlsBarcodeReader_Reopen(const char *name);
+
+/*!
  * \brief mlsBarcodeReader_ReadData Reader data from descriptor file (blocking read)
  * \param buff point to buffer which store data.
  * \return number of byte(s) read.

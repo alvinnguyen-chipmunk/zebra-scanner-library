@@ -20,6 +20,8 @@
  */
 
 /********** Include section ***************************************************/
+#include "string.h"
+
 #include "mlsBarcode.h"
 #include "CStylScannerUtils.h"
 #include "CStylScannerConfig.h"
@@ -112,15 +114,15 @@ int mlsBarcodeReader_Open(const char *name)
         goto __error;
     }
 
+
     /* Flush buffer of device*/
-    if(StylScannerConfig_Flush(StylScanner_FD) != EXIT_SUCCESS)
+    if(StylScannerSSI_SendCommand(StylScanner_FD, SSI_CMD_FLUSH_QUEUE) != EXIT_SUCCESS)
     {
         STYL_ERROR("Can not flush buffer of device");
         goto __error;
     }
-
     /* Enable device to scanning */
-    if(StylScannerConfig_Enable(StylScanner_FD) != EXIT_SUCCESS)
+    if(StylScannerSSI_SendCommand(StylScanner_FD,SSI_CMD_SCAN_ENABLE) != EXIT_SUCCESS)
     {
         STYL_ERROR("Can not enable device to scanning");
         goto __error;
@@ -148,6 +150,27 @@ int mlsBarcodeReader_Close()
 }
 
 /*!
+ * \brief mlsBarcodeReader_Reopen closes then opens device
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+int mlsBarcodeReader_Reopen(const char *name)
+{
+    STYL_WARNING("*****************************");
+    STYL_WARNING("ENTER mlsBarcodeReader_Reopen");
+    STYL_WARNING("*****************************");
+
+    int retValue = EXIT_SUCCESS;
+    retValue = mlsBarcodeReader_Close();
+    if(EXIT_SUCCESS==retValue)
+    {
+        retValue = mlsBarcodeReader_Open(name);
+    }
+    return retValue;
+}
+
+/*!
  * \brief mlsBarcodeReader_ReadData Reader data from descriptor file (blocking read)
  * \param buff point to buffer which store data.
  * \return number of byte(s) read.
@@ -170,17 +193,23 @@ unsigned int mlsBarcodeReader_ReadData(char *buffer, const int buffLength, const
 
     if ( (retValue > 0) && (SSI_CMD_DECODE_DATA == recvBuff[PKG_INDEX_OPCODE]) )
     {
+        STYL_INFO("READ DATA SIZE: %d", retValue);
         StylScannerPackage_Display(recvBuff, retValue);
         retValue = StylScannerPackage_Extract((gchar *)buffer, symbolBuff, recvBuff, (const gint)buffLength);
         STYL_INFO("Code Type: %s", symbolBuff);
     }
     else
     {
-        retValue = 0;
-        STYL_WARNING("Nothing is received.");
+        if(retValue <=0 )
+        {
+            STYL_WARNING("Nothing is received.");
+        }
+        else
+        {
+            STYL_ERROR("Received data is invalid.");
+        }
     }
 
-__error:
     return retValue;
 }
 

@@ -67,8 +67,8 @@ int main(int argc, const char * argv[])
         goto __exit;
     }
 
-    // This is to test Reopen API only, not required
-//    mlsBarcodeReader_Reopen(deviceName);
+    /* ************This is to test Reopen API only, not required *************** */
+    mlsBarcodeReader_Reopen(deviceName);
 
     isRunning = TRUE;
     signal(SIGINT, HandleSignal);

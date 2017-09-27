@@ -38,10 +38,8 @@ static const gchar * StylScannerPackage_GetSymbology (byte symbol);
 /********** Local (static) function definition section ************************/
 
 /*!
- * \brief StylScannerPackage_Display: print out package content.
- * \param
- * - package: pointer to package content.
- * - length: length of package in byte.
+ * \brief StylScannerPackage_GetSymbology: find out symbol string for code type
+ * \return Constant string for code type
  */
 static const gchar * StylScannerPackage_GetSymbology(byte symbol)
 {
@@ -202,11 +200,16 @@ static const gchar * StylScannerPackage_GetSymbology(byte symbol)
  */
 void StylScannerPackage_Display(byte *package, gint length)
 {
-    for (gint i = 0; i < length; i++)
+    gint sizeBuffer = 0;
+    if (length==NO_GIVEN)
+        sizeBuffer = PACKAGE_LEN(package)+SSI_LEN_CHECKSUM;
+    else
+        sizeBuffer = length;
+
+    for (gint i = 0; i < sizeBuffer; i++)
     {
         STYL_INFO_OTHER(" 0x%02x", package[i]);
     }
-
     STYL_INFO_OTHER("\n");
 }
 
@@ -223,9 +226,6 @@ gint StylScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *packa
 
     gint decodeLength = 0;
     gint partLength = 0;
-
-    STYL_WARNING("buffLength: %d", buffLength);
-    StylScannerPackage_Display(package, buffLength);
 
     const gchar * symbol = StylScannerPackage_GetSymbology(package[PKG_INDEX_DECODE_TYPE]);
     memcpy(symbolBuffer, symbol, strlen(symbol));
@@ -248,15 +248,29 @@ gint StylScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *packa
 
             /* Point to next pkg */
             pPackage += PACKAGE_LEN(pPackage) + SSI_LEN_CHECKSUM;
-            pBuffer += decodeLength;
+            pBuffer += partLength;
         }
 
         /* Get the last part of barcode */
+        StylScannerPackage_Display(pPackage, NO_GIVEN);
         partLength = PACKAGE_LEN(pPackage) - SSI_LEN_HEADER - SSI_LEN_DECODE_TYPE;
+        STYL_WARNING("Last partLength: %d", partLength);
         if(partLength >= 0)
+        {
             memcpy(pBuffer, &pPackage[PKG_INDEX_DECODE_TYPE + 1], partLength);
-        decodeLength += partLength;
+            decodeLength += partLength;
+        }
+        else
+        {
+            STYL_ERROR("Parsing last part of decode data got problem.");
+        }
     }
+
+    STYL_WARNING("Data extract size: %d", decodeLength);
+
+    STYL_DEBUG("\e[36m pBuffer: \n%s\e[0m\n\n", pBuffer);
+
+    STYL_DEBUG("\e[36m buffer: \n%s\e[0m\n\n", buffer);
 
     return decodeLength;
 }
