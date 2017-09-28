@@ -91,22 +91,20 @@ static gint StylScannerConfig_LockDevice (gint pFile, gboolean isLock)
 gint StylScannerConfig_OpenTTY(gchar *deviceNode)
 {
     gint pFile = -1;
-    StylScannerLockfile_FD = open(LOCK_SCANNER_PATH, O_CREAT | O_RDWR, S_IWUSR | S_IRUSR);
-    if(StylScannerLockfile_FD < 0)
+
+    pFile = open(deviceNode, O_RDWR | O_NOCTTY | O_NDELAY | O_NONBLOCK);
+    if (pFile <= 0)
     {
-        STYL_ERROR("Lock file: open: %d - %s",errno, strerror(errno));
+        STYL_ERROR("Open Scanner device %s: open: %d - %s\n", deviceNode, errno, strerror(errno));
     }
-    if(StylScannerConfig_LockDevice(StylScannerLockfile_FD, TRUE) !=  EXIT_SUCCESS)
+    else if(StylScannerConfig_LockDevice(pFile, TRUE) !=  EXIT_SUCCESS)
     {
-        STYL_ERROR("Device %s is busy.\n", deviceNode);
-    }
-    else
-    {
-        pFile = open(deviceNode, O_RDWR | O_NOCTTY | O_NDELAY | O_NONBLOCK);
-        if (pFile <= 0)
+        if (close(pFile) < 0)
         {
-            STYL_ERROR("Open Scanner device %s: open: %d - %s\n", deviceNode, errno, strerror(errno));
+            STYL_ERROR("close: %d - %s", errno, strerror(errno));
         }
+        STYL_ERROR("Device %s is busy.\n", deviceNode);
+        pFile = -1;
     }
     return pFile;
 }
@@ -130,12 +128,17 @@ gint StylScannerConfig_CloseTTY(gint pFile)
         STYL_ERROR("Can not flush buffer of device");
     }
 
+    if(StylScannerConfig_LockDevice(pFile, FALSE) != EXIT_SUCCESS)
+    {
+        STYL_ERROR("Unlock for device fail.");
+    }
+
     if (close(pFile) < 0)
     {
         STYL_ERROR("close: %d - %s", errno, strerror(errno));
     }
 
-    return StylScannerConfig_LockDevice(StylScannerLockfile_FD, FALSE);
+    return EXIT_SUCCESS;
 }
 
 /*!
