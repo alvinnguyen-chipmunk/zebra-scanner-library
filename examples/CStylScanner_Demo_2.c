@@ -11,12 +11,12 @@
  ******************************************************************************/
 
 /**
- * @file    barcode_test.c
+ * @file    CStylScanner_Demo_2.c
  * @brief   Simple test application use C library to get data from qrcode/barcode scanner
  *
  * Long description.
- * @date    13/07/2017
- * @author  luck.hoang alvin.nguyen
+ * @date    28/09/2017
+ * @author  alvin.nguyen
  */
 
 /********** Include section ***************************************************/
@@ -34,7 +34,7 @@
 /********** Local Constant and compile switch definition section **************/
 /********** Local Macro definition section ************************************/
 
-#define BUFFER_LEN	4000
+#define BUFFER_LEN	4096
 #define TRUE		1
 #define FALSE		0
 
@@ -42,7 +42,7 @@
 
 static int isRunning = FALSE;
 
-static void HandleSignal(int sig);
+static void mlsHandleSignal(int sig);
 
 /********** Local (static) function declaration section ***********************/
 /********** Local (static) function definition section ************************/
@@ -51,45 +51,45 @@ static void HandleSignal(int sig);
 
 int main(int argc, const char * argv[])
 {
-    char buff[BUFFER_LEN];
-    const char *deviceName = argv[1];
-    int ret = EXIT_SUCCESS;
-    int barcodeLen = 0;
-    const int timeout = 10;	// 1/10 sec
-    memset(buff, 0, BUFFER_LEN);
+    char        buffer[BUFFER_LEN];
+    const char *deviceName              = argv[1];
+    int         retValue                = EXIT_FAILURE;
+    int         decodeLength            = 0;
+    const int   msTimeout               = 300;	/* mili-seconds */
 
     printf("Version: %s\n", mlsBarcodeReader_GetVersion());
 
-    ret = mlsBarcodeReader_Open(deviceName);
-    if (ret!=EXIT_SUCCESS)
-    {
-        goto EXIT;
-    }
+    if(mlsBarcodeReader_Open(deviceName) != EXIT_SUCCESS)
+        goto __exit;
 
-    // This is to test Reopen API only, not required
-//    mlsBarcodeReader_Reopen(deviceName);
+    if(mlsBarcodeReader_ManualMode() != EXIT_SUCCESS)
+        goto __exit;
+
+    retValue = EXIT_SUCCESS;
 
     isRunning = TRUE;
-    signal(SIGINT, HandleSignal);
+    signal(SIGINT, mlsHandleSignal);
+
     while (isRunning)
     {
-//        ret = mlsBarcodeReader_Test("http://www.styl.com.sg");
-        if (ret == EXIT_SUCCESS)
-            printf("[BARCODE_TEST]: Testing OK !\n");
-        else
-            printf("[BARCODE_TEST]: Testing FAIL !\n");
-
+        printf("\n\n +++++++++++++++++++++++++++++++++++++++++++++++++++ \n");
+        memset(buffer, 0, BUFFER_LEN);
+        decodeLength = mlsBarcodeReader_ReadData_Manual(buffer, BUFFER_LEN, msTimeout);
+        if (decodeLength > 0)
+        {
+            printf("\e[36m Decode content: (%d):\n %s \e[0m\n\n", decodeLength, buffer);
+        }
         sleep(2);
     }
 
     mlsBarcodeReader_Close();
 
-EXIT:
+__exit:
     printf("Finished!\n");
-    return ret;
+    return retValue;
 }
 
-static void HandleSignal(int sig)
+static void mlsHandleSignal(int sig)
 {
     if (SIGINT == sig)
     {

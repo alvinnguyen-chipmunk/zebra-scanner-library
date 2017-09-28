@@ -330,8 +330,9 @@ gint StylScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint t
                             break;
                         }
                         /* Copy current buffer to finally buffer */
-                        memcpy(&buffer[lastIndex], recvBuff, PACKAGE_LEN(recvBuff) + SSI_LEN_CHECKSUM);
-                        lastIndex += PACKAGE_LEN(recvBuff) + SSI_LEN_CHECKSUM;
+                        gint sizeMemcpy = PACKAGE_LEN(recvBuff) + SSI_LEN_CHECKSUM;
+                        memcpy(&buffer[lastIndex], recvBuff, sizeMemcpy);
+                        lastIndex += sizeMemcpy;
                     }
                 }
                 else
@@ -354,6 +355,84 @@ __error:
         STYL_ERROR("Send NAK to scanner got problem.");
     }
     return retValue;
+}
+
+/*!
+ * \brief StylScannerSSI_GetACK: get ACK raw package
+ * \return number of read bytes
+ */
+gint StylScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout)
+{
+    gint retValue = 0;
+    gint sizeReceived = 0;
+    gint readRequest;
+    byte recvBuff[PACKAGE_LEN_MAXIMUM];
+    gint lastIndex = 0;
+
+    memset(&recvBuff, 0, PACKAGE_LEN_MAXIMUM);
+
+    /* Read 1 first byte for length */
+    readRequest = 1;
+    retValue = StylScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN], readRequest, TTY_TIMEOUT);
+    STYL_INFO("Fisrt byte size: %d", retValue);
+    if(retValue <= 0)
+    {
+        goto __error;
+    }
+    else
+    {
+        STYL_INFO("Length is: %x", recvBuff[PKG_INDEX_LEN]);
+        if(recvBuff[PKG_INDEX_LEN] >= PACKAGE_LEN_MAXIMUM)
+        {
+            STYL_ERROR("Receive value of length package is invalid.");
+            goto __error;
+        }
+        /* Read rest of byte of package */
+        readRequest = recvBuff[PKG_INDEX_LEN] + SSI_LEN_CHECKSUM - 1; /* 1 is byte read before */
+        STYL_INFO("Rest byte is: %d", readRequest);
+
+        sizeReceived = StylScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN + 1], readRequest, TTY_TIMEOUT);
+        STYL_INFO("");
+        StylScannerPackage_Display(recvBuff, NO_GIVEN);
+        STYL_INFO("sizeReceived: %d", sizeReceived);
+
+        if(sizeReceived != readRequest)
+        {
+            goto __error;
+        }
+        else
+        {
+            retValue += sizeReceived;
+            STYL_INFO("Total size received: %d", retValue);
+
+            if(!StylScannerSSI_CorrectPackage(recvBuff))
+            {
+                STYL_ERROR("********** Receive a invalid package");
+                goto __error;
+            }
+
+            if (StylScannerSSI_IsChecksumOK(recvBuff))
+            {
+                /* Copy current buffer to finally buffer */
+                STYL_DEBUG("MEMCPY SIZE: %d", PACKAGE_LEN(recvBuff) + SSI_LEN_CHECKSUM);
+                memcpy(buffer, recvBuff, PACKAGE_LEN(recvBuff) + SSI_LEN_CHECKSUM);
+            }
+            else
+            {
+                STYL_ERROR("*********** Checksum fail!");
+                goto __error;
+            }
+        }
+    }
+
+    STYL_INFO("ACK buffer size: %d", retValue);
+    StylScannerPackage_Display(buffer, NO_GIVEN);
+    return retValue;
+
+__error:
+    retValue = 0;
+    return retValue;
+
 }
 
 /*!
@@ -402,8 +481,14 @@ gint StylScannerSSI_CheckACK(gint pFile)
     gint retValue = EXIT_SUCCESS;
     byte recvBuff[PACKAGE_LEN_ACK_MAXIMUM];
 
+    memset(recvBuff, 0, PACKAGE_LEN_ACK_MAXIMUM);
+    for (gint i = 0; i < PACKAGE_LEN_ACK_MAXIMUM; i++)
+    {
+        STYL_INFO_OTHER(" 0x%02x", recvBuff[i]);
+    }
+
     STYL_INFO("Invoke StylScannerSSI_Read");
-    retValue = StylScannerSSI_Read(pFile, recvBuff, PACKAGE_LEN_ACK_MAXIMUM, 1);
+    retValue = StylScannerSSI_GetACK(pFile, recvBuff, PACKAGE_LEN_ACK_MAXIMUM, 1);
     if ( (retValue > 0) && (SSI_CMD_ACK == recvBuff[PKG_INDEX_OPCODE]) )
     {
         retValue = EXIT_SUCCESS;

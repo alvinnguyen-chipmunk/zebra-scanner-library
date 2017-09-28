@@ -82,6 +82,12 @@ gint StylScannerSSI_CorrectPackage(byte *package);
  */
 gint StylScannerSSI_SendCommand(gint pFile, byte opCode);
 
+/*!
+ * \brief StylScannerSSI_GetACK: get ACK raw package
+ * \return number of read bytes
+ */
+gint StylScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout);
+
 #ifdef __cplusplus
 }
 #endif

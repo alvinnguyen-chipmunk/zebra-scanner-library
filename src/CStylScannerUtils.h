@@ -132,8 +132,13 @@ typedef unsigned char byte;
 #define SSI_PARAM_B_DEF_SW_ACK              0x9F
 #define SSI_PARAM_B_DEF_SCAN                0xEC
 
+#define SSI_PARAM_INDEX_EVENT               0xF0
+#define SSI_PARAM_INDEX_EVENT_DECODE        0x00
+
 /* ************** Parameter value **********************/
 #define SSI_PARAM_VALUE_TRIGGER_PRESENT     0x07
+#define SSI_PARAM_VALUE_TRIGGER_HOST        0x08
+
 #define SSI_PARAM_VALUE_ENABLE              0x01
 #define SSI_PARAM_VALUE_DISABLE             0x00
 
@@ -152,14 +157,20 @@ typedef unsigned char byte;
 /* ************** Other utils ****************************/
 #define PACKAGE_LEN(x)		               (x[PKG_INDEX_LEN])
 #define PACKAGE_LEN_MAXIMUM                257
-#define PACKAGE_LEN_ACK_MAXIMUM            8
+#define PACKAGE_LEN_ACK_MAXIMUM            32
 
 #define DATA_SYMBOL_LEN_MAXIMUM            32
 
 #define NO_GIVEN                           -1
+
 /* ************** TTY configure **************************/
-#define TTY_BUFF_MAXSIZE                    0xFF
-#define TTY_TIMEOUT                         300 /* mili-seconds */
+#define TTY_BUFF_MAXSIZE                   0xFF
+#define TTY_TIMEOUT                        300 /* mili-seconds */
+
+/* ************** Scanning mode **************************/
+#define SCANNING_TRIGGER_AUTO              0x0
+#define SCANNING_TRIGGER_MANUAL            0x1
+
 /********** Function declaration section **************************************/
 
 #ifdef __cplusplus

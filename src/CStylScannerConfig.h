@@ -67,7 +67,7 @@ gint StylScannerConfig_ConfigTTY(gint pFile);
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-gint StylScannerConfig_ConfigSSI(gint pFile);
+gint StylScannerConfig_ConfigSSI(gint pFile, byte triggerMode);
 
 
 #ifdef __cplusplus

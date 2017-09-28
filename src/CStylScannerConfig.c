@@ -216,11 +216,14 @@ gint StylScannerConfig_ConfigTTY(gint pFile)
 
 /*!
  * \brief StylScannerConfig_ConfigSSI: Send parameters to configure scanner as SSI interface.
+ * \param
+ * - File descriptor of scanner device
+ * - triggerMode: SCANNING_TRIGGER_AUTO or SCANNING_TRIGGER_MANUAL
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-gint StylScannerConfig_ConfigSSI(gint pFile)
+gint StylScannerConfig_ConfigSSI(gint pFile, byte triggerMode)
 {
     /*
         #define SSI_PARAM_TYPE_PARAM_PREFIX			0xFF
@@ -232,17 +235,34 @@ gint StylScannerConfig_ConfigSSI(gint pFile)
         #define SSI_PARAM_B_DEF_SW_ACK              0x9F
         #define SSI_PARAM_B_DEF_SCAN                0xEC
 
+        #define SSI_PARAM_INDEX_EVENT               0xF0
+        #define SSI_PARAM_INDEX_EVENT_DECODE        0x00
+
         #define SSI_PARAM_VALUE_TRIGGER_PRESENT     0x07
         #define SSI_PARAM_VALUE_ENABLE              0x01
         #define SSI_PARAM_VALUE_DISABLE             0x00
     */
     gint retValue = EXIT_SUCCESS;
-    byte paramContent[9] = {  SSI_PARAM_TYPE_PARAM_PREFIX
-                      ,SSI_PARAM_DEF_FORMAT_B,      SSI_PARAM_VALUE_ENABLE
-                      ,SSI_PARAM_B_DEF_SW_ACK,      SSI_PARAM_VALUE_ENABLE
-                      ,SSI_PARAM_B_DEF_SCAN,        SSI_PARAM_VALUE_ENABLE
-                      ,SSI_PARAM_INDEX_TRIGGER,     SSI_PARAM_VALUE_TRIGGER_PRESENT
-                     };
+    byte paramContent[12] = {  SSI_PARAM_TYPE_PARAM_PREFIX
+                                 ,SSI_PARAM_DEF_FORMAT_B,      SSI_PARAM_VALUE_ENABLE
+                                 ,SSI_PARAM_B_DEF_SW_ACK,      SSI_PARAM_VALUE_ENABLE
+                                 ,SSI_PARAM_B_DEF_SCAN,        SSI_PARAM_VALUE_ENABLE
+                           };
+    if (triggerMode == SCANNING_TRIGGER_MANUAL)
+    {
+        paramContent[7] = SSI_PARAM_INDEX_TRIGGER;
+        paramContent[8] = SSI_PARAM_VALUE_TRIGGER_HOST;
+    }
+    else
+    {
+        paramContent[7] = SSI_PARAM_INDEX_TRIGGER;
+        paramContent[8] = SSI_PARAM_VALUE_TRIGGER_PRESENT;
+    }
+
+    paramContent[9]  = SSI_PARAM_INDEX_EVENT;
+    paramContent[10] = SSI_PARAM_INDEX_EVENT_DECODE;
+    paramContent[11] = SSI_PARAM_VALUE_DISABLE;
+
     gint paramSize = sizeof(paramContent) / sizeof(*paramContent);
 
     STYL_INFO("");

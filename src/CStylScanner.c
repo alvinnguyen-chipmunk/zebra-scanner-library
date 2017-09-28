@@ -108,11 +108,12 @@ int mlsBarcodeReader_Open(const char *name)
         goto __error;
     }
 
-    if(StylScannerConfig_ConfigSSI(StylScanner_FD) != EXIT_SUCCESS )
+    if(StylScannerConfig_ConfigSSI(StylScanner_FD, SCANNING_TRIGGER_AUTO) != EXIT_SUCCESS )
     {
         STYL_ERROR("Can not configure SSI for device");
         goto __error;
     }
+
 
 
     /* Flush buffer of device*/
@@ -175,27 +176,24 @@ int mlsBarcodeReader_Reopen(const char *name)
  * \param buff point to buffer which store data.
  * \return number of byte(s) read.
  */
-unsigned int mlsBarcodeReader_ReadData(char *buffer, const int buffLength, const int timeout)
+unsigned int mlsBarcodeReader_ReadData(char *buffer, const int bufferLength, const int timeout)
 {
     gint retValue = 0;
 
-    if( (timeout <= 0) || (timeout >= 25) )
-        return 0;
-
-    byte  recvBuff[buffLength];
+    byte  recvBuff[bufferLength];
     gchar symbolBuff[DATA_SYMBOL_LEN_MAXIMUM];
 
-    memset(recvBuff,   0, buffLength             );
+    memset(recvBuff,   0, bufferLength           );
     memset(symbolBuff, 0, DATA_SYMBOL_LEN_MAXIMUM);
 
     STYL_INFO("Invoke StylScannerSSI_Read");
-    retValue = StylScannerSSI_Read(StylScanner_FD, recvBuff, buffLength, timeout);
+    retValue = StylScannerSSI_Read(StylScanner_FD, recvBuff, bufferLength, timeout);
 
     if ( (retValue > 0) && (SSI_CMD_DECODE_DATA == recvBuff[PKG_INDEX_OPCODE]) )
     {
         STYL_INFO("READ DATA SIZE: %d", retValue);
         StylScannerPackage_Display(recvBuff, retValue);
-        retValue = StylScannerPackage_Extract((gchar *)buffer, symbolBuff, recvBuff, (const gint)buffLength);
+        retValue = StylScannerPackage_Extract((gchar *)buffer, symbolBuff, recvBuff, (const gint)bufferLength);
         STYL_INFO("Code Type: %s", symbolBuff);
     }
     else
@@ -213,6 +211,97 @@ unsigned int mlsBarcodeReader_ReadData(char *buffer, const int buffLength, const
     return retValue;
 }
 
+/*!
+ * \brief mlsBarcodeReader_ManualMode: Set configure for scanner via manual scanning.
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+int mlsBarcodeReader_ManualMode()
+{
+    if(StylScannerConfig_ConfigSSI(StylScanner_FD, SCANNING_TRIGGER_MANUAL) != EXIT_SUCCESS )
+    {
+        STYL_ERROR("Can not configure SSI for device");
+    }
+}
+
+/*!
+ * \brief mlsBarcodeReader_ReadData_Manual: Reader data from descriptor file (blocking read)
+ * \param buff point to buffer which store data.
+ * \return number of byte(s) read.
+ */
+unsigned int mlsBarcodeReader_ReadData_Manual(char *buffer, const int bufferLength, const int mlTimeout)
+{
+    gint retValue = 0;
+
+    byte  recvBuff[bufferLength];
+    gchar symbolBuff[DATA_SYMBOL_LEN_MAXIMUM];
+
+    memset(recvBuff,   0, bufferLength           );
+    memset(symbolBuff, 0, DATA_SYMBOL_LEN_MAXIMUM);
+
+
+    STYL_INFO("Send START SECTION");
+    if(StylScannerSSI_SendCommand(StylScanner_FD, SSI_CMD_SESSION_START) != EXIT_SUCCESS)
+    {
+        STYL_ERROR("Start section request was fail.");
+        return 0;
+    }
+
+    STYL_INFO("************************************** Invoke StylScannerSSI_Read");
+    retValue = StylScannerSSI_Read(StylScanner_FD, recvBuff, bufferLength, mlTimeout);
+
+    if ( (retValue > 0) && (SSI_CMD_DECODE_DATA == recvBuff[PKG_INDEX_OPCODE]) )
+    {
+        STYL_INFO("READ DATA SIZE: %d", retValue);
+        StylScannerPackage_Display(recvBuff, retValue);
+        retValue = StylScannerPackage_Extract((gchar *)buffer, symbolBuff, recvBuff, (const gint)bufferLength);
+        STYL_INFO("Code Type: %s", symbolBuff);
+    }
+    else
+    {
+        if(retValue <= 0 )
+        {
+            STYL_WARNING("Nothing was received.");
+        }
+        else
+        {
+            STYL_ERROR("Received data was invalid.");
+        }
+        retValue = 0;
+    }
+
+    STYL_INFO("Send STOP SECTION");
+    if(StylScannerSSI_SendCommand(StylScanner_FD, SSI_CMD_SESSION_STOP) != EXIT_SUCCESS)
+    {
+        STYL_ERROR("Stop section request was fail.");
+    }
+
+    return retValue;
+}
 
 /**@}*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

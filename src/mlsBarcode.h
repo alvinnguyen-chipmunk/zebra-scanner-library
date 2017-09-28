@@ -37,13 +37,13 @@ extern "C"
 /********** Function declaration section **************************************/
 
 /*!
- * \brief mlsBarcodeReader_GetDevice - Get the device node file name of the udev device
+ * \brief mlsBarcodeReader_GetDevice: Get the device node file name of the udev device
  * \return 	the device node file name of the udev device, or NULL if no device node exists
  */
 const char *mlsBarcodeReader_GetDevice(void);
 
 /*!
- * \brief mlsBarcodeReader_GetVersion provide software version
+ * \brief mlsBarcodeReader_GetVersion: provide software version
  * \return string of software version
  * -
  */
@@ -57,16 +57,8 @@ const char *mlsBarcodeReader_GetVersion(void);
  */
 int mlsBarcodeReader_Open(const char *name);
 
-///*!
-// * \brief mlsBarcodeReader_Manual_Open: Open Reader descriptor file for read write manually.
-// * \return
-// * - EXIT_SUCCESS: Success
-// * - EXIT_FAILURE: Fail
-// */
-//int mlsBarcodeReader_Manual_Open(const char *name);
-
 /*!
- * \brief mlsBarcodeReader_reopen() closes and re-opens scanner device file
+ * \brief mlsBarcodeReader_Reopen: closes and re-opens scanner device file
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
@@ -74,11 +66,26 @@ int mlsBarcodeReader_Open(const char *name);
 int mlsBarcodeReader_Reopen(const char *name);
 
 /*!
- * \brief mlsBarcodeReader_ReadData Reader data from descriptor file (blocking read)
+ * \brief mlsBarcodeReader_ReadData: Reader data from descriptor file (blocking read)
  * \param buff point to buffer which store data.
  * \return number of byte(s) read.
  */
-unsigned int mlsBarcodeReader_ReadData(char *buffer, const int buffLength, const int timeout);
+unsigned int mlsBarcodeReader_ReadData(char *buffer, const int bufferLength, const int timeout);
+
+/*!
+ * \brief mlsBarcodeReader_ReadData_Manual: Reader data from descriptor file (blocking read)
+ * \param buff point to buffer which store data.
+ * \return number of byte(s) read.
+ */
+unsigned int mlsBarcodeReader_ReadData_Manual(char *buffer, const int bufferLength, const int timeout);
+
+/*!
+ * \brief mlsBarcodeReader_ManualMode: Set configure for scanner via manual scanning.
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+int mlsBarcodeReader_ManualMode();
 
 /*!
  * \brief mlsBarcodeReader_close close Reader file descriptor.

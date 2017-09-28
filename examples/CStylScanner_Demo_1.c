@@ -11,12 +11,12 @@
  ******************************************************************************/
 
 /**
- * @file    barcode_demo.c
+ * @file    CStylScanner_Demo_1.c
  * @brief   Simple example use C library to get data from qrcode/barcode scanner
  *
  * Long description.
- * @date    13/07/2017
- * @author  luck.hoang alvin.nguyen
+ * @date    28/09/2017
+ * @author  alvin.nguyen
  */
 
 /********** Include section ***************************************************/
