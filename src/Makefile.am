@@ -7,7 +7,8 @@ if RELEASE
 RELEASE_CFLAGS = -D__RELEASE__
 endif
 
-STYLSCANNER_includedir = $(includedir)/styl
+#STYLSCANNER_includedir = $(includedir)/styl
+STYLSCANNER_includedir = $(includedir)
 
 STYLSCANNER_SOURCES = mlsBarcode.h			\
 					  CStylScanner.c		\

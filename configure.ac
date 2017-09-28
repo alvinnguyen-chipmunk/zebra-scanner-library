@@ -55,9 +55,9 @@ AC_STRUCT_TM
 
 # LIBUDEV checks
 udev_module="libudev"
-PKG_CHECK_MODULES(LIBUDEV, [$udev_module])
-AC_SUBST(LIBUDEV_CFLAGS)
-AC_SUBST(LIBUDEV_LIBS)
+PKG_CHECK_MODULES(UDEV, [$udev_module])
+AC_SUBST(UDEV_CFLAGS)
+AC_SUBST(UDEV_LIBS)
 LIBUDEV_VERSION=`$PKG_CONFIG --modversion ${udev_module}`
 
 # Glib-2.0 checks
