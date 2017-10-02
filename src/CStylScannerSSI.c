@@ -59,8 +59,20 @@ static gint StylScannerSSI_SerialRead(gint pFile, byte* buffer, guint sizeBuffer
 
     /* Initialize the timeout. */
     struct timeval tv;
-    tv.tv_sec  = (timeout_ms + sizeBuffer) / 1000;
-    tv.tv_usec = ((timeout_ms % 1000) +sizeBuffer) * 1000;
+
+    guint min_timeout_ms = TIMEOUT_BYTE_MS * sizeBuffer;
+
+    if(timeout_ms > min_timeout_ms)
+    {
+        tv.tv_sec  = timeout_ms / 1000;
+        tv.tv_usec = (timeout_ms % 1000) * 1000;
+    }
+    else
+    {
+        STYL_WARNING("Timeout value is invalid. Using timeout value default.");
+        tv.tv_sec  = min_timeout_ms / 1000;
+        tv.tv_usec = (min_timeout_ms % 1000) * 1000;
+    }
 
 
     gint nbytes = 0;
@@ -257,7 +269,7 @@ static uint16_t StylScannerSSI_CalculateChecksum(byte *package, gint length)
  * \brief StylScannerSSI_Read: read formatted package and response ACK from/to scanner via file descriptor
  * \return number of read bytes
  */
-gint StylScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout)
+gint StylScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout_ms)
 {
     gint retValue = 0;
     gint sizeReceived = 0;
@@ -487,7 +499,7 @@ gint StylScannerSSI_CheckACK(gint pFile)
         STYL_INFO_OTHER(" 0x%02x", recvBuff[i]);
     }
 
-    STYL_INFO("Invoke StylScannerSSI_Read");
+    STYL_INFO("Invoke StylScannerSSI_GetACK");
     retValue = StylScannerSSI_GetACK(pFile, recvBuff, PACKAGE_LEN_ACK_MAXIMUM, 1);
     if ( (retValue > 0) && (SSI_CMD_ACK == recvBuff[PKG_INDEX_OPCODE]) )
     {

@@ -87,7 +87,8 @@ typedef unsigned char byte;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define BAUDRATE		B9600
+#define BAUDRATE            B9600
+#define TIMEOUT_BYTE_MS     2 /* (1/9600)*8*1000 ~= 0.8333 milisecond*/
 
 /* ************** SSI Commands opcodes **************/
 #define SSI_CMD_PARAM                       0xC6

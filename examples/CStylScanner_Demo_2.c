@@ -55,7 +55,7 @@ int main(int argc, const char * argv[])
     const char *deviceName              = argv[1];
     int         retValue                = EXIT_FAILURE;
     int         decodeLength            = 0;
-    const int   msTimeout               = 300;	/* mili-seconds */
+    const int   timeout                 = 3;	/* 1/10 second */
 
     printf("Version: %s\n", mlsBarcodeReader_GetVersion());
 
@@ -74,7 +74,7 @@ int main(int argc, const char * argv[])
     {
         printf("\n\n +++++++++++++++++++++++++++++++++++++++++++++++++++ \n");
         memset(buffer, 0, BUFFER_LEN);
-        decodeLength = mlsBarcodeReader_ReadData_Manual(buffer, BUFFER_LEN, msTimeout);
+        decodeLength = mlsBarcodeReader_ReadData_Manual(buffer, BUFFER_LEN, timeout);
         if (decodeLength > 0)
         {
             printf("\e[36m Decode content: (%d):\n %s \e[0m\n\n", decodeLength, buffer);

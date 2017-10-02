@@ -39,7 +39,7 @@ extern "C"
  * \brief StylScannerSSI_Read: read formatted package and response ACK from/to scanner via file descriptor
  * \return number of read bytes
  */
-gint StylScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout);
+gint StylScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout_ms);
 
 /*!
  * \brief StylScannerSSI_Write: write formatted package and check ACK to/from scanner via file descriptor

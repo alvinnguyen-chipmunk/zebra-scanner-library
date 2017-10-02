@@ -187,7 +187,11 @@ unsigned int mlsBarcodeReader_ReadData(char *buffer, const int bufferLength, con
     memset(symbolBuff, 0, DATA_SYMBOL_LEN_MAXIMUM);
 
     STYL_INFO("Invoke StylScannerSSI_Read");
-    retValue = StylScannerSSI_Read(StylScanner_FD, recvBuff, bufferLength, timeout);
+
+    /* Convert 1/10 seconds to mili-seconds */
+    guint timeout_ms = timeout/10*1000;
+
+    retValue = StylScannerSSI_Read(StylScanner_FD, recvBuff, bufferLength, timeout_ms);
 
     if ( (retValue > 0) && (SSI_CMD_DECODE_DATA == recvBuff[PKG_INDEX_OPCODE]) )
     {
@@ -230,7 +234,7 @@ int mlsBarcodeReader_ManualMode()
  * \param buff point to buffer which store data.
  * \return number of byte(s) read.
  */
-unsigned int mlsBarcodeReader_ReadData_Manual(char *buffer, const int bufferLength, const int mlTimeout)
+unsigned int mlsBarcodeReader_ReadData_Manual(char *buffer, const int bufferLength, const int timeout)
 {
     gint retValue = 0;
 
@@ -248,8 +252,11 @@ unsigned int mlsBarcodeReader_ReadData_Manual(char *buffer, const int bufferLeng
         return 0;
     }
 
+    /* Convert 1/10 seconds to mili-seconds */
+    guint timeout_ms = timeout/10*1000;
+
     STYL_INFO("************************************** Invoke StylScannerSSI_Read");
-    retValue = StylScannerSSI_Read(StylScanner_FD, recvBuff, bufferLength, mlTimeout);
+    retValue = StylScannerSSI_Read(StylScanner_FD, recvBuff, bufferLength, timeout_ms);
 
     if ( (retValue > 0) && (SSI_CMD_DECODE_DATA == recvBuff[PKG_INDEX_OPCODE]) )
     {
