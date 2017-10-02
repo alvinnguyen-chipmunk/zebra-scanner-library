@@ -31,6 +31,8 @@
 #include <unistd.h>
 #include <error.h>
 #include <errno.h>
+#include <glib.h>
+#include <glib/gstdio.h>
 
 #include "CStylScannerUtils.h"
 #include "CStylScannerConfig.h"
@@ -43,11 +45,11 @@ static gint StylScannerLockfile_FD  = -1;
 
 /********** Local Macro definition section ************************************/
 #define TIMEOUT_MSEC		        50
-#define LOCK_SCANNER_PATH           "/tmp/lock_scanner"
+#define LOCK_SCANNER_PATH           "/var/log/styl_scanner"
 
 /********** Local (static) variable declaration section ***********************/
 /********** Local (static) function declaration section ***********************/
-static gint         StylScannerConfig_LockDevice            (gint pFile, gboolean isLock);
+static gint         StylScannerConfig_LockDevice            (gboolean isLock);
 
 /********** Local (static) function definition section ************************/
 
@@ -57,27 +59,62 @@ static gint         StylScannerConfig_LockDevice            (gint pFile, gboolea
  * - EXIT_SUCCESS: if executing success
  * - EXIT_FAILURE: if executing fail
  */
-static gint StylScannerConfig_LockDevice (gint pFile, gboolean isLock)
+static gint StylScannerConfig_LockDevice (gboolean isLock)
 {
     if(TRUE==isLock)
     {
-        if(flock(pFile, LOCK_EX | LOCK_NB) < 0)
+        gint pLockFile = -1;
+        gchar *buffer =  NULL;
+        gboolean getError = FALSE;
+        if (g_file_test (LOCK_SCANNER_PATH, G_FILE_TEST_EXISTS))
         {
-            STYL_ERROR("flock: %d - %s", errno, strerror(errno));
-            return EXIT_FAILURE;
+            pLockFile = g_open (LOCK_SCANNER_PATH, O_RDWR);
+            if(pLockFile==-1)
+            {
+                STYL_ERROR("g_open: %d - %s", errno, strerror(errno));
+                return EXIT_FAILURE;
+            }
+            buffer = g_malloc0(32);
+            if(read(pLockFile, buffer, 32)<=0)
+            {
+                STYL_ERROR("read: %d - %s", errno, strerror(errno));
+                getError = TRUE;
+            }
+            STYL_ERROR("PID OLD IS: %s", buffer);
+            guint oldPID = (guint)g_ascii_strtoull(buffer, NULL, 10);
+            if(kill((pid_t)oldPID, 0)==0)
+            {
+                STYL_ERROR("Scanner device port was used by process %d", oldPID);
+                getError = TRUE;
+            }
+            getError = TRUE;
         }
-        return EXIT_SUCCESS;
+        else
+        {
+            pLockFile = g_open (LOCK_SCANNER_PATH, O_CREAT | O_RDWR, S_IWUSR | S_IRUSR);
+            if(pLockFile==-1)
+            {
+                STYL_ERROR("g_open: %d - %s", errno, strerror(errno));
+                return EXIT_FAILURE;
+            }
+            buffer = g_strdup_printf("%d", getpid());
+            if(write(pLockFile, buffer, (guint)strlen(buffer))<=0)
+            {
+                STYL_ERROR("write: %d - %s", errno, strerror(errno));
+                getError = TRUE;
+            }
+        }
+        g_free(buffer);
+        g_close(pLockFile, NULL);
+
+        if(getError==TRUE)
+            return EXIT_FAILURE;
     }
     else
     {
-        if(flock(pFile, LOCK_UN | LOCK_NB) < 0)
-        {
-            STYL_ERROR("flock: %d - %s", errno, strerror(errno));
-            return EXIT_FAILURE;
-        }
-        unlink(LOCK_SCANNER_PATH);
-        return EXIT_SUCCESS;
+        g_unlink(LOCK_SCANNER_PATH);
     }
+    return EXIT_SUCCESS;
 }
 
 /********** Global function definition section ********************************/
@@ -97,7 +134,7 @@ gint StylScannerConfig_OpenTTY(gchar *deviceNode)
     {
         STYL_ERROR("Open Scanner device %s: open: %d - %s\n", deviceNode, errno, strerror(errno));
     }
-    else if(StylScannerConfig_LockDevice(pFile, TRUE) !=  EXIT_SUCCESS)
+    else if(StylScannerConfig_LockDevice(TRUE) !=  EXIT_SUCCESS)
     {
         if (close(pFile) < 0)
         {
@@ -128,7 +165,7 @@ gint StylScannerConfig_CloseTTY(gint pFile)
         STYL_ERROR("Can not flush buffer of device");
     }
 
-    if(StylScannerConfig_LockDevice(pFile, FALSE) != EXIT_SUCCESS)
+    if(StylScannerConfig_LockDevice(FALSE) != EXIT_SUCCESS)
     {
         STYL_ERROR("Unlock for device fail.");
     }
