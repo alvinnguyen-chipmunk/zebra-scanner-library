@@ -127,8 +127,19 @@ static gint StylScannerSSI_SerialWrite(gint pFile, byte* buffer, guint sizeBuffe
     FD_ZERO(&sset);
     FD_SET(pFile, &sset);
 
-    tv.tv_sec = (timeout_ms + sizeBuffer) / 1000;
-    tv.tv_usec =((timeout_ms % 1000) + sizeBuffer) * 1000;
+    guint min_timeout_ms = TIMEOUT_BYTE_MS * sizeBuffer;
+
+    if(timeout_ms > min_timeout_ms)
+    {
+        tv.tv_sec  = timeout_ms / 1000;
+        tv.tv_usec = (timeout_ms % 1000) * 1000;
+    }
+    else
+    {
+        STYL_WARNING("Timeout value is invalid. Using timeout value default.");
+        tv.tv_sec  = min_timeout_ms / 1000;
+        tv.tv_usec = (min_timeout_ms % 1000) * 1000;
+    }
 
     while (sizeSent < sizeBuffer)
     {
