@@ -33,20 +33,20 @@ extern "C"
 /********** Function declaration section ***************************************/
 
 /*!
- * \brief StylScannerPackage_Display: print out package content.
+ * \brief mlsScannerPackage_Display: print out package content.
  * \param
  * - package: pointer to package content.
  * - length: length of package in byte.
  */
-void StylScannerPackage_Display(byte *package, gint length);
+void mlsScannerPackage_Display(byte *package, gint length);
 
 /*!
- * \brief StylScannerPackage_Extract: extract barcode from formatted package
+ * \brief mlsScannerPackage_Extract: extract barcode from formatted package
  * \return
  * - barcode length: Success
  * - 0             : Fail
  */
-gint StylScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *package, const gint buffLength);
+gint mlsScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *package, const gint buffLength);
 
 #ifdef __cplusplus
 }

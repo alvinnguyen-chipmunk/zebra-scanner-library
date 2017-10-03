@@ -36,57 +36,57 @@ extern "C"
 /********** Function declaration section ***************************************/
 
 /*!
- * \brief StylScannerSSI_Read: read formatted package and response ACK from/to scanner via file descriptor
+ * \brief mlsScannerSSI_Read: read formatted package and response ACK from/to scanner via file descriptor
  * \return number of read bytes
  */
-gint StylScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout_ms);
+gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout_ms);
 
 /*!
- * \brief StylScannerSSI_Write: write formatted package and check ACK to/from scanner via file descriptor
+ * \brief mlsScannerSSI_Write: write formatted package and check ACK to/from scanner via file descriptor
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-gint StylScannerSSI_Write(gint pFile, byte opcode, byte *param, byte paramLen);
+gint mlsScannerSSI_Write(gint pFile, byte opcode, byte *param, byte paramLen);
 
 /*!
- * \brief StylScannerSSI_CheckACK: receive ACK package after StylScannerSSI_Write() and check for ACK
+ * \brief mlsScannerSSI_CheckACK: receive ACK package after mlsScannerSSI_Write() and check for ACK
  * \return
  * - EXIT_SUCCESS: Success	ACK
  * - EXIT_FAILURE: Fail		Unknown cause
  */
-gint StylScannerSSI_CheckACK(gint pFile);
+gint mlsScannerSSI_CheckACK(gint pFile);
 
 /*!
- * \brief StylScannerSSI_IsContinue: check package's type
+ * \brief mlsScannerSSI_IsContinue: check package's type
  * \return
  * - 0  : Is last package in multiple packages stream
  * - 1 : Is intermediate package in multiple packages stream
  */
-gint StylScannerSSI_IsContinue(byte *package);
+gint mlsScannerSSI_IsContinue(byte *package);
 
 /*!
- * \brief StylScannerSSI_CorrectPackage: check package's is correct
+ * \brief mlsScannerSSI_CorrectPackage: check package's is correct
  * \return
  * - 1 : Receive package is correct
  * - 0 : Receive package is incorrect
  */
-gint StylScannerSSI_CorrectPackage(byte *package);
+gint mlsScannerSSI_CorrectPackage(byte *package);
 
 
 /*!
- * \brief StylScannerSSI_SendCommand: Send a command then check ACK
+ * \brief mlsScannerSSI_SendCommand: Send a command then check ACK
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-gint StylScannerSSI_SendCommand(gint pFile, byte opCode);
+gint mlsScannerSSI_SendCommand(gint pFile, byte opCode);
 
 /*!
- * \brief StylScannerSSI_GetACK: get ACK raw package
+ * \brief mlsScannerSSI_GetACK: get ACK raw package
  * \return number of read bytes
  */
-gint StylScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout);
+gint mlsScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout);
 
 #ifdef __cplusplus
 }

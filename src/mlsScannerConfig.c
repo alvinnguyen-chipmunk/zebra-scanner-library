@@ -41,25 +41,23 @@
 
 /********** Local Type definition section *************************************/
 /********** Local Constant and compile switch definition section **************/
-static gint StylScannerLockfile_FD  = -1;
-
 /********** Local Macro definition section ************************************/
 #define TIMEOUT_MSEC		        50
 #define LOCK_SCANNER_PATH           "/var/log/styl_scanner"
 
 /********** Local (static) variable declaration section ***********************/
 /********** Local (static) function declaration section ***********************/
-static gint         StylScannerConfig_LockDevice            (gboolean isLock);
+static gint         mlsScannerConfig_LockDevice            (gboolean isLock);
 
 /********** Local (static) function definition section ************************/
 
 /*!
- * \brief StylScannerConfig_LockDevice: Lock or unlock device
+ * \brief mlsScannerConfig_LockDevice: Lock or unlock device
  * \return
  * - EXIT_SUCCESS: if executing success
  * - EXIT_FAILURE: if executing fail
  */
-static gint StylScannerConfig_LockDevice (gboolean isLock)
+static gint mlsScannerConfig_LockDevice (gboolean isLock)
 {
     if(TRUE==isLock)
     {
@@ -120,12 +118,12 @@ static gint StylScannerConfig_LockDevice (gboolean isLock)
 /********** Global function definition section ********************************/
 
 /*!
- * \brief StylScannerConfig_OpenTTY: Open TTY port of device
+ * \brief mlsScannerConfig_OpenTTY: Open TTY port of device
  * \return
  * - EXIT_SUCCESS: if executing success
  * - EXIT_SUCCESS: if executing success
  */
-gint StylScannerConfig_OpenTTY(gchar *deviceNode)
+gint mlsScannerConfig_OpenTTY(gchar *deviceNode)
 {
     gint pFile = -1;
 
@@ -134,7 +132,7 @@ gint StylScannerConfig_OpenTTY(gchar *deviceNode)
     {
         STYL_ERROR("Open Scanner device %s: open: %d - %s\n", deviceNode, errno, strerror(errno));
     }
-    else if(StylScannerConfig_LockDevice(TRUE) !=  EXIT_SUCCESS)
+    else if(mlsScannerConfig_LockDevice(TRUE) !=  EXIT_SUCCESS)
     {
         if (close(pFile) < 0)
         {
@@ -147,25 +145,25 @@ gint StylScannerConfig_OpenTTY(gchar *deviceNode)
 }
 
 /*!
- * \brief StylScannerConfig_CloseTTY: Close TTY port of device.
+ * \brief mlsScannerConfig_CloseTTY: Close TTY port of device.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-gint StylScannerConfig_CloseTTY(gint pFile)
+gint mlsScannerConfig_CloseTTY(gint pFile)
 {
     /* Disable device for scanning */
-    if(StylScannerSSI_SendCommand(pFile, SSI_CMD_SCAN_DISABLE) != EXIT_SUCCESS)
+    if(mlsScannerSSI_SendCommand(pFile, SSI_CMD_SCAN_DISABLE) != EXIT_SUCCESS)
     {
         STYL_ERROR("Can not disable scanner device");
     }
 
-    if(StylScannerSSI_SendCommand(pFile, SSI_CMD_FLUSH_QUEUE) != EXIT_SUCCESS)
+    if(mlsScannerSSI_SendCommand(pFile, SSI_CMD_FLUSH_QUEUE) != EXIT_SUCCESS)
     {
         STYL_ERROR("Can not flush buffer of device");
     }
 
-    if(StylScannerConfig_LockDevice(FALSE) != EXIT_SUCCESS)
+    if(mlsScannerConfig_LockDevice(FALSE) != EXIT_SUCCESS)
     {
         STYL_ERROR("Unlock for device fail.");
     }
@@ -179,12 +177,12 @@ gint StylScannerConfig_CloseTTY(gint pFile)
 }
 
 /*!
- * \brief StylScannerConfig_ConfigTTY: Do configure for SSI port.
+ * \brief mlsScannerConfig_ConfigTTY: Do configure for SSI port.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-gint StylScannerConfig_ConfigTTY(gint pFile)
+gint mlsScannerConfig_ConfigTTY(gint pFile)
 {
     speed_t br_speed = BAUDRATE;
     gint mcs = 0;
@@ -255,7 +253,7 @@ gint StylScannerConfig_ConfigTTY(gint pFile)
 }
 
 /*!
- * \brief StylScannerConfig_ConfigSSI: Send parameters to configure scanner as SSI interface.
+ * \brief mlsScannerConfig_ConfigSSI: Send parameters to configure scanner as SSI interface.
  * \param
  * - File descriptor of scanner device
  * - triggerMode: SCANNING_TRIGGER_AUTO or SCANNING_TRIGGER_MANUAL
@@ -263,7 +261,7 @@ gint StylScannerConfig_ConfigTTY(gint pFile)
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-gint StylScannerConfig_ConfigSSI(gint pFile, byte triggerMode)
+gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode)
 {
     /*
         #define SSI_PARAM_TYPE_PARAM_PREFIX			0xFF
@@ -306,12 +304,12 @@ gint StylScannerConfig_ConfigSSI(gint pFile, byte triggerMode)
     gint paramSize = sizeof(paramContent) / sizeof(*paramContent);
 
     STYL_INFO("");
-    StylScannerPackage_Display(paramContent, paramSize);
+    mlsScannerPackage_Display(paramContent, paramSize);
 
-    retValue = StylScannerSSI_Write(pFile, SSI_CMD_PARAM, paramContent, paramSize);
+    retValue = mlsScannerSSI_Write(pFile, SSI_CMD_PARAM, paramContent, paramSize);
 
     if(retValue==EXIT_SUCCESS)
-        retValue = StylScannerSSI_CheckACK(pFile);
+        retValue = mlsScannerSSI_CheckACK(pFile);
 
     return retValue;
 }

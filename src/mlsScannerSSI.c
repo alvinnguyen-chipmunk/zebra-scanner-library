@@ -37,19 +37,19 @@
 /********** Local Macro definition section ************************************/
 /********** Local (static) variable declaration section ***********************/
 /********** Local (static) function declaration section ***********************/
-static void     StylScannerSSI_PreparePackage           (byte *package, byte opcode, byte *param, byte paramLen);
-static uint16_t StylScannerSSI_CalculateChecksum        (byte *package, gint length);
-static gint     StylScannerSSI_IsChecksumOK             (byte *package);
-static gint     StylScannerSSI_SerialRead               (gint pFile, byte* buffer, guint sizeBuffer, guint timeout_ms);
-static gint     StylScannerSSI_SerialWrite              (gint pFile, byte* buffer, guint sizeBuffer, guint timeout_ms);
+static void     mlsScannerSSI_PreparePackage           (byte *package, byte opcode, byte *param, byte paramLen);
+static uint16_t mlsScannerSSI_CalculateChecksum        (byte *package, gint length);
+static gint     mlsScannerSSI_IsChecksumOK             (byte *package);
+static gint     mlsScannerSSI_SerialRead               (gint pFile, byte* buffer, guint sizeBuffer, guint timeout_ms);
+static gint     mlsScannerSSI_SerialWrite              (gint pFile, byte* buffer, guint sizeBuffer, guint timeout_ms);
 /********** Local (static) function definition section ************************/
 
 /*!
- * \brief StylScannerSSI_SerialRead: read data from serial port
+ * \brief mlsScannerSSI_SerialRead: read data from serial port
  * \return
  * - number of readed bytes or O if no byte was readed
  */
-static gint StylScannerSSI_SerialRead(gint pFile, byte* buffer, guint sizeBuffer, guint timeout_ms)
+static gint mlsScannerSSI_SerialRead(gint pFile, byte* buffer, guint sizeBuffer, guint timeout_ms)
 {
     /*  Initialize the file descriptor set.*/
     fd_set  fds;
@@ -111,12 +111,12 @@ static gint StylScannerSSI_SerialRead(gint pFile, byte* buffer, guint sizeBuffer
 }
 
 /*!
- * \brief StylScannerSSI_SerialWrite: write data to serial port
+ * \brief mlsScannerSSI_SerialWrite: write data to serial port
  * \return
  * - number of readed bytes or O if no byte was readed
  */
  //unsigned int PM_UART::sendBuff(unsigned char* buff, unsigned int len, unsigned int timeout_ms)
-static gint StylScannerSSI_SerialWrite(gint pFile, byte* buffer, guint sizeBuffer, guint timeout_ms)
+static gint mlsScannerSSI_SerialWrite(gint pFile, byte* buffer, guint sizeBuffer, guint timeout_ms)
 {
     guint   sizeSent    = 0;
     guint   n           = 0;
@@ -177,40 +177,40 @@ static gint StylScannerSSI_SerialWrite(gint pFile, byte* buffer, guint sizeBuffe
 }
 
 /*!
- * \brief StylScannerSSI_IsChecksumOK: check 2 last bytes for checksum
+ * \brief mlsScannerSSI_IsChecksumOK: check 2 last bytes for checksum
  * \return
  * - TRUE : checksum is correct
  * - FALSE: checksum is incorrect
  */
-static gint StylScannerSSI_IsChecksumOK(byte *package)
+static gint mlsScannerSSI_IsChecksumOK(byte *package)
 {
     uint16_t checksum = 0;
 
     checksum += package[PACKAGE_LEN(package) + 1];
     checksum += package[PACKAGE_LEN(package)] << 8;
     STYL_INFO("checksum receive: %x", checksum);
-    STYL_INFO("checksum calculate: %x", StylScannerSSI_CalculateChecksum(package, PACKAGE_LEN(package)));
-    return (checksum == StylScannerSSI_CalculateChecksum(package, PACKAGE_LEN(package)));
+    STYL_INFO("checksum calculate: %x", mlsScannerSSI_CalculateChecksum(package, PACKAGE_LEN(package)));
+    return (checksum == mlsScannerSSI_CalculateChecksum(package, PACKAGE_LEN(package)));
 }
 
 /*!
- * \brief StylScannerSSI_IsContinue: check package's type
+ * \brief mlsScannerSSI_IsContinue: check package's type
  * \return
  * - 0  : Is last package in multiple packages stream
  * - 1 : Is intermediate package in multiple packages stream
  */
-gint StylScannerSSI_IsContinue(byte *package)
+gint mlsScannerSSI_IsContinue(byte *package)
 {
     return (SSI_PARAM_STATUS_CONTINUATION & package[PKG_INDEX_STAT]);
 }
 
 /*!
- * \brief StylScannerSSI_CorrectPackage: check package's is correct
+ * \brief mlsScannerSSI_CorrectPackage: check package's is correct
  * \return
  * - 1 : Receive package is correct
  * - 0 : Receive package is incorrect
  */
-gint StylScannerSSI_CorrectPackage(byte *package)
+gint mlsScannerSSI_CorrectPackage(byte *package)
 {
     return !(SSI_ID_DECODER | package[PKG_INDEX_SRC]);
 }
@@ -220,7 +220,7 @@ gint StylScannerSSI_CorrectPackage(byte *package)
  * \brief PreparePkg: generate package from input opcode and params
  * \param
  */
-static void StylScannerSSI_PreparePackage(byte *package, byte opcode, byte *param, byte paramLen)
+static void mlsScannerSSI_PreparePackage(byte *package, byte opcode, byte *param, byte paramLen)
 {
     uint16_t checksum = 0;
     /*
@@ -247,19 +247,19 @@ static void StylScannerSSI_PreparePackage(byte *package, byte opcode, byte *para
     }
 
     /* ***************** Add checksum ************************* */
-    checksum = StylScannerSSI_CalculateChecksum(package, PACKAGE_LEN(package));
+    checksum = mlsScannerSSI_CalculateChecksum(package, PACKAGE_LEN(package));
     package[PACKAGE_LEN(package)]     = checksum >> 8;
     package[PACKAGE_LEN(package) + 1] = checksum & 0xFF;
 }
 
 /*!
- * \brief StylScannerSSI_CalculateChecksum: calculate 2's complement of package
+ * \brief mlsScannerSSI_CalculateChecksum: calculate 2's complement of package
  * \param
  * - package: pointer of package content.
  * - length: Length of package in byte.
  * \return 16 bits checksum (no 2'complement) value
  */
-static uint16_t StylScannerSSI_CalculateChecksum(byte *package, gint length)
+static uint16_t mlsScannerSSI_CalculateChecksum(byte *package, gint length)
 {
     uint16_t checksum = 0;
     for (guint i = 0; i < length; i++)
@@ -276,10 +276,10 @@ static uint16_t StylScannerSSI_CalculateChecksum(byte *package, gint length)
 /********** Global function definition section ********************************/
 
 /*!
- * \brief StylScannerSSI_Read: read formatted package and response ACK from/to scanner via file descriptor
+ * \brief mlsScannerSSI_Read: read formatted package and response ACK from/to scanner via file descriptor
  * \return number of read bytes
  */
-gint StylScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout_ms)
+gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout_ms)
 {
     gint retValue = 0;
     gint sizeReceived = 0;
@@ -293,7 +293,7 @@ gint StylScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint t
     {
         /* Read 1 first byte for length */
         readRequest = 1;
-        retValue += StylScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN], readRequest, TTY_TIMEOUT);
+        retValue += mlsScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN], readRequest, TTY_TIMEOUT);
         STYL_INFO("retValue: %d", retValue);
         if(retValue <= 0)
         {
@@ -314,9 +314,9 @@ gint StylScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint t
             readRequest = recvBuff[PKG_INDEX_LEN] + SSI_LEN_CHECKSUM - 1; /* 1 is byte read before */
             STYL_INFO("Rest byte is: %d", readRequest);
 
-            sizeReceived = StylScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN + 1], readRequest, TTY_TIMEOUT);
+            sizeReceived = mlsScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN + 1], readRequest, TTY_TIMEOUT);
             STYL_INFO("");
-            StylScannerPackage_Display(recvBuff, NO_GIVEN);
+            mlsScannerPackage_Display(recvBuff, NO_GIVEN);
             STYL_INFO("sizeReceived: %d", sizeReceived);
             if(sizeReceived != readRequest)
             {
@@ -328,18 +328,18 @@ gint StylScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint t
                 retValue += sizeReceived;
                 STYL_INFO("retValue: %d", retValue);
 
-                if(!StylScannerSSI_CorrectPackage(recvBuff))
+                if(!mlsScannerSSI_CorrectPackage(recvBuff))
                 {
                     STYL_ERROR("********** Receive a invalid package");
                     retValue = 0;
                     goto __error;
                 }
 
-                if (StylScannerSSI_IsChecksumOK(recvBuff))
+                if (mlsScannerSSI_IsChecksumOK(recvBuff))
                 {
                     /* Send ACK for buffer received */
                     STYL_INFO("Checksum OK! Send ACK for checksum.");
-                    if(StylScannerSSI_Write(pFile, SSI_CMD_ACK, NULL, 0) != EXIT_SUCCESS)
+                    if(mlsScannerSSI_Write(pFile, SSI_CMD_ACK, NULL, 0) != EXIT_SUCCESS)
                     {
                         STYL_ERROR("Send ACK for checksum fail.");
                     }
@@ -366,13 +366,13 @@ gint StylScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint t
             }
         }
     }
-    while(StylScannerSSI_IsContinue(recvBuff));
+    while(mlsScannerSSI_IsContinue(recvBuff));
 
     return retValue;
 
 __error:
     STYL_INFO("Error! Send NAK to scanner");
-    if(StylScannerSSI_Write(pFile, SSI_CMD_NAK, NULL, 0) != EXIT_SUCCESS)
+    if(mlsScannerSSI_Write(pFile, SSI_CMD_NAK, NULL, 0) != EXIT_SUCCESS)
     {
         STYL_ERROR("Send NAK to scanner got problem.");
     }
@@ -380,10 +380,10 @@ __error:
 }
 
 /*!
- * \brief StylScannerSSI_GetACK: get ACK raw package
+ * \brief mlsScannerSSI_GetACK: get ACK raw package
  * \return number of read bytes
  */
-gint StylScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout)
+gint mlsScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout)
 {
     gint retValue = 0;
     gint sizeReceived = 0;
@@ -395,7 +395,7 @@ gint StylScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint
 
     /* Read 1 first byte for length */
     readRequest = 1;
-    retValue = StylScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN], readRequest, TTY_TIMEOUT);
+    retValue = mlsScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN], readRequest, TTY_TIMEOUT);
     STYL_INFO("Fisrt byte size: %d", retValue);
     if(retValue <= 0)
     {
@@ -413,9 +413,9 @@ gint StylScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint
         readRequest = recvBuff[PKG_INDEX_LEN] + SSI_LEN_CHECKSUM - 1; /* 1 is byte read before */
         STYL_INFO("Rest byte is: %d", readRequest);
 
-        sizeReceived = StylScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN + 1], readRequest, TTY_TIMEOUT);
+        sizeReceived = mlsScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN + 1], readRequest, TTY_TIMEOUT);
         STYL_INFO("");
-        StylScannerPackage_Display(recvBuff, NO_GIVEN);
+        mlsScannerPackage_Display(recvBuff, NO_GIVEN);
         STYL_INFO("sizeReceived: %d", sizeReceived);
 
         if(sizeReceived != readRequest)
@@ -427,13 +427,13 @@ gint StylScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint
             retValue += sizeReceived;
             STYL_INFO("Total size received: %d", retValue);
 
-            if(!StylScannerSSI_CorrectPackage(recvBuff))
+            if(!mlsScannerSSI_CorrectPackage(recvBuff))
             {
                 STYL_ERROR("********** Receive a invalid package");
                 goto __error;
             }
 
-            if (StylScannerSSI_IsChecksumOK(recvBuff))
+            if (mlsScannerSSI_IsChecksumOK(recvBuff))
             {
                 /* Copy current buffer to finally buffer */
                 STYL_DEBUG("MEMCPY SIZE: %d", PACKAGE_LEN(recvBuff) + SSI_LEN_CHECKSUM);
@@ -448,7 +448,7 @@ gint StylScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint
     }
 
     STYL_INFO("ACK buffer size: %d", retValue);
-    StylScannerPackage_Display(buffer, NO_GIVEN);
+    mlsScannerPackage_Display(buffer, NO_GIVEN);
     return retValue;
 
 __error:
@@ -458,12 +458,12 @@ __error:
 }
 
 /*!
- * \brief StylScannerSSI_Write: write formatted package and check ACK to/from scanner via file descriptor
+ * \brief mlsScannerSSI_Write: write formatted package and check ACK to/from scanner via file descriptor
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-gint StylScannerSSI_Write(gint pFile, byte opcode, byte *param, byte paramLen)
+gint mlsScannerSSI_Write(gint pFile, byte opcode, byte *param, byte paramLen)
 {
     gint retValue = EXIT_SUCCESS;
     gint sizeSend = 0;
@@ -474,15 +474,15 @@ gint StylScannerSSI_Write(gint pFile, byte opcode, byte *param, byte paramLen)
     /* ***************** Flush old input queue *************** */
     tcflush(pFile, TCIFLUSH);
 
-    StylScannerSSI_PreparePackage(bufferContent, opcode, param, paramLen);
+    mlsScannerSSI_PreparePackage(bufferContent, opcode, param, paramLen);
 
     STYL_WARNING("bufferSize: %d", bufferSize);
     STYL_WARNING("Send data: ");
-    StylScannerPackage_Display(bufferContent, bufferSize);
+    mlsScannerPackage_Display(bufferContent, bufferSize);
 
     STYL_WARNING("PACKAGE_LEN(bufferContent) + SSI_LEN_CHECKSUM: %d", PACKAGE_LEN(bufferContent) + SSI_LEN_CHECKSUM);
     sizeSend = PACKAGE_LEN(bufferContent) + SSI_LEN_CHECKSUM;
-    if(StylScannerSSI_SerialWrite(pFile, bufferContent, sizeSend, TTY_TIMEOUT) != sizeSend)
+    if(mlsScannerSSI_SerialWrite(pFile, bufferContent, sizeSend, TTY_TIMEOUT) != sizeSend)
     {
         STYL_ERROR("Send data to scanner got problem.");
         retValue = EXIT_FAILURE;
@@ -493,12 +493,12 @@ gint StylScannerSSI_Write(gint pFile, byte opcode, byte *param, byte paramLen)
 }
 
 /*!
- * \brief StylScannerSSI_CheckACK: receive ACK package after StylScannerSSI_Write() and check for ACK
+ * \brief mlsScannerSSI_CheckACK: receive ACK package after mlsScannerSSI_Write() and check for ACK
  * \return
  * - EXIT_SUCCESS: Success	ACK
  * - EXIT_FAILURE: Fail		Unknown cause
  */
-gint StylScannerSSI_CheckACK(gint pFile)
+gint mlsScannerSSI_CheckACK(gint pFile)
 {
     gint retValue = EXIT_SUCCESS;
     byte recvBuff[PACKAGE_LEN_ACK_MAXIMUM];
@@ -509,8 +509,8 @@ gint StylScannerSSI_CheckACK(gint pFile)
         STYL_INFO_OTHER(" 0x%02x", recvBuff[i]);
     }
 
-    STYL_INFO("Invoke StylScannerSSI_GetACK");
-    retValue = StylScannerSSI_GetACK(pFile, recvBuff, PACKAGE_LEN_ACK_MAXIMUM, 1);
+    STYL_INFO("Invoke mlsScannerSSI_GetACK");
+    retValue = mlsScannerSSI_GetACK(pFile, recvBuff, PACKAGE_LEN_ACK_MAXIMUM, 1);
     if ( (retValue > 0) && (SSI_CMD_ACK == recvBuff[PKG_INDEX_OPCODE]) )
     {
         retValue = EXIT_SUCCESS;
@@ -525,17 +525,17 @@ gint StylScannerSSI_CheckACK(gint pFile)
 
 
 /*!
- * \brief StylScannerSSI_SendCommand: Send a command then check ACK
+ * \brief mlsScannerSSI_SendCommand: Send a command then check ACK
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-gint StylScannerSSI_SendCommand(gint pFile, byte opCode)
+gint mlsScannerSSI_SendCommand(gint pFile, byte opCode)
 {
     gint retValue = EXIT_SUCCESS;
-    retValue = StylScannerSSI_Write(pFile, opCode, NULL, 0);
+    retValue = mlsScannerSSI_Write(pFile, opCode, NULL, 0);
     if(retValue==EXIT_SUCCESS)
-        retValue = StylScannerSSI_CheckACK(pFile);
+        retValue = mlsScannerSSI_CheckACK(pFile);
 
     return retValue;
 }

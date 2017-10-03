@@ -34,14 +34,14 @@ extern "C"
 /********** Function declaration section **************************************/
 
 /*!
- * \brief StylScannerDevice_GetNode - Get node string for device with vendor id and product id and subsystem
+ * \brief mlsScannerDevice_GetNode - Get node string for device with vendor id and product id and subsystem
  * \param
  * - devSubsystem : String for subsystem that is where to list all devices
  * - devVendorID  : String for vendor ID that will let filter for specific device
  * - devProductID : String for product ID that will let filter for specific device
  * \return 	the device node file name of the udev device, or NULL if no device node exists
  */
-const char * StylScannerDevice_GetNode(const char *devSubsystem, const char *devVendorID, const char *devProductID);
+const char * mlsScannerDevice_GetNode(const char *devSubsystem, const char *devVendorID, const char *devProductID);
 
 #ifdef __cplusplus
 }

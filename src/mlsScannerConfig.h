@@ -38,36 +38,36 @@ extern "C"
 /********** Function declaration section **************************************/
 
 /*!
- * \brief StylScannerConfig_OpenTTY: Open TTY port of device
+ * \brief mlsScannerConfig_OpenTTY: Open TTY port of device
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-gint StylScannerConfig_OpenTTY(gchar *deviceNode);
+gint mlsScannerConfig_OpenTTY(gchar *deviceNode);
 
 /*!
- * \brief StylScannerConfig_CloseTTY: Close TTY port of device.
+ * \brief mlsScannerConfig_CloseTTY: Close TTY port of device.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-gint StylScannerConfig_CloseTTY(gint pFile);
+gint mlsScannerConfig_CloseTTY(gint pFile);
 
 /*!
- * \brief StylScannerConfig_ConfigTTY: Do configure for SSI port.
+ * \brief mlsScannerConfig_ConfigTTY: Do configure for SSI port.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-gint StylScannerConfig_ConfigTTY(gint pFile);
+gint mlsScannerConfig_ConfigTTY(gint pFile);
 
 /*!
- * \brief StylScannerConfig_ConfigSSI: Send parameters to configure scanner as SSI interface.
+ * \brief mlsScannerConfig_ConfigSSI: Send parameters to configure scanner as SSI interface.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-gint StylScannerConfig_ConfigSSI(gint pFile, byte triggerMode);
+gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode);
 
 
 #ifdef __cplusplus

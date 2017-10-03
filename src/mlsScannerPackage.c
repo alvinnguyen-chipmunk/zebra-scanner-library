@@ -33,15 +33,15 @@
 /********** Local Macro definition section ************************************/
 /********** Local (static) variable declaration section ***********************/
 /********** Local (static) function declaration section ***********************/
-static const gchar * StylScannerPackage_GetSymbology (byte symbol);
+static const gchar * mlsScannerPackage_GetSymbology (byte symbol);
 
 /********** Local (static) function definition section ************************/
 
 /*!
- * \brief StylScannerPackage_GetSymbology: find out symbol string for code type
+ * \brief mlsScannerPackage_GetSymbology: find out symbol string for code type
  * \return Constant string for code type
  */
-static const gchar * StylScannerPackage_GetSymbology(byte symbol)
+static const gchar * mlsScannerPackage_GetSymbology(byte symbol)
 {
     switch (symbol)
     {
@@ -193,12 +193,12 @@ static const gchar * StylScannerPackage_GetSymbology(byte symbol)
 /********** Global function definition section ********************************/
 
 /*!
- * \brief StylScannerPackage_Display: print out package content.
+ * \brief mlsScannerPackage_Display: print out package content.
  * \param
  * - package: pointer to package content.
  * - length: length of package in byte.
  */
-void StylScannerPackage_Display(byte *package, gint length)
+void mlsScannerPackage_Display(byte *package, gint length)
 {
     gint sizeBuffer = 0;
     if (length==NO_GIVEN)
@@ -214,12 +214,12 @@ void StylScannerPackage_Display(byte *package, gint length)
 }
 
 /*!
- * \brief StylScannerPackage_Extract: extract barcode from formatted package
+ * \brief mlsScannerPackage_Extract: extract barcode from formatted package
  * \return
  * - barcode length: Success
  * - 0             : Fail
  */
-gint StylScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *package, const gint buffLength)
+gint mlsScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *package, const gint buffLength)
 {
     gchar *pBuffer  = buffer;
     byte *pPackage = package;
@@ -227,12 +227,12 @@ gint StylScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *packa
     gint decodeLength = 0;
     gint partLength = 0;
 
-    const gchar * symbol = StylScannerPackage_GetSymbology(package[PKG_INDEX_DECODE_TYPE]);
+    const gchar * symbol = mlsScannerPackage_GetSymbology(package[PKG_INDEX_DECODE_TYPE]);
     memcpy(symbolBuffer, symbol, strlen(symbol));
 
     if (NULL != pPackage)
     {
-        while (StylScannerSSI_IsContinue(pPackage))
+        while (mlsScannerSSI_IsContinue(pPackage))
         {
 
             partLength = PACKAGE_LEN(pPackage) - SSI_LEN_HEADER - SSI_LEN_DECODE_TYPE;
@@ -252,7 +252,7 @@ gint StylScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *packa
         }
 
         /* Get the last part of barcode */
-        StylScannerPackage_Display(pPackage, NO_GIVEN);
+        mlsScannerPackage_Display(pPackage, NO_GIVEN);
         partLength = PACKAGE_LEN(pPackage) - SSI_LEN_HEADER - SSI_LEN_DECODE_TYPE;
         STYL_WARNING("Last partLength: %d", partLength);
         if(partLength >= 0)
