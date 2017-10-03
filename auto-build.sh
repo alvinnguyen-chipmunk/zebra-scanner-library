@@ -1,6 +1,6 @@
 #!/bin/bash
 #---------------------------------------------------------------------------------
-# set the target and compiler flags
+# Set the target and compiler flags
 #---------------------------------------------------------------------------------
 CXXFLAGS=""
 CFLAGS=""
@@ -8,7 +8,7 @@ export DEBUG_FLAGS=''
 CONF_FLAGS=""
 FULL_PKG_NAME=""
 #---------------------------------------------------------------------------------
-# Build and install binutils
+# Build and install
 #---------------------------------------------------------------------------------
 _configure_()
 {
@@ -115,7 +115,7 @@ _package_()
 				--pkgarch=$ARCH \
 				--maintainer="STYL Solutions" \
 				--pakdir=$DIR_PACKAGE --backup=no -D $(pwd)/install.sh \
-				--requires="glib-2.0 libnm-glib libcurl" && 
+				--requires="glib-2.0 libudev" && 
 	cd - || exit 1
 }
 
