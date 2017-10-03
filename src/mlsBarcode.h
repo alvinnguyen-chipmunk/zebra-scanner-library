@@ -11,8 +11,8 @@
  ******************************************************************************/
 
 /**
- * @file    mlsDevice.h
- * @brief   C code - check tty port is exist and return its node
+ * @file    mlsBarcode.h
+ * @brief   C library communicate Qrcode/Barcode decoder.
  *
  * Long description.
  * @date    22/09/2017
@@ -27,15 +27,10 @@ extern "C"
 #endif
 
 /********** Include section ***************************************************/
-
-/********** Constant  and compile switch definition section *******************/
-
+/********** Constant and compile switch definition section ********************/
 /********** Type definition section *******************************************/
-
-/********** Macro definition section ******************************************/
-
+/********** Macro definition section*******************************************/
 /********** Function declaration section **************************************/
-
 /*!
  * \brief mlsBarcodeReader_GetDevice: Get the device node file name of the udev device
  * \return 	the device node file name of the udev device, or NULL if no device node exists
@@ -99,4 +94,4 @@ int mlsBarcodeReader_Close();
 }
 #endif
 #endif // MLSBARCODE_H_INCLUDED
-/**@}*/
+/*@}*/

@@ -12,7 +12,7 @@
 
 /**
  * @file    CStylScannerDevice.c
- * @brief   C code - check tty port is exist and return its node
+ * @brief   C library communicate Qrcode/Barcode decoder.
  *
  * Long description.
  * @date    22/09/2017
@@ -21,7 +21,6 @@
 
 /********** Include section ***************************************************/
 #include "string.h"
-
 #include "mlsBarcode.h"
 #include "CStylScannerUtils.h"
 #include "CStylScannerConfig.h"
@@ -34,10 +33,10 @@
 /********** Local Macro definition section ************************************/
 /********** Local (static) variable declaration section ***********************/
 static gint StylScanner_FD          = -1;
+
 /********** Local (static) function declaration section ***********************/
 /********** Local (static) function definition section ************************/
 /********** Global function definition section ********************************/
-
 /*!
  * \brief mlsBarcodeReader_GetVersion provide software version
  * \return string of software version
@@ -113,8 +112,6 @@ int mlsBarcodeReader_Open(const char *name)
         STYL_ERROR("Can not configure SSI for device");
         goto __error;
     }
-
-
 
     /* Flush buffer of device*/
     if(StylScannerSSI_SendCommand(StylScanner_FD, SSI_CMD_FLUSH_QUEUE) != EXIT_SUCCESS)
@@ -287,7 +284,7 @@ unsigned int mlsBarcodeReader_ReadData_Manual(char *buffer, const int bufferLeng
     return retValue;
 }
 
-/**@}*/
+/*@}*/
 
 
 
