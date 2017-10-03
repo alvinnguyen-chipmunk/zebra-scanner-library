@@ -11,7 +11,7 @@
  ******************************************************************************/
 
 /**
- * @file    CStylScannerConfig.c
+ * @file    mlsScannerConfig.c
  * @brief   C code - Configure for TTY port and SSI protocol.
  *
  * Long description.
@@ -34,10 +34,10 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 
-#include "CStylScannerUtils.h"
-#include "CStylScannerConfig.h"
-#include "CStylScannerSSI.h"
-#include "CStylScannerPackage.h"
+#include "mlsScannerUtils.h"
+#include "mlsScannerConfig.h"
+#include "mlsScannerSSI.h"
+#include "mlsScannerPackage.h"
 
 /********** Local Type definition section *************************************/
 /********** Local Constant and compile switch definition section **************/

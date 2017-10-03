@@ -11,7 +11,7 @@
  ******************************************************************************/
 
 /**
- * @file    CStylScannerPackage.h
+ * @file    mlsScannerPackage.h
  * @brief   C code - Implement some method for maintain package.
  *
  * Long description.
@@ -19,16 +19,14 @@
  * @author  Alvin Nguyen - alvin.nguyen@styl.solutions
  */
 
-#ifndef CSTYLSCANNERPACKAGE_H_INCLUDED
-#define CSTYLSCANNERPACKAGE_H_INCLUDED
+#ifndef MLSSCANNERPACKAGE_H_INCLUDED
+#define MLSSCANNERPACKAGE_H_INCLUDED
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
 /********** Include section ****************************************************/
-#include "CStylScannerUtils.h"
-
 /********** Constant  and compile switch definition section ********************/
 /********** Type declaration section *******************************************/
 /********** Macro declaration section ******************************************/
@@ -53,5 +51,5 @@ gint StylScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *packa
 #ifdef __cplusplus
 }
 #endif
-#endif // CSTYLSCANNERPACKAGE_H_INCLUDED
+#endif // MLSSCANNERPACKAGE_H_INCLUDED
 /**@}*/

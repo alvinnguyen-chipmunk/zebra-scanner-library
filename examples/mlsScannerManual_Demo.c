@@ -11,7 +11,7 @@
  ******************************************************************************/
 
 /**
- * @file    CStylScanner_Demo_2.c
+ * @file    mlsScanner_Demo_2.c
  * @brief   Simple test application use C library to get data from qrcode/barcode scanner
  *
  * Long description.

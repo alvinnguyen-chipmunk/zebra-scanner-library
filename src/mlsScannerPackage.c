@@ -11,7 +11,7 @@
  ******************************************************************************/
 
 /**
- * @file    CStylScannerPackage.c
+ * @file    mlsScannerPackage.c
  * @brief   C code - Implement some method for maintain package.
  *
  * Long description.
@@ -25,9 +25,9 @@
 #include <string.h>
 #include "glib.h"
 
-#include "CStylScannerUtils.h"
-#include "CStylScannerPackage.h"
-#include "CStylScannerSSI.h"
+#include "mlsScannerUtils.h"
+#include "mlsScannerPackage.h"
+#include "mlsScannerSSI.h"
 /********** Local Type definition section *************************************/
 /********** Local Constant and compile switch definition section **************/
 /********** Local Macro definition section ************************************/

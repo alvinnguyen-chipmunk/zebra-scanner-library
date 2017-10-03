@@ -10,7 +10,7 @@
  *  Agreement referenced above.                                                *
  ******************************************************************************/
 /**
- * @file    CStylScannerSSI.h
+ * @file    mlsScannerSSI.h
  * @brief   C code - Implement SSI Communication.
  *
  * Long description.
@@ -28,9 +28,9 @@
 #include <error.h>
 #include <errno.h>
 
-#include "CStylScannerUtils.h"
-#include "CStylScannerSSI.h"
-#include "CStylScannerPackage.h"
+#include "mlsScannerUtils.h"
+#include "mlsScannerSSI.h"
+#include "mlsScannerPackage.h"
 
 /********** Local Type definition section *************************************/
 /********** Local Constant and compile switch definition section **************/

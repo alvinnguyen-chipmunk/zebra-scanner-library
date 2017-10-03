@@ -10,17 +10,17 @@ endif
 #STYLSCANNER_includedir = $(includedir)/styl
 STYLSCANNER_includedir = $(includedir)
 
-STYLSCANNER_SOURCES = mlsBarcode.h			\
-					  CStylScanner.c		\
-					  CStylScannerUtils.h	\
-					  CStylScannerConfig.h	\
-					  CStylScannerConfig.c	\
-					  CStylScannerDevice.h	\
-					  CStylScannerDevice.c	\
-					  CStylScannerSSI.h		\
-					  CStylScannerSSI.c		\
-					  CStylScannerPackage.h	\
-					  CStylScannerPackage.c
+STYLSCANNER_SOURCES = mlsBarcode.h          \
+                      mlsScanner.c          \
+                      mlsScannerUtils.h     \
+                      mlsScannerConfig.h    \
+                      mlsScannerConfig.c    \
+                      mlsScannerDevice.h    \
+                      mlsScannerDevice.c    \
+                      mlsScannerSSI.h       \
+                      mlsScannerSSI.c       \
+                      mlsScannerPackage.h   \
+                      mlsScannerPackage.c
 
 
 STYLSCANNER_include_HEADERS = mlsBarcode.h

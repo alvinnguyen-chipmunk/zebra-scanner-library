@@ -11,7 +11,7 @@
  ******************************************************************************/
 
 /**
- * @file    CStylScannerSSI.h
+ * @file    mlsScannerSSI.h
  * @brief   C code - Implement SSI Communication.
  *
  * Long description.
@@ -19,8 +19,8 @@
  * @author  Alvin Nguyen - alvin.nguyen@styl.solutions
  */
 
-#ifndef CSTYLSCANNERSSI_H_INCLUDED
-#define CSTYLSCANNERSSI_H_INCLUDED
+#ifndef MLSSCANNERSSI_H_INCLUDED
+#define MLSSCANNERSSI_H_INCLUDED
 
 #ifdef __cplusplus
 extern "C"
@@ -92,5 +92,5 @@ gint StylScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint
 }
 #endif
 
-#endif // CSTYLSCANNERSSI_H_INCLUDED
+#endif // MLSSCANNERSSI_H_INCLUDED
 /**@}*/

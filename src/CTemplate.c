@@ -18,7 +18,7 @@
 @{
 */
 /**
- * @file    CStylScannerSSI.h
+ * @file    mlsScannerSSI.h
  * @brief   C code - Implement SSI Communication.
  *
  * Long description.
@@ -27,7 +27,7 @@
  */
 
 /********** Include section ***************************************************/
-#include "CStylScannerSSI.h"
+#include "mlsScannerSSI.h"
 
 /********** Include section ***************************************************/
 /********** Local Constant and compile switch definition section **************/

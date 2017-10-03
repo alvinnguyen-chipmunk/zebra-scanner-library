@@ -11,7 +11,7 @@
  ******************************************************************************/
 
 /**
- * @file    CStylScannerDevice.c
+ * @file    mlsScannerDevice.c
  * @brief   C code - check tty port is exist and return its node
  *
  * Long description.
@@ -25,8 +25,8 @@
 #include <string.h>
 #include <libudev.h>
 
-#include "CStylScannerDevice.h"
-#include "CStylScannerUtils.h"
+#include "mlsScannerDevice.h"
+#include "mlsScannerUtils.h"
 
 /********** Local Type definition section *************************************/
 /********** Local Constant and compile switch definition section **************/

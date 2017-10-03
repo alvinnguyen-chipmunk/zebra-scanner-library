@@ -11,7 +11,7 @@
  ******************************************************************************/
 
 /**
- * @file    CStylScannerDevice.c
+ * @file    mlsScanner.c
  * @brief   C library communicate Qrcode/Barcode decoder.
  *
  * Long description.
@@ -22,11 +22,11 @@
 /********** Include section ***************************************************/
 #include "string.h"
 #include "mlsBarcode.h"
-#include "CStylScannerUtils.h"
-#include "CStylScannerConfig.h"
-#include "CStylScannerDevice.h"
-#include "CStylScannerSSI.h"
-#include "CStylScannerPackage.h"
+#include "mlsScannerUtils.h"
+#include "mlsScannerConfig.h"
+#include "mlsScannerDevice.h"
+#include "mlsScannerSSI.h"
+#include "mlsScannerPackage.h"
 
 /********** Local Type definition section *************************************/
 /********** Local Constant and compile switch definition section **************/

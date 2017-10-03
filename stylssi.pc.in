@@ -11,4 +11,4 @@ Description: A library to scanning qrcode/barcode
 Requires: libudev 
 Version: @VERSION@
 Libs: -L${libdir} -lstylssi
-Cflags: -I${includedir}/styl
+Cflags: -I${includedir}

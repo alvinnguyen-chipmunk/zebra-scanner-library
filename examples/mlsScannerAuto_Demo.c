@@ -11,7 +11,7 @@ Agreement referenced above.                                                    *
 *******************************************************************************/
 
 /**
- * @file    CStylScanner_Demo_1.c
+ * @file    mlsScanner_Demo_1.c
  * @brief   Simple example use C library to get data from qrcode/barcode scanner
  *
  * Long description.

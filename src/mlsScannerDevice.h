@@ -11,16 +11,16 @@
  ******************************************************************************/
 
 /**
- * @file    CStylScannerConfig.h
- * @brief   C code - Configure for TTY port and SSI protocol.
+ * @file    mlsScannerDevice.h
+ * @brief   C code - check tty port is exist and return its node
  *
  * Long description.
  * @date    22/09/2017
  * @author  Alvin Nguyen - alvin.nguyen@styl.solutions
  */
 
-//#ifndef CSTYLSCANNERCONFIG_H_INCLUDED
-//#define CSTYLSCANNERCONFIG_H_INCLUDED
+#ifndef MLSSCANNERDEVICE_H_INCLUDED
+#define MLSSCANNERDEVICE_H_INCLUDED
 
 #ifdef __cplusplus
 extern "C"
@@ -28,51 +28,25 @@ extern "C"
 #endif
 
 /********** Include section ***************************************************/
-#include <stdlib.h>
-#include <stdio.h>
-#include <glib.h>
-
 /********** Constant  and compile switch definition section *******************/
 /********** Type definition section *******************************************/
 /********** Macro definition section ******************************************/
 /********** Function declaration section **************************************/
 
 /*!
- * \brief StylScannerConfig_OpenTTY: Open TTY port of device
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
+ * \brief StylScannerDevice_GetNode - Get node string for device with vendor id and product id and subsystem
+ * \param
+ * - devSubsystem : String for subsystem that is where to list all devices
+ * - devVendorID  : String for vendor ID that will let filter for specific device
+ * - devProductID : String for product ID that will let filter for specific device
+ * \return 	the device node file name of the udev device, or NULL if no device node exists
  */
-gint StylScannerConfig_OpenTTY(gchar *deviceNode);
-
-/*!
- * \brief StylScannerConfig_CloseTTY: Close TTY port of device.
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-gint StylScannerConfig_CloseTTY(gint pFile);
-
-/*!
- * \brief StylScannerConfig_ConfigTTY: Do configure for SSI port.
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-gint StylScannerConfig_ConfigTTY(gint pFile);
-
-/*!
- * \brief StylScannerConfig_ConfigSSI: Send parameters to configure scanner as SSI interface.
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-gint StylScannerConfig_ConfigSSI(gint pFile, byte triggerMode);
-
+const char * StylScannerDevice_GetNode(const char *devSubsystem, const char *devVendorID, const char *devProductID);
 
 #ifdef __cplusplus
 }
 #endif
 
-//#endif // CSTYLSCANNERCONFIG_H_INCLUDED
+#endif // MLSSCANNERDEVICE_H_INCLUDED
 /**@}*/
+

@@ -11,7 +11,7 @@
  ******************************************************************************/
 
 /**
- * @file    mlsUtils.h
+ * @file    mlsScannerUtils.h
  * @brief   C code - define some utils
  *
  * Long description.
@@ -19,8 +19,8 @@
  * @author  Alvin Nguyen - alvin.nguyen@styl.solutions
  */
 
-#ifndef CSTYLSCANNERUTILS_H_INCLUDED
-#define CSTYLSCANNERUTILS_H_INCLUDED
+#ifndef MLSSCANNERUTILS_H_INCLUDED
+#define MLSSCANNERUTILS_H_INCLUDED
 
 #ifdef __cplusplus
 extern "C"
@@ -178,5 +178,5 @@ typedef unsigned char byte;
 }
 #endif
 
-#endif // CSTYLSCANNERUTILS_H_INCLUDED
+#endif // MLSSCANNERUTILS_H_INCLUDED
 /**@}*/
