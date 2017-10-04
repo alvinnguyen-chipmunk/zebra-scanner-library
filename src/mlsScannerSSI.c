@@ -61,16 +61,19 @@ static gint mlsScannerSSI_SerialRead(gint pFile, byte* buffer, guint sizeBuffer,
 
     guint min_timeout_ms = TIMEOUT_BYTE_MS * sizeBuffer;
 
+    STYL_DEBUG("timeout_ms is: %d", timeout_ms);
+    STYL_DEBUG("min_timeout_ms is: %d", min_timeout_ms);
+
     if(timeout_ms > min_timeout_ms)
     {
-        tv.tv_sec  = timeout_ms / 1000;
-        tv.tv_usec = (timeout_ms % 1000) * 1000;
+        tv.tv_sec  = (guint)(timeout_ms / 1000);
+        tv.tv_usec = (guint)((timeout_ms % 1000) * 1000);
     }
     else
     {
         STYL_WARNING("Timeout value is invalid. Using timeout value default.");
-        tv.tv_sec  = min_timeout_ms / 1000;
-        tv.tv_usec = (min_timeout_ms % 1000) * 1000;
+        tv.tv_sec  = (guint)(min_timeout_ms / 1000);
+        tv.tv_usec = (guint)((min_timeout_ms % 1000) * 1000);
     }
 
 
@@ -78,6 +81,8 @@ static gint mlsScannerSSI_SerialRead(gint pFile, byte* buffer, guint sizeBuffer,
     while (nbytes < sizeBuffer)
     {
         /*See if there is data available. */
+        STYL_DEBUG("Timeout is: %d", tv.tv_sec);
+        STYL_DEBUG("Timeout u is: %d", tv.tv_usec);
         gint rc = select (pFile + 1, &fds, NULL, NULL, &tv);
         /* TODO: Recalculate timeout here! */
         if (rc < 0)
@@ -89,6 +94,7 @@ static gint mlsScannerSSI_SerialRead(gint pFile, byte* buffer, guint sizeBuffer,
         else if (rc == 0)
         {
             /* ********* Timeout ********************************* */
+            STYL_DEBUG("Timeout over");
             break;
         }
 
@@ -293,7 +299,7 @@ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint ti
     {
         /* Read 1 first byte for length */
         readRequest = 1;
-        retValue += mlsScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN], readRequest, TTY_TIMEOUT);
+        retValue += mlsScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN], readRequest, timeout_ms);
         STYL_INFO("retValue: %d", retValue);
         if(retValue <= 0)
         {
@@ -312,7 +318,7 @@ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint ti
             readRequest = recvBuff[PKG_INDEX_LEN] + SSI_LEN_CHECKSUM - 1; /* 1 is byte read before */
             STYL_INFO("Rest byte is: %d", readRequest);
 
-            sizeReceived = mlsScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN + 1], readRequest, TTY_TIMEOUT);
+            sizeReceived = mlsScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN + 1], readRequest, timeout_ms);
             STYL_INFO("");
             mlsScannerPackage_Display(recvBuff, NO_GIVEN);
             STYL_INFO("sizeReceived: %d", sizeReceived);
@@ -369,11 +375,19 @@ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint ti
     return retValue;
 
 __error:
+    #if 0
     STYL_INFO("Error! Send NAK to scanner");
     if(mlsScannerSSI_Write(pFile, SSI_CMD_NAK, NULL, 0) != EXIT_SUCCESS)
     {
         STYL_ERROR("Send NAK to scanner got problem.");
     }
+    #else
+    STYL_ERROR("Error! Send END SECTION to scanner.");
+    if(mlsScannerSSI_SendCommand(pFile, SSI_CMD_SESSION_STOP) != EXIT_SUCCESS)
+    {
+        STYL_ERROR("Stop section request was fail.");
+    }
+    #endif
     return retValue;
 }
 
@@ -381,7 +395,7 @@ __error:
  * \brief mlsScannerSSI_GetACK: get ACK raw package
  * \return number of read bytes
  */
-gint mlsScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout)
+gint mlsScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout_ms)
 {
     gint retValue = 0;
     gint sizeReceived = 0;
@@ -393,7 +407,7 @@ gint mlsScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint 
 
     /* Read 1 first byte for length */
     readRequest = 1;
-    retValue = mlsScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN], readRequest, TTY_TIMEOUT);
+    retValue = mlsScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN], readRequest, timeout_ms);
     STYL_INFO("Fisrt byte size: %d", retValue);
     if(retValue <= 0)
     {
@@ -411,7 +425,7 @@ gint mlsScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint 
         readRequest = recvBuff[PKG_INDEX_LEN] + SSI_LEN_CHECKSUM - 1; /* 1 is byte read before */
         STYL_INFO("Rest byte is: %d", readRequest);
 
-        sizeReceived = mlsScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN + 1], readRequest, TTY_TIMEOUT);
+        sizeReceived = mlsScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN + 1], readRequest, timeout_ms);
         STYL_INFO("");
         mlsScannerPackage_Display(recvBuff, NO_GIVEN);
         STYL_INFO("sizeReceived: %d", sizeReceived);
@@ -501,13 +515,8 @@ gint mlsScannerSSI_CheckACK(gint pFile)
     byte recvBuff[PACKAGE_LEN_ACK_MAXIMUM];
 
     memset(recvBuff, 0, PACKAGE_LEN_ACK_MAXIMUM);
-    for (gint i = 0; i < PACKAGE_LEN_ACK_MAXIMUM; i++)
-    {
-        STYL_INFO_OTHER(" 0x%02x", recvBuff[i]);
-    }
-
     STYL_INFO("Invoke mlsScannerSSI_GetACK");
-    retValue = mlsScannerSSI_GetACK(pFile, recvBuff, PACKAGE_LEN_ACK_MAXIMUM, 1);
+    retValue = mlsScannerSSI_GetACK(pFile, recvBuff, PACKAGE_LEN_ACK_MAXIMUM, TTY_TIMEOUT);
     if ( (retValue > 0) && (SSI_CMD_ACK == recvBuff[PKG_INDEX_OPCODE]) )
     {
         retValue = EXIT_SUCCESS;

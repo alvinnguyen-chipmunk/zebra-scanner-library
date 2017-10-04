@@ -42,13 +42,13 @@ typedef unsigned char byte;
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
 #ifdef __RELEASE__
-#define __DEBUG__(format, ...)
+#define __DEBUG_CMD__(format, ...)
 #else
-#define __DEBUG__(format, ...) fprintf(stderr, "%s", ANSI_COLOR_RESET); fprintf (stderr, format, ## __VA_ARGS__)
+#define __DEBUG_CMD__(format, ...) fprintf(stderr, "%s", ANSI_COLOR_RESET); fprintf (stderr, format, ## __VA_ARGS__)
 #endif // __RELEASE__
-#define DEBUG_BEGIN(format, args...) __DEBUG__("[STYLSSI-DEBUG]: %s||%s():[%d] " format ": ",__FILE__,__FUNCTION__, __LINE__, ##args)
-#define DEBUG_END(format, args...) __DEBUG__(format "\n", ##args)
-#define DEBUG(format, args...) __DEBUG__("[STYLSSI-DEBUG]: %s||%s():[%d] " format "\n",__FILE__,__FUNCTION__, __LINE__, ##args)
+#define DEBUG_BEGIN(format, args...) __DEBUG_CMD__("[STYLSSI-DEBUG]: %s||%s():[%d] " format ": ",__FILE__,__FUNCTION__, __LINE__, ##args)
+#define DEBUG_END(format, args...) __DEBUG_CMD__(format "\n", ##args)
+#define DEBUG(format, args...) __DEBUG_CMD__("[STYLSSI-DEBUG]: %s||%s():[%d] " format "\n",__FILE__,__FUNCTION__, __LINE__, ##args)
 #define DEBUG_1(format, ...) DEBUG("\n"      format, ##__VA_ARGS__)
 #define DEBUG_0() DEBUG("\n")
 #define STYL_DEBUG(format, ...) DEBUG(format, ##__VA_ARGS__)
@@ -65,7 +65,7 @@ typedef unsigned char byte;
 #define STYL_ERROR(format, ...) ERROR(format, ##__VA_ARGS__)
 #define STYL_ERROR_INLINE(format, ...) __ERROR__("%s" format "%s", ANSI_COLOR_RED, ##__VA_ARGS__, ANSI_COLOR_RED)
 
-#ifdef __DEBUG__
+#ifndef __DEBUG__
 #define __WARNING__(format, ...)
 #else
 #define __WARNING__(format, ...) fprintf (stderr, format, ## __VA_ARGS__); fprintf(stderr, "%s", ANSI_COLOR_RESET)
@@ -78,7 +78,7 @@ typedef unsigned char byte;
 #define STYL_WARNING(format, ...) WARNING(format, ##__VA_ARGS__)
 #define STYL_WARNING_INLINE(format, ...) __WARNING__("%s" format "%s", ANSI_COLOR_YELLOW, ##__VA_ARGS__, ANSI_COLOR_YELLOW)
 
-#ifdef __DEBUG__
+#ifndef __DEBUG__
 #define __INFO__(format, ...)
 #else
 #define __INFO__(format, ...) fprintf (stdout, format, ## __VA_ARGS__); fprintf(stdout, "%s", ANSI_COLOR_RESET)

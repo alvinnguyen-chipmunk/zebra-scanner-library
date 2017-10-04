@@ -252,6 +252,7 @@ gint mlsScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *packag
         }
 
         /* Get the last part of barcode */
+        STYL_INFO("");
         mlsScannerPackage_Display(pPackage, NO_GIVEN);
         partLength = PACKAGE_LEN(pPackage) - SSI_LEN_HEADER - SSI_LEN_DECODE_TYPE;
         STYL_WARNING("Last partLength: %d", partLength);

@@ -86,7 +86,7 @@ gint mlsScannerSSI_SendCommand(gint pFile, byte opCode);
  * \brief mlsScannerSSI_GetACK: get ACK raw package
  * \return number of read bytes
  */
-gint mlsScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout);
+gint mlsScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout_ms);
 
 #ifdef __cplusplus
 }

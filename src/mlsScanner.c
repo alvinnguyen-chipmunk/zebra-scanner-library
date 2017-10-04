@@ -186,7 +186,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buffer, const int bufferLength, con
     STYL_INFO("Invoke mlsScannerSSI_Read");
 
     /* Convert 1/10 seconds to mili-seconds */
-    guint timeout_ms = timeout/10*1000;
+    guint timeout_ms = (timeout*1000)/10;
 
     retValue = mlsScannerSSI_Read(gStylScannerFD, recvBuff, bufferLength, timeout_ms);
 
@@ -250,7 +250,7 @@ unsigned int mlsBarcodeReader_ReadData_Manual(char *buffer, const int bufferLeng
     }
 
     /* Convert 1/10 seconds to mili-seconds */
-    guint timeout_ms = timeout/10*1000;
+    guint timeout_ms = (timeout*1000)/10;
 
     STYL_INFO("************************************** Invoke mlsScannerSSI_Read");
     retValue = mlsScannerSSI_Read(gStylScannerFD, recvBuff, bufferLength, timeout_ms);
