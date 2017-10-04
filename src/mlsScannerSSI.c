@@ -309,8 +309,6 @@ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint ti
                 break;
             }
             /* Read rest of byte of package */
-            STYL_ERROR("recvBuff[PKG_INDEX_LEN]: %x", recvBuff[PKG_INDEX_LEN]);
-            STYL_ERROR("SSI_LEN_CHECKSUM: %x", SSI_LEN_CHECKSUM);
             readRequest = recvBuff[PKG_INDEX_LEN] + SSI_LEN_CHECKSUM - 1; /* 1 is byte read before */
             STYL_INFO("Rest byte is: %d", readRequest);
 
@@ -330,7 +328,7 @@ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint ti
 
                 if(!mlsScannerSSI_CorrectPackage(recvBuff))
                 {
-                    STYL_ERROR("********** Receive a invalid package");
+                    STYL_ERROR("Receive a invalid package");
                     retValue = 0;
                     goto __error;
                 }
@@ -436,7 +434,6 @@ gint mlsScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint 
             if (mlsScannerSSI_IsChecksumOK(recvBuff))
             {
                 /* Copy current buffer to finally buffer */
-                STYL_DEBUG("MEMCPY SIZE: %d", PACKAGE_LEN(recvBuff) + SSI_LEN_CHECKSUM);
                 memcpy(buffer, recvBuff, PACKAGE_LEN(recvBuff) + SSI_LEN_CHECKSUM);
             }
             else

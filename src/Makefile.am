@@ -1,6 +1,6 @@
 ######################### STYL SCANNER COMMON VARIABLE ############################
 if DEBUG
-DEBUG_CFLAGS = -g -ggdb
+DEBUG_CFLAGS = -g -ggdb -D__DEBUG__
 endif
 
 if RELEASE

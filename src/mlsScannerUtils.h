@@ -56,7 +56,6 @@ typedef unsigned char byte;
 #define STYL_DEBUG_BEGIN(format, ...) DEBUG_BEGIN(format, ##__VA_ARGS__)
 #define STYL_DEBUG_END(format, ...) DEBUG_END(format, ##__VA_ARGS__)
 
-
 #define __ERROR__(format, ...) fprintf (stderr, format, ## __VA_ARGS__) ; fprintf(stderr, "%s", ANSI_COLOR_RESET)
 #ifdef __RELEASE__
 #define ERROR(format, args...) __ERROR__("%s [STYLSSI-ERROR]: " format "%s \n",ANSI_COLOR_RED, ##args, ANSI_COLOR_RED)
@@ -66,7 +65,11 @@ typedef unsigned char byte;
 #define STYL_ERROR(format, ...) ERROR(format, ##__VA_ARGS__)
 #define STYL_ERROR_INLINE(format, ...) __ERROR__("%s" format "%s", ANSI_COLOR_RED, ##__VA_ARGS__, ANSI_COLOR_RED)
 
+#ifdef __DEBUG__
+#define __WARNING__(format, ...)
+#else
 #define __WARNING__(format, ...) fprintf (stderr, format, ## __VA_ARGS__); fprintf(stderr, "%s", ANSI_COLOR_RESET)
+#endif // __DEBUG__
 #ifdef __RELEASE__
 #define WARNING(format, args...) __WARNING__("%s [STYLSSI-WARNING]: " format "%s \n",ANSI_COLOR_YELLOW, ##args, ANSI_COLOR_YELLOW)
 #else
@@ -75,7 +78,11 @@ typedef unsigned char byte;
 #define STYL_WARNING(format, ...) WARNING(format, ##__VA_ARGS__)
 #define STYL_WARNING_INLINE(format, ...) __WARNING__("%s" format "%s", ANSI_COLOR_YELLOW, ##__VA_ARGS__, ANSI_COLOR_YELLOW)
 
+#ifdef __DEBUG__
+#define __INFO__(format, ...)
+#else
 #define __INFO__(format, ...) fprintf (stdout, format, ## __VA_ARGS__); fprintf(stdout, "%s", ANSI_COLOR_RESET)
+#endif // __DEBUG__
 #ifdef __RELEASE__
 #define INFO(format, args...) __INFO__("%s [STYLSSI-INFO]: " format "%s \n",ANSI_COLOR_GREEN, ##args, ANSI_COLOR_GREEN)
 #else
@@ -158,7 +165,7 @@ typedef unsigned char byte;
 /* ************** Other utils ****************************/
 #define PACKAGE_LEN(x)		               (x[PKG_INDEX_LEN])
 #define PACKAGE_LEN_MAXIMUM                257
-#define PACKAGE_LEN_ACK_MAXIMUM            32
+#define PACKAGE_LEN_ACK_MAXIMUM            257
 
 #define DATA_SYMBOL_LEN_MAXIMUM            32
 

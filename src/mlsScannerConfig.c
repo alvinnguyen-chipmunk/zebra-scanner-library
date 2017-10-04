@@ -78,7 +78,7 @@ static gint mlsScannerConfig_LockDevice (gboolean isLock)
                 STYL_ERROR("read: %d - %s", errno, strerror(errno));
                 getError = TRUE;
             }
-            STYL_ERROR("PID OLD IS: %s", buffer);
+            STYL_DEBUG("PID OLD IS: %s", buffer);
             guint oldPID = (guint)g_ascii_strtoull(buffer, NULL, 10);
             if(kill((pid_t)oldPID, 0)==0)
             {

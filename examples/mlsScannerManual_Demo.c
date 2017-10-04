@@ -57,7 +57,9 @@ int main(int argc, const char * argv[])
     int         decodeLength            = 0;
     const int   timeout                 = 3;	/* 1/10 second */
 
-    printf("Version: %s\n", mlsBarcodeReader_GetVersion());
+    printf("Version: \x1b[35m%s\e[0m\n", mlsBarcodeReader_GetVersion());
+
+    printf("Device: \x1b[35m%s\e[0m\n", mlsBarcodeReader_GetDevice());
 
     if(mlsBarcodeReader_Open(deviceName) != EXIT_SUCCESS)
         goto __exit;
@@ -72,12 +74,11 @@ int main(int argc, const char * argv[])
 
     while (isRunning)
     {
-        printf("\n\n +++++++++++++++++++++++++++++++++++++++++++++++++++ \n");
         memset(buffer, 0, BUFFER_LEN);
         decodeLength = mlsBarcodeReader_ReadData_Manual(buffer, BUFFER_LEN, timeout);
         if (decodeLength > 0)
         {
-            printf("\e[36m Decode content: (%d):\n %s \e[0m\n\n", decodeLength, buffer);
+            printf("Barcode(%d):\e[36m\n%s\e[0m\n\n", decodeLength, buffer);
         }
         sleep(2);
     }

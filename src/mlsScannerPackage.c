@@ -265,13 +265,6 @@ gint mlsScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *packag
             STYL_ERROR("Parsing last part of decode data got problem.");
         }
     }
-
-    STYL_WARNING("Data extract size: %d", decodeLength);
-
-    STYL_DEBUG("\e[36m pBuffer: \n%s\e[0m\n\n", pBuffer);
-
-    STYL_DEBUG("\e[36m buffer: \n%s\e[0m\n\n", buffer);
-
     return decodeLength;
 }
 
