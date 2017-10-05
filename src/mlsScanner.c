@@ -66,7 +66,6 @@ const char *mlsBarcodeReader_GetDevice(void)
 int mlsBarcodeReader_Open(const char *name)
 {
     gchar *deviceNode = NULL;
-    int ret = EXIT_SUCCESS;
 
     if(name == NULL)
     {
@@ -93,11 +92,9 @@ int mlsBarcodeReader_Open(const char *name)
     gStylScannerFD = mlsScannerConfig_OpenTTY(deviceNode);
     g_free(deviceNode);
 
-    if (gStylScannerFD <= 0)
+    if (gStylScannerFD == -1)
     {
-        gStylScannerFD = -1;
-        ret = EXIT_FAILURE;
-        goto __exit;
+        goto __error;
     }
 
     /* ***************** Configure TTY port ******************* */
@@ -127,7 +124,7 @@ int mlsBarcodeReader_Open(const char *name)
     }
 
 __exit:
-    return ret;
+    return EXIT_SUCCESS;
 __error:
     /* ***************** Close TTY port ******************* */
     mlsScannerConfig_CloseTTY(gStylScannerFD);

@@ -130,13 +130,13 @@ gint mlsScannerConfig_OpenTTY(gchar *deviceNode)
     gint pFile = -1;
 
     pFile = open(deviceNode, O_RDWR | O_NOCTTY | O_NDELAY | O_NONBLOCK);
-    if (pFile < 0)
+    if (pFile == -1)
     {
         STYL_ERROR("Open Scanner device %s: open: %d - %s\n", deviceNode, errno, strerror(errno));
     }
     else if(mlsScannerConfig_LockDevice(TRUE) !=  EXIT_SUCCESS)
     {
-        if (close(pFile) < 0)
+        if (close(pFile) == -1)
         {
             STYL_ERROR("close: %d - %s", errno, strerror(errno));
         }
