@@ -196,6 +196,11 @@ unsigned int mlsBarcodeReader_ReadData(char *buffer, const int bufferLength, con
         mlsScannerPackage_Display(recvBuff, retValue);
         retValue = mlsScannerPackage_Extract((gchar *)buffer, symbolBuff, recvBuff, (const gint)bufferLength);
         STYL_INFO("Code Type: %s", symbolBuff);
+//        STYL_DEBUG("Send to stop section after receive a valid decode data.");
+//        if(mlsScannerSSI_SendCommand(gStylScannerFD, SSI_CMD_SESSION_STOP) != EXIT_SUCCESS)
+//        {
+//            STYL_ERROR("Stop section request was fail.");
+//        }
     }
     else
     {

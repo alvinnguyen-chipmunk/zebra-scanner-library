@@ -80,12 +80,14 @@ static gint mlsScannerConfig_LockDevice (gboolean isLock)
             }
             STYL_DEBUG("PID OLD IS: %s", buffer);
             guint oldPID = (guint)g_ascii_strtoull(buffer, NULL, 10);
+
+            STYL_ERROR("kill ret value: %d", kill((pid_t)oldPID, 0));
+
             if(kill((pid_t)oldPID, 0)==0)
             {
                 STYL_ERROR("Scanner device port was used by process %d", oldPID);
                 getError = TRUE;
             }
-            getError = TRUE;
         }
         else
         {
