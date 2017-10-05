@@ -81,7 +81,7 @@ static gint mlsScannerConfig_LockDevice (gboolean isLock)
             STYL_DEBUG("PID OLD IS: %s", buffer);
             guint oldPID = (guint)g_ascii_strtoull(buffer, NULL, 10);
 
-            STYL_ERROR("kill ret value: %d", kill((pid_t)oldPID, 0));
+            STYL_DEBUG("kill ret value: %d", kill((pid_t)oldPID, 0));
 
             if(kill((pid_t)oldPID, 0)==0)
             {
@@ -130,7 +130,7 @@ gint mlsScannerConfig_OpenTTY(gchar *deviceNode)
     gint pFile = -1;
 
     pFile = open(deviceNode, O_RDWR | O_NOCTTY | O_NDELAY | O_NONBLOCK);
-    if (pFile <= 0)
+    if (pFile < 0)
     {
         STYL_ERROR("Open Scanner device %s: open: %d - %s\n", deviceNode, errno, strerror(errno));
     }
