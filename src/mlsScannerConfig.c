@@ -188,10 +188,10 @@ gint mlsScannerConfig_ConfigTTY(gint pFile)
 {
     speed_t br_speed = BAUDRATE;
     gint mcs = 0;
+
     /* ********** Check serial port is valid ********** */
     STYL_INFO("serialPort: %d\n", pFile);
-    if(pFile <= 0)
-        return EXIT_FAILURE;
+
     /* ********** Check serial port is valid ********** */
     struct termios serial_opt;
     /* ********** Set file descriptor ***************** */
