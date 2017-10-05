@@ -75,6 +75,7 @@ int main(int argc, const char * argv[])
 
     while (isRunning)
     {
+        printf("\n=============================================\n");
         ret = mlsBarcodeReader_ReadData(buff, BUFFER_LEN, timeout);
         if (ret > 0)
         {

@@ -42,7 +42,35 @@ static uint16_t mlsScannerSSI_CalculateChecksum        (byte *package, gint leng
 static gint     mlsScannerSSI_IsChecksumOK             (byte *package);
 static gint     mlsScannerSSI_SerialRead               (gint pFile, byte* buffer, guint sizeBuffer, guint timeout_ms);
 static gint     mlsScannerSSI_SerialWrite              (gint pFile, byte* buffer, guint sizeBuffer, guint timeout_ms);
+static void     mlsScannerSSI_Dump                     (byte *message, gint length, gboolean isRead);
 /********** Local (static) function definition section ************************/
+
+/*!
+ * \brief mlsScannerSSI_Dump: Dump content of message.
+ */
+static void mlsScannerSSI_Dump (byte *message, gint length, gboolean isRead)
+{
+    gint sizeBuffer = 0;
+
+    if(getenv("STYL_DEBUG")==NULL)
+        return;
+
+    if (length==NO_GIVEN)
+        sizeBuffer = PACKAGE_LEN(message)+SSI_LEN_CHECKSUM;
+    else
+        sizeBuffer = length;
+
+    if(isRead==TRUE)
+        printf("** READ **%s\n", ANSI_COLOR_YELLOW);
+    else
+        printf("** WRITE **%s\n", ANSI_COLOR_YELLOW);
+
+    for (gint i = 0; i < sizeBuffer; i++)
+    {
+        printf(" 0x%02x", message[i]);
+    }
+    printf("%s\n", ANSI_COLOR_RESET);
+}
 
 /*!
  * \brief mlsScannerSSI_SerialRead: read data from serial port
@@ -388,6 +416,9 @@ __error:
         STYL_ERROR("Stop section request was fail.");
     }
     #endif
+    STYL_INFO("************ READ:\n");
+    mlsScannerPackage_Display(buffer, NO_GIVEN);
+    mlsScannerSSI_Dump(buffer, NO_GIVEN, TRUE);
     return retValue;
 }
 
@@ -458,8 +489,9 @@ gint mlsScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint 
         }
     }
 
-    STYL_INFO("ACK buffer size: %d", retValue);
+    STYL_INFO("************ READ:\n");
     mlsScannerPackage_Display(buffer, NO_GIVEN);
+    mlsScannerSSI_Dump(buffer, NO_GIVEN, TRUE);
     return retValue;
 
 __error:
@@ -487,9 +519,12 @@ gint mlsScannerSSI_Write(gint pFile, byte opcode, byte *param, byte paramLen)
 
     mlsScannerSSI_PreparePackage(bufferContent, opcode, param, paramLen);
 
-    STYL_WARNING("bufferSize: %d", bufferSize);
-    STYL_WARNING("Send data: ");
+//    STYL_WARNING("bufferSize: %d", bufferSize);
+//    STYL_WARNING("Send data: ");
+//    mlsScannerPackage_Display(bufferContent, bufferSize);
+    STYL_INFO("************ WRITE:\n");
     mlsScannerPackage_Display(bufferContent, bufferSize);
+    mlsScannerSSI_Dump(bufferContent, bufferSize, FALSE);
 
     STYL_WARNING("PACKAGE_LEN(bufferContent) + SSI_LEN_CHECKSUM: %d", PACKAGE_LEN(bufferContent) + SSI_LEN_CHECKSUM);
     sizeSend = PACKAGE_LEN(bufferContent) + SSI_LEN_CHECKSUM;

@@ -74,6 +74,8 @@ int main(int argc, const char * argv[])
 
     while (isRunning)
     {
+        printf("\n=============================================\n");
+
         memset(buffer, 0, BUFFER_LEN);
         decodeLength = mlsBarcodeReader_ReadData_Manual(buffer, BUFFER_LEN, timeout);
         if (decodeLength > 0)
