@@ -170,7 +170,7 @@ gint mlsScannerConfig_CloseTTY(gint pFile)
         STYL_ERROR("Unlock for device fail.");
     }
 
-    if (close(pFile) < 0)
+    if (close(pFile) == -1)
     {
         STYL_ERROR("close: %d - %s", errno, strerror(errno));
     }
@@ -243,7 +243,7 @@ gint mlsScannerConfig_ConfigTTY(gint pFile)
     else
     {
         fcntl(pFile, F_SETFL, O_NONBLOCK);
-        if(pFile > 0)
+        if(pFile != -1)
         {
             STYL_INFO("Setup for TTY port was success.");
             return EXIT_SUCCESS;
