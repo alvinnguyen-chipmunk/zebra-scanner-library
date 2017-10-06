@@ -130,7 +130,8 @@ char mlsBarcodeReader_Open(char *name)
     gStylScannerFD = mlsScannerConfig_OpenTTY(deviceNode);
     if(mlsScannerConfig_ConfigTTY(gStylScannerFD) == EXIT_SUCCESS)
     {
-        mlsScannerConfig_ConfigSSI(gStylScannerFD, SCANNING_TRIGGER_AUTO);
+        if(mlsScannerConfig_ConfigSSI(gStylScannerFD, SCANNING_TRIGGER_AUTO)==EXIT_FAILURE)
+            sleep(10);
     }
     mlsScannerConfig_CloseTTY_Only(gStylScannerFD);
     gStylScannerFD = -1;
