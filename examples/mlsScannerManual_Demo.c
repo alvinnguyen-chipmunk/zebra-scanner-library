@@ -52,22 +52,27 @@ static void mlsHandleSignal(int sig);
 int main(int argc, const char * argv[])
 {
     char        buffer[BUFFER_LEN];
-    const char *deviceName              = argv[1];
-    int         retValue                = EXIT_FAILURE;
+    char        *deviceName             = argv[1];
+    char        retValue                = EXIT_FAILURE;
     int         decodeLength            = 0;
     const int   timeout                 = 5;	/* 1/10 second */
 
-    printf("Version: \x1b[35m%s\e[0m\n", mlsBarcodeReader_GetVersion());
+    printf("Version: \x1b[35m%s\e[0m\n", GetVersion());
 
     printf("Device: \x1b[35m%s\e[0m\n", mlsBarcodeReader_GetDevice());
 
-    if(mlsBarcodeReader_Open(deviceName) != EXIT_SUCCESS)
+    retValue = mlsBarcodeReader_Open(deviceName);
+    if (retValue!=EXIT_SUCCESS)
+    {
         goto __exit;
+    }
 
-    if(mlsBarcodeReader_ManualMode() != EXIT_SUCCESS)
+
+    retValue = mlsBarcodeReader_ManualMode();
+    if (retValue!=EXIT_SUCCESS)
+    {
         goto __exit;
-
-    retValue = EXIT_SUCCESS;
+    }
 
     isRunning = TRUE;
     signal(SIGINT, mlsHandleSignal);

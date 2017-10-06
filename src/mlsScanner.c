@@ -20,7 +20,11 @@
  */
 
 /********** Include section ***************************************************/
-#include "string.h"
+#include <string.h>
+#include <error.h>
+#include <errno.h>
+#include <unistd.h>
+
 #include "mlsBarcode.h"
 #include "mlsScannerUtils.h"
 #include "mlsScannerConfig.h"
@@ -42,7 +46,8 @@ static gint gStylScannerFD          = -1;
  * \return string of software version
  * -
  */
-const char *mlsBarcodeReader_GetVersion(void)
+//const char *mlsBarcodeReader_GetVersion(void)
+char * GetVersion(void)
 {
     return VERSION;
 }
@@ -63,9 +68,11 @@ const char *mlsBarcodeReader_GetDevice(void)
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-int mlsBarcodeReader_Open(const char *name)
+//int mlsBarcodeReader_Open(const char *name)
+char mlsBarcodeReader_Open(char *name)
 {
-    gchar *deviceNode = NULL;
+    gchar    *deviceNode = NULL;
+    gboolean scannerReady = FALSE;
 
     if(name == NULL)
     {
@@ -88,27 +95,60 @@ int mlsBarcodeReader_Open(const char *name)
 
     STYL_INFO(" ** Scanner port: %s", deviceNode);
 
-    /* ***************** Open device node ********************* */
+    #if 0
+    gint     tryNumber = 1;
+    do
+    {
+        STYL_WARNING("Try more time ..............");
+        tryNumber--;
+        /* ***************** Open device node ********************* */
+        gStylScannerFD = mlsScannerConfig_OpenTTY(deviceNode);
+        if (gStylScannerFD != -1)
+        {
+            /* ***************** Configure TTY port ******************* */
+            if(mlsScannerConfig_ConfigTTY(gStylScannerFD) == EXIT_SUCCESS)
+            {
+                if(mlsScannerConfig_ConfigSSI(gStylScannerFD, SCANNING_TRIGGER_AUTO) == EXIT_SUCCESS)
+                {
+                    scannerReady = TRUE;
+                    break;
+                }
+                else
+                {
+                    STYL_ERROR("Can not set configure for SSI protocol.");
+                    mlsScannerConfig_CloseTTY_Only(gStylScannerFD);
+                }
+            }
+        }
+        sleep(3);
+    }
+    while(tryNumber > 0);
+    #else
     gStylScannerFD = mlsScannerConfig_OpenTTY(deviceNode);
+
+    //sleep(10);
+
+    if (gStylScannerFD != -1)
+    {
+        /* ***************** Configure TTY port ******************* */
+        if(mlsScannerConfig_ConfigTTY(gStylScannerFD) == EXIT_SUCCESS)
+        {
+            if(mlsScannerConfig_ConfigSSI(gStylScannerFD, SCANNING_TRIGGER_AUTO) == EXIT_SUCCESS)
+            {
+                scannerReady = TRUE;
+            }
+            else
+            {
+                STYL_ERROR("Can not set configure for SSI protocol.");
+                mlsScannerConfig_CloseTTY_Only(gStylScannerFD);
+            }
+        }
+    }
+    #endif
     g_free(deviceNode);
 
-    if (gStylScannerFD == -1)
-    {
+    if(scannerReady==FALSE)
         goto __error;
-    }
-
-    /* ***************** Configure TTY port ******************* */
-    if(mlsScannerConfig_ConfigTTY(gStylScannerFD) != EXIT_SUCCESS)
-    {
-        STYL_ERROR("Can not configure TTY for device");
-        goto __error;
-    }
-
-    if(mlsScannerConfig_ConfigSSI(gStylScannerFD, SCANNING_TRIGGER_AUTO) != EXIT_SUCCESS )
-    {
-        STYL_ERROR("Can not configure SSI for device");
-        goto __error;
-    }
 
     /* Flush buffer of device*/
     if(mlsScannerSSI_SendCommand(gStylScannerFD, SSI_CMD_FLUSH_QUEUE) != EXIT_SUCCESS)
@@ -125,9 +165,10 @@ int mlsBarcodeReader_Open(const char *name)
 
 __exit:
     return EXIT_SUCCESS;
+
 __error:
     /* ***************** Close TTY port ******************* */
-    mlsScannerConfig_CloseTTY(gStylScannerFD);
+    //mlsScannerConfig_CloseTTY_Only(gStylScannerFD);
     gStylScannerFD = -1;
     return EXIT_FAILURE;
 }
@@ -138,10 +179,11 @@ __error:
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-int mlsBarcodeReader_Close()
+//int mlsBarcodeReader_Close()
+char mlsBarcodeReader_Close()
 {
     STYL_INFO("Close scanner device.");
-    return (int) mlsScannerConfig_CloseTTY(gStylScannerFD);
+    return (char) mlsScannerConfig_CloseTTY(gStylScannerFD);
 }
 
 /*!
@@ -150,13 +192,10 @@ int mlsBarcodeReader_Close()
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-int mlsBarcodeReader_Reopen(const char *name)
+//int mlsBarcodeReader_Reopen(const char *name)
+char mlsBarcodeReader_Reopen(char *name)
 {
-    STYL_WARNING("*****************************");
-    STYL_WARNING("ENTER mlsBarcodeReader_Reopen");
-    STYL_WARNING("*****************************");
-
-    int retValue = EXIT_SUCCESS;
+    char retValue = EXIT_SUCCESS;
     retValue = mlsBarcodeReader_Close();
     if(EXIT_SUCCESS==retValue)
     {

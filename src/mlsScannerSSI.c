@@ -573,10 +573,24 @@ gint mlsScannerSSI_CheckACK(gint pFile)
  */
 gint mlsScannerSSI_SendCommand(gint pFile, byte opCode)
 {
+
     gint retValue = EXIT_SUCCESS;
+
     retValue = mlsScannerSSI_Write(pFile, opCode, NULL, 0);
     if(retValue==EXIT_SUCCESS)
         retValue = mlsScannerSSI_CheckACK(pFile);
+#if 0
+    gint tryNumber = 3;
+    while(retValue==EXIT_FAILURE && tryNumber > 0)
+    {
+        STYL_ERROR("Try more time to send command to decoder.");
+        tryNumber--;     sleep(1);
+
+        retValue = mlsScannerSSI_Write(pFile, opCode, NULL, 0);
+        if(retValue==EXIT_SUCCESS)
+            retValue = mlsScannerSSI_CheckACK(pFile);
+    };
+#endif // 0
 
     return retValue;
 }

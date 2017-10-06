@@ -54,6 +54,14 @@ gint mlsScannerConfig_OpenTTY(gchar *deviceNode);
 gint mlsScannerConfig_CloseTTY(gint pFile);
 
 /*!
+ * \brief mlsScannerConfig_CloseTTY_Only: Close TTY port of device.
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+gint mlsScannerConfig_CloseTTY_Only(gint pFile);
+
+/*!
  * \brief mlsScannerConfig_ConfigTTY: Do configure for SSI port.
  * \return
  * - EXIT_SUCCESS: Success

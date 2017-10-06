@@ -50,14 +50,15 @@ static void HandleSignal(int sig);
 
 int main(int argc, const char * argv[])
 {
-    char buff[BUFFER_LEN];
-    const char *deviceName = argv[1];
-    int ret = EXIT_SUCCESS;
-    int barcodeLen = 0;
-    const int timeout = 5;	// 1/10 sec
+    char        buff[BUFFER_LEN];
+    char        *deviceName         = argv[1];
+    char        ret                 = EXIT_SUCCESS;
+    int         barcodeLen          = 0;
+    const int   timeout             = 5;	// 1/10 sec
+
     memset(buff, 0, BUFFER_LEN);
 
-    printf("Version: \x1b[35m%s\e[0m\n", mlsBarcodeReader_GetVersion());
+    printf("Version: \x1b[35m%s\e[0m\n", GetVersion());
 
     printf("Device: \x1b[35m%s\e[0m\n", mlsBarcodeReader_GetDevice());
 
@@ -68,7 +69,7 @@ int main(int argc, const char * argv[])
     }
 
     /* ************This is to test Reopen API only, not required *************** */
-    mlsBarcodeReader_Reopen(deviceName);
+    //mlsBarcodeReader_Reopen(deviceName);
 
     isRunning = TRUE;
     signal(SIGINT, HandleSignal);

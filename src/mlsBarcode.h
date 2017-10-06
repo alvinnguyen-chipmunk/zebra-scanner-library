@@ -42,7 +42,8 @@ const char *mlsBarcodeReader_GetDevice(void);
  * \return string of software version
  * -
  */
-const char *mlsBarcodeReader_GetVersion(void);
+//const char * mlsBarcodeReader_GetVersion(void);
+char * GetVersion(void);
 
 /*!
  * \brief mlsBarcodeReader_Open: Open Reader descriptor file for read write automatic.
@@ -50,7 +51,8 @@ const char *mlsBarcodeReader_GetVersion(void);
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-int mlsBarcodeReader_Open(const char *name);
+//int mlsBarcodeReader_Open(const char *name);
+char mlsBarcodeReader_Open(char *name);
 
 /*!
  * \brief mlsBarcodeReader_Reopen: closes and re-opens scanner device file
@@ -58,7 +60,8 @@ int mlsBarcodeReader_Open(const char *name);
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-int mlsBarcodeReader_Reopen(const char *name);
+//int mlsBarcodeReader_Reopen(const char *name);
+char mlsBarcodeReader_Reopen(char *name);
 
 /*!
  * \brief mlsBarcodeReader_ReadData: Reader data from descriptor file (blocking read)
@@ -88,8 +91,8 @@ int mlsBarcodeReader_ManualMode();
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-int mlsBarcodeReader_Close();
-
+//int mlsBarcodeReader_Close();
+char mlsBarcodeReader_Close();
 #ifdef __cplusplus
 }
 #endif

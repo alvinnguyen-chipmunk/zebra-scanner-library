@@ -129,7 +129,7 @@ gint mlsScannerConfig_OpenTTY(gchar *deviceNode)
 {
     gint pFile = -1;
 
-    pFile = open(deviceNode, O_RDWR | O_NOCTTY | O_NDELAY | O_NONBLOCK);
+    pFile = open(deviceNode, O_RDWR);
     if (pFile == -1)
     {
         STYL_ERROR("Open Scanner device %s: open: %d - %s\n", deviceNode, errno, strerror(errno));
@@ -165,6 +165,27 @@ gint mlsScannerConfig_CloseTTY(gint pFile)
         STYL_ERROR("Can not flush buffer of device");
     }
 
+    if(mlsScannerConfig_LockDevice(FALSE) != EXIT_SUCCESS)
+    {
+        STYL_ERROR("Unlock for device fail.");
+    }
+
+    if (close(pFile) == -1)
+    {
+        STYL_ERROR("close: %d - %s", errno, strerror(errno));
+    }
+
+    return EXIT_SUCCESS;
+}
+
+/*!
+ * \brief mlsScannerConfig_CloseTTY_Only: Close TTY port of device.
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+gint mlsScannerConfig_CloseTTY_Only(gint pFile)
+{
     if(mlsScannerConfig_LockDevice(FALSE) != EXIT_SUCCESS)
     {
         STYL_ERROR("Unlock for device fail.");
@@ -309,9 +330,21 @@ gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode)
     mlsScannerPackage_Display(paramContent, paramSize);
 
     retValue = mlsScannerSSI_Write(pFile, SSI_CMD_PARAM, paramContent, paramSize);
-
     if(retValue==EXIT_SUCCESS)
         retValue = mlsScannerSSI_CheckACK(pFile);
+
+#if 0
+    gint tryNumber = 10;
+    while(retValue==EXIT_FAILURE && tryNumber > 0)
+    {
+        STYL_ERROR("Try more time to configure for SSI protocol.");
+        tryNumber--;     sleep(2);
+
+        retValue = mlsScannerSSI_Write(pFile, SSI_CMD_PARAM, paramContent, paramSize);
+        if(retValue==EXIT_SUCCESS)
+            retValue = mlsScannerSSI_CheckACK(pFile);
+    };
+#endif
 
     return retValue;
 }
