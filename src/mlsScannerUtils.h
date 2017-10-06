@@ -173,7 +173,7 @@ typedef unsigned char byte;
 
 /* ************** TTY configure **************************/
 #define TTY_BUFF_MAXSIZE                   0xFF
-#define TTY_TIMEOUT                        300 /* mili-seconds */
+#define TTY_TIMEOUT                        1000 /* mili-seconds */
 
 /* ************** Scanning mode **************************/
 #define SCANNING_TRIGGER_AUTO              0x0
