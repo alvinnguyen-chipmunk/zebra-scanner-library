@@ -2,7 +2,7 @@ AC_INIT([libstylscanner], [2.0.0], [alvin.nguyen@styl.solutions])
 AC_CONFIG_SRCDIR([configure.ac])
 
 # Version information
-STYL_MAJOR_VERSION=2
+STYL_MAJOR_VERSION=0
 STYL_MINOR_VERSION=0
 STYL_MICRO_VERSION=0
 STYL_MICRO_VERSION_SUFFIX=
