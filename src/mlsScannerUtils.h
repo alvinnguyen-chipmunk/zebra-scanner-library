@@ -171,6 +171,8 @@ typedef unsigned char byte;
 
 #define NO_GIVEN                           -1
 
+#define EXIT_WARNING                        2
+
 /* ************** TTY configure **************************/
 #define TTY_BUFF_MAXSIZE                   0xFF
 #define TTY_TIMEOUT                        1000 /* mili-seconds */

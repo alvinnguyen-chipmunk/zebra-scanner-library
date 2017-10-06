@@ -73,6 +73,7 @@ char mlsBarcodeReader_Open(char *name)
 {
     gchar    *deviceNode = NULL;
     gboolean scannerReady = FALSE;
+    gint     retValue = EXIT_SUCCESS;
 
     if(name == NULL)
     {
@@ -124,28 +125,65 @@ char mlsBarcodeReader_Open(char *name)
     }
     while(tryNumber > 0);
     #else
+    ///////////////////////////////////////////////////////////////////
+    STYL_ERROR("Configure first time.");
     gStylScannerFD = mlsScannerConfig_OpenTTY(deviceNode);
-
-    //sleep(10);
-
-    if (gStylScannerFD != -1)
+    if(mlsScannerConfig_ConfigTTY(gStylScannerFD) == EXIT_SUCCESS)
     {
-        /* ***************** Configure TTY port ******************* */
-        if(mlsScannerConfig_ConfigTTY(gStylScannerFD) == EXIT_SUCCESS)
+        mlsScannerConfig_ConfigSSI(gStylScannerFD, SCANNING_TRIGGER_AUTO);
+    }
+    mlsScannerConfig_CloseTTY_Only(gStylScannerFD);
+    gStylScannerFD = -1;
+
+    sleep(2);
+    ///////////////////////////////////////////////////////////////////
+    gint tryNumber = 1;
+    do
+    {
+        tryNumber--;
+        STYL_ERROR("Reopen for working section.");
+        gStylScannerFD = mlsScannerConfig_OpenTTY(deviceNode);
+
+        g_free(deviceNode);
+
+        if (gStylScannerFD != -1)
         {
-            if(mlsScannerConfig_ConfigSSI(gStylScannerFD, SCANNING_TRIGGER_AUTO) == EXIT_SUCCESS)
+            /* ***************** Configure TTY port ******************* */
+            if(mlsScannerConfig_ConfigTTY(gStylScannerFD) == EXIT_SUCCESS)
             {
-                scannerReady = TRUE;
-            }
-            else
-            {
-                STYL_ERROR("Can not set configure for SSI protocol.");
-                mlsScannerConfig_CloseTTY_Only(gStylScannerFD);
+                retValue = mlsScannerConfig_ConfigSSI(gStylScannerFD, SCANNING_TRIGGER_AUTO);
+                #if 0
+                switch(retValue)
+                {
+                case EXIT_SUCCESS:
+                    scannerReady = TRUE;
+                    break;
+                case EXIT_FAILURE:
+                    STYL_ERROR("Can not set configure for SSI protocol.");
+                    mlsScannerConfig_CloseTTY_Only(gStylScannerFD);
+                    goto __error;
+                    break;
+                case EXIT_WARNING:
+                    scannerReady = FALSE;
+                    break;
+                }
+                #else
+                if(mlsScannerConfig_ConfigSSI(gStylScannerFD, SCANNING_TRIGGER_AUTO) == EXIT_SUCCESS)
+                {
+                    scannerReady = TRUE;
+                    break;
+                }
+                else
+                {
+                    STYL_ERROR("Can not set configure for SSI protocol.");
+                    mlsScannerConfig_CloseTTY_Only(gStylScannerFD);
+                }
+                #endif
             }
         }
     }
+    while(tryNumber > 0);
     #endif
-    g_free(deviceNode);
 
     if(scannerReady==FALSE)
         goto __error;

@@ -207,6 +207,59 @@ gint mlsScannerConfig_CloseTTY_Only(gint pFile)
  */
 gint mlsScannerConfig_ConfigTTY(gint pFile)
 {
+#if 0
+    int ret = EXIT_SUCCESS;
+    int flags = 0;
+    struct termios devConf;
+
+    // Set flags for blocking mode and sync for writing
+    flags = fcntl(pFile, F_GETFL);
+    if (0 > flags)
+    {
+        perror("F_GETFL");
+        ret = EXIT_FAILURE;
+        goto EXIT;
+    }
+    flags |= (O_FSYNC);
+    flags &= ~(O_NDELAY | O_ASYNC);
+
+    ret = fcntl(pFile, F_SETFL, flags);
+    if (ret)
+    {
+        perror("F_SETFL");
+        ret = EXIT_FAILURE;
+        goto EXIT;
+    }
+
+    // Configure tty dev
+    devConf.c_cflag = (CS8 | CLOCAL | CREAD);
+    devConf.c_iflag = 0;
+    devConf.c_oflag = 0;
+    devConf.c_lflag = 0;
+    devConf.c_cc[VMIN] = 0;
+    devConf.c_cc[VTIME] = TIMEOUT_MSEC;     // read non-blocking flush dump data. See blocking read timeout later
+
+    // Portability: Use cfsetspeed instead of CBAUD since c_cflag/CBAUD is not in POSIX
+    ret = cfsetspeed(&devConf, BAUDRATE);
+    if (ret)
+    {
+        perror("Set speed");
+        ret = EXIT_FAILURE;
+        goto EXIT;
+    }
+
+    ret = tcsetattr(pFile, TCSANOW, &devConf);
+    if (ret)
+    {
+        perror("Set attribute");
+        ret = EXIT_FAILURE;
+        goto EXIT;
+    }
+EXIT:
+    return ret;
+
+
+    #else
     speed_t br_speed = BAUDRATE;
     gint mcs = 0;
 
@@ -273,6 +326,7 @@ gint mlsScannerConfig_ConfigTTY(gint pFile)
             return EXIT_FAILURE;
     }
     return EXIT_FAILURE;
+    #endif
 }
 
 /*!
@@ -283,6 +337,7 @@ gint mlsScannerConfig_ConfigTTY(gint pFile)
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
+ * - EXIT_WARNING:
  */
 gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode)
 {
@@ -331,7 +386,14 @@ gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode)
 
     retValue = mlsScannerSSI_Write(pFile, SSI_CMD_PARAM, paramContent, paramSize);
     if(retValue==EXIT_SUCCESS)
+    {
         retValue = mlsScannerSSI_CheckACK(pFile);
+//        if(retValue == EXIT_FAILURE)
+//        {
+//            STYL_ERROR("Decoder don't answer ACK, Maybe this is first time decoder be configure.");
+//            retValue = EXIT_WARNING;
+//        }
+    }
 
 #if 0
     gint tryNumber = 10;

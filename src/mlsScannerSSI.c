@@ -267,12 +267,16 @@ static void mlsScannerSSI_PreparePackage(byte *package, byte opcode, byte *param
     package[PKG_INDEX_OPCODE]   = opcode        ;
     package[PKG_INDEX_SRC]      = SSI_ID_HOST   ;
 
+    #if 1
     if(opcode == SSI_CMD_PARAM          ||
        opcode == SSI_CMD_SCAN_DISABLE   ||
        opcode == SSI_CMD_SCAN_ENABLE     )
         package[PKG_INDEX_STAT]     = SSI_PARAM_TYPE_PERMANENT;
     else
-        package[PKG_INDEX_STAT]     = SSI_PARAM_TYPE_TEMPORARY; // fix here again
+        package[PKG_INDEX_STAT]     = SSI_PARAM_TYPE_TEMPORARY;
+    #else
+        package[PKG_INDEX_STAT] = SSI_PARAM_TYPE_TEMPORARY;
+    #endif
 
     if ( (NULL != param) && (0 != paramLen) )
     {
