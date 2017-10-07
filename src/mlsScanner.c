@@ -131,10 +131,12 @@ char mlsBarcodeReader_Open(char *name)
     if(mlsScannerConfig_ConfigTTY(gStylScannerFD) == EXIT_SUCCESS)
     {
         if(mlsScannerConfig_ConfigSSI(gStylScannerFD, SCANNING_TRIGGER_AUTO)==EXIT_FAILURE)
+        {
+            mlsScannerConfig_CloseTTY_Only(gStylScannerFD);
+            gStylScannerFD = -1;
             sleep(10);
+        }
     }
-    mlsScannerConfig_CloseTTY_Only(gStylScannerFD);
-    gStylScannerFD = -1;
 
     sleep(2);
     ///////////////////////////////////////////////////////////////////
@@ -144,8 +146,6 @@ char mlsBarcodeReader_Open(char *name)
         tryNumber--;
         STYL_ERROR("Reopen for working section.");
         gStylScannerFD = mlsScannerConfig_OpenTTY(deviceNode);
-
-        g_free(deviceNode);
 
         if (gStylScannerFD != -1)
         {
@@ -188,6 +188,10 @@ char mlsBarcodeReader_Open(char *name)
 
     if(scannerReady==FALSE)
         goto __error;
+
+__success:
+
+    g_free(deviceNode);
 
     /* Flush buffer of device*/
     if(mlsScannerSSI_SendCommand(gStylScannerFD, SSI_CMD_FLUSH_QUEUE) != EXIT_SUCCESS)
