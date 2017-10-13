@@ -11,7 +11,7 @@ Agreement referenced above.                                                    *
 *******************************************************************************/
 
 /**
- * @file    mlsScanner_Demo_1.c
+ * @file    mlsScannerAuto_Demo.c
  * @brief   Simple example use C library to get data from qrcode/barcode scanner
  *
  * Long description.
@@ -50,13 +50,13 @@ static void HandleSignal(int sig);
 
 int main(int argc, const char * argv[])
 {
-    char        buff[BUFFER_LEN];
-    char        *deviceName         = argv[1];
+    char        buffer[BUFFER_LEN];
+    const char  *deviceName         = argv[1];
     char        ret                 = EXIT_SUCCESS;
     int         barcodeLen          = 0;
     const int   timeout             = 5;	// 1/10 sec
 
-    memset(buff, 0, BUFFER_LEN);
+    memset(buffer, 0, BUFFER_LEN);
 
     printf("Version: \x1b[35m%s\e[0m\n", GetVersion());
 
@@ -76,14 +76,14 @@ int main(int argc, const char * argv[])
 
     while (isRunning)
     {
+        memset(buffer, 0, BUFFER_LEN);
         printf("\n=============================================\n");
-        ret = mlsBarcodeReader_ReadData(buff, BUFFER_LEN, timeout);
-        if (ret > 0)
+        barcodeLen = mlsBarcodeReader_ReadData(buffer, BUFFER_LEN, timeout);
+        if (barcodeLen > 0)
         {
-            barcodeLen = ret;
-            printf("Barcode(%d):\e[36m\n%s\e[0m\n\n", barcodeLen, buff);
-            memset(buff, 0, BUFFER_LEN);
+            printf("Barcode(%d):\e[36m\n%s\e[0m\n\n", barcodeLen, buffer);
         }
+        sleep(1);
     }
 
     mlsBarcodeReader_Close();
@@ -102,4 +102,4 @@ static void HandleSignal(int sig)
     }
 }
 
-/**@}*/
+/*@}*/

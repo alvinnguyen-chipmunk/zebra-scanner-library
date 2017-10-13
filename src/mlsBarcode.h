@@ -30,6 +30,10 @@ extern "C"
 /********** Constant and compile switch definition section ********************/
 /********** Type definition section *******************************************/
 /********** Macro definition section*******************************************/
+#define STYL_SCANNER_NONEMODE       0
+#define STYL_SCANNER_AUTOMODE       1
+#define STYL_SCANNER_MANUALMODE     2
+
 /********** Function declaration section **************************************/
 /*!
  * \brief mlsBarcodeReader_GetDevice: Get the device node file name of the udev device
@@ -52,7 +56,7 @@ char * GetVersion(void);
  * - EXIT_FAILURE: Fail
  */
 //int mlsBarcodeReader_Open(const char *name);
-char mlsBarcodeReader_Open(char *name);
+char mlsBarcodeReader_Open(const char *name);
 
 /*!
  * \brief mlsBarcodeReader_Reopen: closes and re-opens scanner device file
@@ -61,7 +65,7 @@ char mlsBarcodeReader_Open(char *name);
  * - EXIT_FAILURE: Fail
  */
 //int mlsBarcodeReader_Reopen(const char *name);
-char mlsBarcodeReader_Reopen(char *name);
+char mlsBarcodeReader_Reopen(const char *name);
 
 /*!
  * \brief mlsBarcodeReader_ReadData: Reader data from descriptor file (blocking read)
@@ -93,6 +97,23 @@ int mlsBarcodeReader_ManualMode();
  */
 //int mlsBarcodeReader_Close();
 char mlsBarcodeReader_Close();
+
+/*!
+ * \brief mlsBarcodeReader_Revision Check reversion number of decoder.
+ * \return
+ * - EXIT_SUCCESS: Success
+ */
+char mlsBarcodeReader_Revision(const char *name);
+
+
+/*!
+ * \brief mlsBarcodeReader_Setup: Open Reader descriptor file for read write automatic.
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+int mlsBarcodeReader_Setup(const char *scannerPort, const int scannerMode);
+
 #ifdef __cplusplus
 }
 #endif

@@ -28,6 +28,11 @@ extern "C"
 #endif
 
 /********** Include section ***************************************************/
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "glib.h"
+
 /********** Constant  and compile switch definition section *******************/
 /********** Type definition section *******************************************/
 typedef unsigned char byte;
@@ -56,7 +61,11 @@ typedef unsigned char byte;
 #define STYL_DEBUG_BEGIN(format, ...) DEBUG_BEGIN(format, ##__VA_ARGS__)
 #define STYL_DEBUG_END(format, ...) DEBUG_END(format, ##__VA_ARGS__)
 
+#if 1
 #define __ERROR__(format, ...) fprintf (stderr, format, ## __VA_ARGS__) ; fprintf(stderr, "%s", ANSI_COLOR_RESET)
+#else
+#define __ERROR__(format, ...)
+#endif // 0
 #ifdef __RELEASE__
 #define ERROR(format, args...) __ERROR__("%s [STYLSSI-ERROR]: " format "%s \n",ANSI_COLOR_RED, ##args, ANSI_COLOR_RED)
 #else
@@ -107,6 +116,8 @@ typedef unsigned char byte;
 #define SSI_CMD_SCAN_DISABLE                0xEA
 #define SSI_CMD_SESSION_START               0xE4
 #define SSI_CMD_SESSION_STOP                0xE5
+#define SSI_CMD_REVISION_REQUEST            0xA3
+#define SSI_CMD_REVISION_REPLY              0xA4
 
 
 /* ************** Devices ID **************************/
@@ -117,9 +128,9 @@ typedef unsigned char byte;
 #define SSI_LEN_HEADER						0x04
 #define SSI_LEN_CHECKSUM					0x02
 #define SSI_LEN_DECODE_TYPE					0x01
+#define SSI_LEN_WAKEUP                      0x02
 
 /* ************** Parameter Type **********************/
-#define SSI_PARAM_TYPE_PARAM_PREFIX			0xFF
 #define SSI_PARAM_TYPE_TEMPORARY	    	0x00
 #define SSI_PARAM_TYPE_PERMANENT 			0x08
 
@@ -139,14 +150,13 @@ typedef unsigned char byte;
 #define SSI_PARAM_DEF_FORMAT_B              0xEE
 #define SSI_PARAM_B_DEF_SW_ACK              0x9F
 #define SSI_PARAM_B_DEF_SCAN                0xEC
-
 #define SSI_PARAM_INDEX_EVENT               0xF0
 #define SSI_PARAM_INDEX_EVENT_DECODE        0x00
 
 /* ************** Parameter value **********************/
 #define SSI_PARAM_VALUE_TRIGGER_PRESENT     0x07
 #define SSI_PARAM_VALUE_TRIGGER_HOST        0x08
-
+#define SSI_PARAM_VALUE_BEEP    			0xFF
 #define SSI_PARAM_VALUE_ENABLE              0x01
 #define SSI_PARAM_VALUE_DISABLE             0x00
 
@@ -175,13 +185,27 @@ typedef unsigned char byte;
 
 /* ************** TTY configure **************************/
 #define TTY_BUFF_MAXSIZE                   0xFF
-#define TTY_TIMEOUT                        1000 /* mili-seconds */
+#define TTY_TIMEOUT                        2000 /* mili-seconds */
 
 /* ************** Scanning mode **************************/
 #define SCANNING_TRIGGER_AUTO              0x0
 #define SCANNING_TRIGGER_MANUAL            0x1
 
+
+#define STYL_LOG_VERBOSE_1              1
+#define STYL_LOG_VERBOSE_2              2
+#define STYL_LOG_VERBOSE_3              3
+#define STYL_LOG_1(buffer)                mlsScannerUtils_Print(buffer, STYL_LOG_VERBOSE_1);
+#define STYL_LOG_2(buffer)                mlsScannerUtils_Print(buffer, STYL_LOG_VERBOSE_2);
+#define STYL_LOG_3(buffer)                mlsScannerUtils_Print(buffer, STYL_LOG_VERBOSE_3);
+
 /********** Function declaration section **************************************/
+
+
+/*!
+ * \brief mlsScannerPackage_Dump: Dump content of buffer.
+ */
+void mlsScannerUtils_Print (gchar *buffer, gint verbose);
 
 #ifdef __cplusplus
 }

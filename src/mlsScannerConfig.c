@@ -272,6 +272,7 @@ EXIT:
     tcgetattr(pFile, &serial_opt);
     /* ********** Set baudrate ************************ */
     cfsetispeed(&serial_opt, br_speed);
+    cfsetispeed(&serial_opt, br_speed);
 
     /* ********** Set parity: yes ********************* */
     serial_opt.c_cflag |= PARENB;
@@ -299,8 +300,10 @@ EXIT:
     serial_opt.c_lflag=0;
     serial_opt.c_oflag=0;
 
-    serial_opt.c_cc[VTIME] = 1;
-    serial_opt.c_cc[VMIN] = TTY_BUFF_MAXSIZE;
+    // One input byte is enough to return from read()
+	// Inter-character timer off
+	serial_opt.c_cc[VMIN]  = 1;
+	serial_opt.c_cc[VTIME] = 10; // was 0
 
     /* ********** Configure for file descriptor ******** */
     ioctl(pFile, TIOCMGET, &mcs);
@@ -308,8 +311,8 @@ EXIT:
     ioctl(pFile, TIOCMSET, &mcs);
 
     /* ********** Flush file descriptor ******** */
-    tcflush(pFile, TCIFLUSH);
-    if (tcsetattr(pFile, TCSANOW, &serial_opt)==-1)
+    //tcflush(pFile, TCIFLUSH);
+    if (tcsetattr(pFile, TCIFLUSH, &serial_opt)==-1)
     {
         close(pFile);
         return EXIT_FAILURE;
@@ -339,10 +342,9 @@ EXIT:
  * - EXIT_FAILURE: Fail
  * - EXIT_WARNING:
  */
-gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode)
+gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode, gboolean isPermanent)
 {
     /*
-        #define SSI_PARAM_TYPE_PARAM_PREFIX			0xFF
         #define SSI_PARAM_TYPE_TEMPORARY	    	0x00
         #define SSI_PARAM_TYPE_PERMANENT 			0x08
 
@@ -357,9 +359,10 @@ gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode)
         #define SSI_PARAM_VALUE_TRIGGER_PRESENT     0x07
         #define SSI_PARAM_VALUE_ENABLE              0x01
         #define SSI_PARAM_VALUE_DISABLE             0x00
+        #define SSI_PARAM_VALUE_BEEP			    0xFF
     */
     gint retValue = EXIT_SUCCESS;
-    byte paramContent[12] = {  SSI_PARAM_TYPE_PARAM_PREFIX
+    byte paramContent[12] = {     SSI_PARAM_VALUE_BEEP  // Beep Code - 0xFF is NO BEEP
                                  ,SSI_PARAM_DEF_FORMAT_B,      SSI_PARAM_VALUE_ENABLE
                                  ,SSI_PARAM_B_DEF_SW_ACK,      SSI_PARAM_VALUE_ENABLE
                                  ,SSI_PARAM_B_DEF_SCAN,        SSI_PARAM_VALUE_ENABLE
@@ -382,12 +385,14 @@ gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode)
     gint paramSize = sizeof(paramContent) / sizeof(*paramContent);
 
     STYL_INFO("");
-    mlsScannerPackage_Display(paramContent, paramSize);
+    mlsScannerPackage_Dump(paramContent, paramSize, FALSE);
 
-    retValue = mlsScannerSSI_Write(pFile, SSI_CMD_PARAM, paramContent, paramSize);
+    retValue = mlsScannerSSI_Write(pFile, SSI_CMD_PARAM, paramContent, paramSize, TRUE, isPermanent);
+    STYL_ERROR("retValue: %d",retValue);
     if(retValue==EXIT_SUCCESS)
     {
         retValue = mlsScannerSSI_CheckACK(pFile);
+        STYL_ERROR("retValue: %d",retValue);
 //        if(retValue == EXIT_FAILURE)
 //        {
 //            STYL_ERROR("Decoder don't answer ACK, Maybe this is first time decoder be configure.");
@@ -402,13 +407,53 @@ gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode)
         STYL_ERROR("Try more time to configure for SSI protocol.");
         tryNumber--;     sleep(2);
 
-        retValue = mlsScannerSSI_Write(pFile, SSI_CMD_PARAM, paramContent, paramSize);
+        retValue = mlsScannerSSI_Write(pFile, SSI_CMD_PARAM, paramContent, paramSize, TRUE);
         if(retValue==EXIT_SUCCESS)
             retValue = mlsScannerSSI_CheckACK(pFile);
     };
 #endif
 
     return retValue;
+}
+
+/*!
+ * \brief mlsScannerConfig_CheckRevision: Request revision number of decoder
+ * \param
+ * - File descriptor of scanner device
+ * - triggerMode: SCANNING_TRIGGER_AUTO or SCANNING_TRIGGER_MANUAL
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+gint mlsScannerConfig_CheckRevision(gint pFile)
+{
+    byte recvBuff[PACKAGE_LEN_MAXIMUM];
+    gint maxLoop = 10;
+    gint count   = 0;
+    gint retValue = EXIT_FAILURE;
+
+    do
+    {
+        count++;
+        printf("\n ** Countdown for send command: %d\n", count);
+        memset(recvBuff, 0, PACKAGE_LEN_MAXIMUM);
+        retValue = mlsScannerSSI_Write(pFile, SSI_CMD_REVISION_REQUEST, NULL, 0, TRUE, FALSE);
+        if(retValue==EXIT_SUCCESS)
+        {
+            retValue = mlsScannerSSI_GetACK(pFile, recvBuff, PACKAGE_LEN_MAXIMUM, TTY_TIMEOUT);
+            if(retValue>0)
+            {
+                STYL_ERROR("REVISION IS");
+                mlsScannerPackage_Dump(recvBuff, NO_GIVEN, TRUE);
+                if(SSI_CMD_REVISION_REPLY == recvBuff[PKG_INDEX_OPCODE])
+                    return EXIT_SUCCESS;
+            }
+        }
+        sleep(2);
+    }
+    while(count < maxLoop);
+
+    return EXIT_FAILURE;
 }
 
 /**@}*/

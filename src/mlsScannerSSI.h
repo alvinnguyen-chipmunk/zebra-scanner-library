@@ -47,7 +47,7 @@ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint ti
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-gint mlsScannerSSI_Write(gint pFile, byte opcode, byte *param, byte paramLen);
+gint mlsScannerSSI_Write(gint pFile, byte opcode, byte *param, byte paramLen, gboolean sendWakeup, gboolean isPermanent);
 
 /*!
  * \brief mlsScannerSSI_CheckACK: receive ACK package after mlsScannerSSI_Write() and check for ACK

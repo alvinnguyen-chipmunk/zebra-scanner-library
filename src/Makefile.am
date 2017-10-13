@@ -13,6 +13,7 @@ STYLSCANNER_includedir = $(includedir)
 STYLSCANNER_SOURCES = mlsBarcode.h          \
                       mlsScanner.c          \
                       mlsScannerUtils.h     \
+                      mlsScannerUtils.c     \
                       mlsScannerConfig.h    \
                       mlsScannerConfig.c    \
                       mlsScannerDevice.h    \

@@ -11,7 +11,7 @@
  ******************************************************************************/
 
 /**
- * @file    mlsScanner_Demo_2.c
+ * @file    mlsScannerManual_Demo.c
  * @brief   Simple test application use C library to get data from qrcode/barcode scanner
  *
  * Long description.
@@ -52,7 +52,7 @@ static void mlsHandleSignal(int sig);
 int main(int argc, const char * argv[])
 {
     char        buffer[BUFFER_LEN];
-    char        *deviceName             = argv[1];
+    const char  *deviceName             = argv[1];
     char        retValue                = EXIT_FAILURE;
     int         decodeLength            = 0;
     const int   timeout                 = 5;	/* 1/10 second */
@@ -106,4 +106,4 @@ static void mlsHandleSignal(int sig)
     }
 }
 
-/**@}*/
+/*@}*/

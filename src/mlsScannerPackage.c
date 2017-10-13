@@ -28,6 +28,7 @@
 #include "mlsScannerUtils.h"
 #include "mlsScannerPackage.h"
 #include "mlsScannerSSI.h"
+
 /********** Local Type definition section *************************************/
 /********** Local Constant and compile switch definition section **************/
 /********** Local Macro definition section ************************************/
@@ -269,5 +270,44 @@ gint mlsScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *packag
     return decodeLength;
 }
 
+/*!
+ * \brief mlsScannerPackage_Dump: Dump content of buffer.
+ */
+void mlsScannerPackage_Dump (byte *buffer, gint length, gboolean isRead)
+{
+    gint sizeBuffer = 0;
+
+    if(getenv("STYL_DEBUG")==NULL)
+        return;
+
+    if (length==NO_GIVEN)
+        sizeBuffer = PACKAGE_LEN(buffer)+SSI_LEN_CHECKSUM;
+    else
+        sizeBuffer = length;
+
+    if(isRead==TRUE)
+        printf("** READ **%s\n", ANSI_COLOR_YELLOW);
+    else
+        printf("** WRITE **%s\n", ANSI_COLOR_YELLOW);
+
+    switch(buffer[PKG_INDEX_OPCODE])
+    {
+    case SSI_CMD_ACK:
+        printf("%s(ACK)%s", ANSI_COLOR_RED, ANSI_COLOR_RESET);
+        break;
+    case SSI_CMD_NAK:
+        printf("%s(NAK)%s", ANSI_COLOR_RED, ANSI_COLOR_RESET);
+        break;
+    default:
+        break;
+    }
+
+
+    for (gint i = 0; i < sizeBuffer; i++)
+    {
+        printf(" 0x%02x", buffer[i]);
+    }
+    printf("%s\n", ANSI_COLOR_RESET);
+}
 
 /**@}*/

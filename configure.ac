@@ -91,7 +91,7 @@ AM_CONDITIONAL([RELEASE], [test x$release = xtrue])
 
 dnl ================================================================
 
-AC_CONFIG_FILES([ Makefile src/Makefile examples/Makefile])
+AC_CONFIG_FILES([ Makefile src/Makefile examples/Makefile tools/Makefile])
 AC_OUTPUT([ stylssi.pc])
 
 

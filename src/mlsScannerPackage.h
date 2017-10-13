@@ -48,6 +48,11 @@ void mlsScannerPackage_Display(byte *package, gint length);
  */
 gint mlsScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *package, const gint buffLength);
 
+/*!
+ * \brief mlsScannerPackage_Dump: Dump content of message.
+ */
+void mlsScannerPackage_Dump (byte *buffer, gint length, gboolean isRead);
+
 #ifdef __cplusplus
 }
 #endif

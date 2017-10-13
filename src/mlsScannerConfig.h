@@ -75,8 +75,18 @@ gint mlsScannerConfig_ConfigTTY(gint pFile);
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode);
+gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode, gboolean isPermanent);
 
+/*!
+ * \brief mlsScannerConfig_CheckRevision: Request revision number of decoder
+ * \param
+ * - File descriptor of scanner device
+ * - triggerMode: SCANNING_TRIGGER_AUTO or SCANNING_TRIGGER_MANUAL
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+gint mlsScannerConfig_CheckRevision(gint pFile);
 
 #ifdef __cplusplus
 }

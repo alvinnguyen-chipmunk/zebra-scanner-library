@@ -17,3 +17,9 @@ bin_PROGRAMS += StylScannerManual_Demo
 StylScannerManual_Demo_SOURCES = mlsScannerManual_Demo.c
 StylScannerManual_Demo_CFLAGS = $(DEBUG_CFLAGS) -std=c99 -D_BSD_SOURCE -D_DEFAULT_SOURCE -I$(top_srcdir)/src $(LIBUDEV_CFLAGS)
 StylScannerManual_Demo_LDADD = -lstylssi -L./../src $(LIBUDEV_LIBS)
+
+bin_PROGRAMS += StylScannerRevision
+StylScannerRevision_SOURCES = mlsScannerOpen_Test.c
+StylScannerRevision_CFLAGS = $(DEBUG_CFLAGS) -std=c99 -D_BSD_SOURCE -D_DEFAULT_SOURCE -I$(top_srcdir)/src $(LIBUDEV_CFLAGS)
+StylScannerRevision_LDADD = -lstylssi -L./../src $(LIBUDEV_LIBS)
+
