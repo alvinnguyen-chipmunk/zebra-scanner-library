@@ -251,6 +251,12 @@ char mlsBarcodeReader_Open(const char *name)
     gStylScannerFD = mlsScannerConfig_OpenTTY(deviceNode);
     g_free(deviceNode);
 
+    #if 1
+    if(mlsScannerConfig_ConfigTTY(gStylScannerFD) != EXIT_SUCCESS)
+    {
+        goto __error;
+    }
+    #else
     if(gStylScannerFD!=-1)
     {
         if(mlsScannerConfig_ConfigTTY(gStylScannerFD) == EXIT_SUCCESS)
@@ -277,30 +283,32 @@ char mlsBarcodeReader_Open(const char *name)
         return EXIT_FAILURE;
     }
 
+
     STYL_ERROR("scannerReady: %d", scannerReady);
     if (scannerReady != TRUE)
         goto __error;
+    #endif // 1
 
-    STYL_ERROR("Send parameter for SSI protocol to scanner ... ");
-    if(mlsScannerConfig_ConfigSSI(gStylScannerFD, SCANNING_TRIGGER_AUTO, TRUE) != EXIT_SUCCESS)
-    {
-        STYL_ERROR("Can not configure SSI protocol for scanner.");
-        goto __error;
-    }
+//    STYL_ERROR("Send parameter for SSI protocol to scanner ... ");
+//    if(mlsScannerConfig_ConfigSSI(gStylScannerFD, SCANNING_TRIGGER_AUTO, TRUE) != EXIT_SUCCESS)
+//    {
+//        STYL_ERROR("Can not configure SSI protocol for scanner.");
+//        goto __error;
+//    }
 
     /* ***************** Flush buffer of device*/
-    STYL_ERROR("Send parameter to flush buffer on scanner ... ");
-    if(mlsScannerSSI_SendCommand(gStylScannerFD, SSI_CMD_FLUSH_QUEUE) != EXIT_SUCCESS)
-    {
-        STYL_ERROR("Can not flush buffer of device");
-        goto __error;
-    }
+//    STYL_ERROR("Send parameter to flush buffer on scanner ... ");
+//    if(mlsScannerSSI_SendCommand(gStylScannerFD, SSI_CMD_FLUSH_QUEUE) != EXIT_SUCCESS)
+//    {
+//        STYL_ERROR("Can not flush buffer of device");
+//        goto __error;
+//    }
     /* ***************** Enable device to scanning */
-    if(mlsScannerSSI_SendCommand(gStylScannerFD, SSI_CMD_SCAN_ENABLE) != EXIT_SUCCESS)
-    {
-        STYL_ERROR("Can not enable device to scanning");
-        goto __error;
-    }
+//    if(mlsScannerSSI_SendCommand(gStylScannerFD, SSI_CMD_SCAN_ENABLE) != EXIT_SUCCESS)
+//    {
+//        STYL_ERROR("Can not enable device to scanning");
+//        goto __error;
+//    }
 
 __exit:
     return EXIT_SUCCESS;
