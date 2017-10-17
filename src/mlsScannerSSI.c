@@ -80,9 +80,9 @@ static gint mlsScannerSSI_SerialRead(gint pFile, byte* buffer, guint sizeBuffer,
     while (nbytes < sizeBuffer)
     {
         /*See if there is data available. */
-        STYL_ERROR("\n ==== Size buffer will be read %d", sizeBuffer);
-        STYL_ERROR("Timeout sec  is: %d", tv.tv_sec);
-        STYL_ERROR("Timeout usec is: %d", tv.tv_usec);
+        STYL_INFO("\n ==== Size buffer will be read %d", sizeBuffer);
+        STYL_INFO("Read Serial: Timeout sec  is: %d", tv.tv_sec);
+        STYL_INFO("Read Serial: Timeout usec is: %d", tv.tv_usec);
         gint rc = select (pFile + 1, &fds, NULL, NULL, &tv);
         /* TODO: Recalculate timeout here! */
         if (rc < 0)
@@ -94,7 +94,7 @@ static gint mlsScannerSSI_SerialRead(gint pFile, byte* buffer, guint sizeBuffer,
         else if (rc == 0)
         {
             /* ********* Timeout ********************************* */
-            STYL_LOG_1("Timeout over");
+            STYL_WARNING("Read Serial get timeout over.");
             break;
         }
 
@@ -395,10 +395,10 @@ __error:
 }
 
 /*!
- * \brief mlsScannerSSI_GetACK: get ACK raw package
+ * \brief mlsScannerSSI_GetResponse: Get response raw data.
  * \return number of read bytes
  */
-gint mlsScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout_ms)
+gint mlsScannerSSI_GetResponse(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout_ms)
 {
     gint retValue = 0;
     gint sizeReceived = 0;
@@ -411,7 +411,7 @@ gint mlsScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint 
     /* Read 1 first byte for length */
     readRequest = 1;
     retValue = mlsScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN], readRequest, timeout_ms);
-    STYL_ERROR("Fisrt byte size: %x", retValue);
+    STYL_INFO("Fisrt byte size: %x", retValue);
     if(retValue <= 0)
     {
         goto __error;
@@ -425,9 +425,9 @@ gint mlsScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint 
         }
         /* Read rest of byte of package */
         readRequest = recvBuff[PKG_INDEX_LEN] + SSI_LEN_CHECKSUM - 1; /* 1 is byte read before */
-        STYL_ERROR("Rest byte is: %d", readRequest);
+        STYL_INFO("Rest byte is: %d", readRequest);
         sizeReceived = mlsScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN + 1], readRequest, timeout_ms);
-        STYL_ERROR("Read byte is: %d", sizeReceived);
+        STYL_INFO("Read byte is: %d", sizeReceived);
         if(sizeReceived != readRequest)
         {
             goto __error;
@@ -435,28 +435,28 @@ gint mlsScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint 
         else
         {
             retValue += sizeReceived;
-            STYL_ERROR("Total size received: %d", retValue);
-            STYL_ERROR_INLINE("Check package is correct from decoder ... ");
+            STYL_INFO("Total size received: %d", retValue);
+            STYL_INFO_INLINE("Check package is correct from decoder ... ");
             if(!mlsScannerSSI_CorrectPackage(recvBuff))
             {
-                STYL_ERROR_INLINE("FAIL\n");
+                STYL_INFO_INLINE("FAIL\n");
                 goto __error;
             }
             else
             {
-                STYL_ERROR_INLINE("OK\n");
+                STYL_INFO_INLINE("OK\n");
             }
 
-            STYL_ERROR_INLINE("Check checksum for package ... ");
+            STYL_INFO_INLINE("Check checksum for package ... ");
             if (mlsScannerSSI_IsChecksumOK(recvBuff))
             {
-                STYL_ERROR_INLINE("OK\n");
+                STYL_INFO_INLINE("OK\n");
                 /* Copy current buffer to finally buffer */
                 memcpy(buffer, recvBuff, PACKAGE_LEN(recvBuff) + SSI_LEN_CHECKSUM);
             }
             else
             {
-                STYL_ERROR_INLINE("FAIL\n");
+                STYL_INFO_INLINE("FAIL\n");
                 goto __error;
             }
         }
@@ -486,12 +486,15 @@ gint mlsScannerSSI_Write(gint pFile, byte opcode, byte *param, byte paramLen, gb
 
     byte  bufferWakeup[]  = { 0x00, 0x00 };
 
+    /* ***************** Flush old input queue ***************************** */
+    tcflush(pFile, TCIFLUSH);
+
     /* ***************** If the scanner is in Low Power mode, this will wake it up. *************** */
     /* ***************** Else the NULLs are ignored. *************** */
     if(sendWakeup==TRUE)
     {
         mlsScannerPackage_Dump(bufferWakeup, SSI_LEN_WAKEUP, FALSE);
-        if(mlsScannerSSI_SerialWrite(pFile, bufferWakeup, SSI_LEN_WAKEUP, TTY_TIMEOUT) != SSI_LEN_WAKEUP)
+        if(mlsScannerSSI_SerialWrite(pFile, bufferWakeup, SSI_LEN_WAKEUP, WRITE_TTY_TIMEOUT) != SSI_LEN_WAKEUP)
         {
             STYL_ERROR("Send wakeup data to scanner got problem.");
             return EXIT_FAILURE;
@@ -500,19 +503,13 @@ gint mlsScannerSSI_Write(gint pFile, byte opcode, byte *param, byte paramLen, gb
         usleep(50000);
     }
 
-    /* ***************** Flush old input queue ***************************** */
-    tcflush(pFile, TCIFLUSH);
-
     /* ***************** Setup then send parameter to scanner *************** */
     bufferSize = (SSI_LEN_HEADER + SSI_LEN_CHECKSUM + paramLen) * sizeof(byte);
     bufferContent = malloc(bufferSize);
     mlsScannerSSI_PreparePackage(bufferContent, opcode, param, paramLen, isPermanent);
-    STYL_INFO("************ WRITE:\n");
-    mlsScannerPackage_Display(bufferContent, bufferSize);
     mlsScannerPackage_Dump(bufferContent, bufferSize, FALSE);
-    STYL_WARNING("PACKAGE_LEN(bufferContent) + SSI_LEN_CHECKSUM: %d", PACKAGE_LEN(bufferContent) + SSI_LEN_CHECKSUM);
     sizeSend = PACKAGE_LEN(bufferContent) + SSI_LEN_CHECKSUM;
-    if(mlsScannerSSI_SerialWrite(pFile, bufferContent, sizeSend, TTY_TIMEOUT) != sizeSend)
+    if(mlsScannerSSI_SerialWrite(pFile, bufferContent, sizeSend, WRITE_TTY_TIMEOUT) != sizeSend)
     {
         STYL_ERROR("Send data to scanner got problem.");
         retValue = EXIT_FAILURE;
@@ -532,20 +529,16 @@ gint mlsScannerSSI_CheckACK(gint pFile)
 {
     gint retValue = EXIT_SUCCESS;
     byte recvBuff[PACKAGE_LEN_ACK_MAXIMUM];
-
     memset(recvBuff, 0, PACKAGE_LEN_ACK_MAXIMUM);
-    STYL_INFO("Invoke mlsScannerSSI_GetACK");
-    retValue = mlsScannerSSI_GetACK(pFile, recvBuff, PACKAGE_LEN_ACK_MAXIMUM, TTY_TIMEOUT);
+    retValue = mlsScannerSSI_GetResponse(pFile, recvBuff, PACKAGE_LEN_ACK_MAXIMUM, ACK_TIMEOUT);
     if ( (retValue > 0) && (SSI_CMD_ACK == recvBuff[PKG_INDEX_OPCODE]) )
     {
-        mlsScannerUtils_Print("Check ACK is OK", STYL_LOG_VERBOSE_1);
         retValue = EXIT_SUCCESS;
     }
     else
     {
         retValue = EXIT_FAILURE;
     }
-
     return retValue;
 }
 
@@ -577,5 +570,5 @@ gint mlsScannerSSI_SendCommand(gint pFile, byte opCode)
     return retValue;
 }
 
-/**@}*/
+/*@}*/
 

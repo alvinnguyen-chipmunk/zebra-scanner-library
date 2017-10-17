@@ -44,6 +44,7 @@
 /********** Local Macro definition section ************************************/
 #define TIMEOUT_MSEC		        50
 #define LOCK_SCANNER_PATH           "/var/log/styl_scanner"
+#define CONFIG_SCANNER_PATH         "/etc/stylssi/stylssi.conf"
 
 /********** Local (static) variable declaration section ***********************/
 /********** Local (static) function declaration section ***********************/
@@ -78,11 +79,7 @@ static gint mlsScannerConfig_LockDevice (gboolean isLock)
                 STYL_ERROR("read: %d - %s", errno, strerror(errno));
                 getError = TRUE;
             }
-            STYL_DEBUG("PID OLD IS: %s", buffer);
             guint oldPID = (guint)g_ascii_strtoull(buffer, NULL, 10);
-
-            STYL_DEBUG("kill ret value: %d", kill((pid_t)oldPID, 0));
-
             if(kill((pid_t)oldPID, 0)==0)
             {
                 STYL_ERROR("Scanner device port was used by process %d", oldPID);
@@ -125,7 +122,7 @@ static gint mlsScannerConfig_LockDevice (gboolean isLock)
  * - EXIT_SUCCESS: if executing success
  * - EXIT_SUCCESS: if executing success
  */
-gint mlsScannerConfig_OpenTTY(gchar *deviceNode)
+gint mlsScannerConfig_OpenTTY(const gchar *deviceNode)
 {
     gint pFile = -1;
 
@@ -188,7 +185,7 @@ gint mlsScannerConfig_CloseTTY_Only(gint pFile)
 {
     if(mlsScannerConfig_LockDevice(FALSE) != EXIT_SUCCESS)
     {
-        STYL_ERROR("Unlock for device fail.");
+        STYL_ERROR("Unlock for scanner device port fail.");
     }
 
     if (close(pFile) == -1)
@@ -337,32 +334,16 @@ EXIT:
  * \param
  * - File descriptor of scanner device
  * - triggerMode: SCANNING_TRIGGER_AUTO or SCANNING_TRIGGER_MANUAL
+ * - isPermanent: Write SSI parameter to flash of decoder.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
- * - EXIT_WARNING:
  */
 gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode, gboolean isPermanent)
 {
-    /*
-        #define SSI_PARAM_TYPE_TEMPORARY	    	0x00
-        #define SSI_PARAM_TYPE_PERMANENT 			0x08
+    gint retValue = EXIT_FAILURE;
 
-        #define SSI_PARAM_INDEX_TRIGGER             0x8A
-        #define SSI_PARAM_DEF_FORMAT_B              0xEE
-        #define SSI_PARAM_B_DEF_SW_ACK              0x9F
-        #define SSI_PARAM_B_DEF_SCAN                0xEC
-
-        #define SSI_PARAM_INDEX_EVENT               0xF0
-        #define SSI_PARAM_INDEX_EVENT_DECODE        0x00
-
-        #define SSI_PARAM_VALUE_TRIGGER_PRESENT     0x07
-        #define SSI_PARAM_VALUE_ENABLE              0x01
-        #define SSI_PARAM_VALUE_DISABLE             0x00
-        #define SSI_PARAM_VALUE_BEEP			    0xFF
-    */
-    gint retValue = EXIT_SUCCESS;
-    byte paramContent[12] = {     SSI_PARAM_VALUE_BEEP  // Beep Code - 0xFF is NO BEEP
+    byte paramContent[12] = {     SSI_PARAM_VALUE_BEEP         // Beep Code - 0xFF is NO BEEP
                                  ,SSI_PARAM_DEF_FORMAT_B,      SSI_PARAM_VALUE_ENABLE
                                  ,SSI_PARAM_B_DEF_SW_ACK,      SSI_PARAM_VALUE_ENABLE
                                  ,SSI_PARAM_B_DEF_SCAN,        SSI_PARAM_VALUE_ENABLE
@@ -384,34 +365,36 @@ gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode, gboolean isPermane
 
     gint paramSize = sizeof(paramContent) / sizeof(*paramContent);
 
-    STYL_INFO("");
     mlsScannerPackage_Dump(paramContent, paramSize, FALSE);
 
-    retValue = mlsScannerSSI_Write(pFile, SSI_CMD_PARAM, paramContent, paramSize, TRUE, isPermanent);
-    STYL_ERROR("retValue: %d",retValue);
-    if(retValue==EXIT_SUCCESS)
+    if (mlsScannerSSI_Write(pFile, SSI_CMD_PARAM, paramContent, paramSize, TRUE, isPermanent)==EXIT_SUCCESS)
     {
-        retValue = mlsScannerSSI_CheckACK(pFile);
-        STYL_ERROR("retValue: %d",retValue);
-//        if(retValue == EXIT_FAILURE)
-//        {
-//            STYL_ERROR("Decoder don't answer ACK, Maybe this is first time decoder be configure.");
-//            retValue = EXIT_WARNING;
-//        }
+        if(mlsScannerSSI_CheckACK(pFile)==EXIT_SUCCESS)
+        {
+            retValue = EXIT_SUCCESS;
+
+            gint pConfigFile = -1;
+            gchar *buffer = NULL;
+            /* Write configure number to file. */
+            pConfigFile = g_open (CONFIG_SCANNER_PATH, O_CREAT | O_RDWR, S_IWUSR | S_IRUSR);
+            if(pConfigFile==-1)
+            {
+                STYL_ERROR("Open configure file of scanner SSI library fail.");
+                STYL_ERROR("g_open: %d - %s", errno, strerror(errno));
+            }
+            else
+            {
+                buffer = g_strdup_printf("%d", triggerMode);
+                if(write(pConfigFile, buffer, (guint)strlen(buffer))<=0)
+                {
+                    STYL_ERROR("Save configure SSI fail.");
+                    STYL_ERROR("write: %d - %s", errno, strerror(errno));
+                }
+                g_free(buffer);
+                g_close(pConfigFile, NULL);
+            }
+        }
     }
-
-#if 0
-    gint tryNumber = 10;
-    while(retValue==EXIT_FAILURE && tryNumber > 0)
-    {
-        STYL_ERROR("Try more time to configure for SSI protocol.");
-        tryNumber--;     sleep(2);
-
-        retValue = mlsScannerSSI_Write(pFile, SSI_CMD_PARAM, paramContent, paramSize, TRUE);
-        if(retValue==EXIT_SUCCESS)
-            retValue = mlsScannerSSI_CheckACK(pFile);
-    };
-#endif
 
     return retValue;
 }
@@ -420,40 +403,94 @@ gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode, gboolean isPermane
  * \brief mlsScannerConfig_CheckRevision: Request revision number of decoder
  * \param
  * - File descriptor of scanner device
- * - triggerMode: SCANNING_TRIGGER_AUTO or SCANNING_TRIGGER_MANUAL
  * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
+ * - length of revision string: success
+ * - 0: failure.
  */
-gint mlsScannerConfig_CheckRevision(gint pFile)
+guint mlsScannerConfig_CheckRevision(gint pFile, gchar *buffer, gint bufferLength, gint msTimeout)
 {
     byte recvBuff[PACKAGE_LEN_MAXIMUM];
-    gint maxLoop = 10;
-    gint count   = 0;
     gint retValue = EXIT_FAILURE;
+    gint revisionLength = 0;
 
-    do
+    memset(recvBuff, 0, PACKAGE_LEN_MAXIMUM);
+    retValue = mlsScannerSSI_Write(pFile, SSI_CMD_REVISION_REQUEST, NULL, 0, TRUE, FALSE);
+    if(retValue==EXIT_SUCCESS)
     {
-        count++;
-        printf("\n ** Countdown for send command: %d\n", count);
-        memset(recvBuff, 0, PACKAGE_LEN_MAXIMUM);
-        retValue = mlsScannerSSI_Write(pFile, SSI_CMD_REVISION_REQUEST, NULL, 0, TRUE, FALSE);
-        if(retValue==EXIT_SUCCESS)
+        retValue = mlsScannerSSI_GetResponse(pFile, recvBuff, PACKAGE_LEN_MAXIMUM, msTimeout);
+        if(retValue>0)
         {
-            retValue = mlsScannerSSI_GetACK(pFile, recvBuff, PACKAGE_LEN_MAXIMUM, TTY_TIMEOUT);
-            if(retValue>0)
+            mlsScannerPackage_Dump(recvBuff, NO_GIVEN, TRUE);
+            if(SSI_CMD_REVISION_REPLY == recvBuff[PKG_INDEX_OPCODE])
             {
-                STYL_ERROR("REVISION IS");
-                mlsScannerPackage_Dump(recvBuff, NO_GIVEN, TRUE);
-                if(SSI_CMD_REVISION_REPLY == recvBuff[PKG_INDEX_OPCODE])
-                    return EXIT_SUCCESS;
+                if(retValue >= bufferLength)
+                {
+                    STYL_ERROR("String buffer is not enough for received data.");
+                    return EXIT_FAILURE;
+                }
+                else
+                {
+                    revisionLength = mlsScannerPackage_Extract(buffer, NULL, recvBuff, (const gint)bufferLength, FALSE);
+                    return revisionLength;
+                }
             }
         }
-        sleep(2);
     }
-    while(count < maxLoop);
 
-    return EXIT_FAILURE;
+    return 0;
 }
 
-/**@}*/
+
+/*!
+ * \brief mlsScannerConfig_GetMode: Get current mode of scanner
+ * \return
+ * - 0: scanner is not setup before
+ * - 1: presentation/auto-trigger mode
+ * - 2: host/manual-trigger mode
+ */
+guint mlsScannerConfig_GetMode (void)
+{
+    gint    pModeFile   = -1;
+    gchar   modeString  = '0';
+
+    /*
+    #define SCANNING_TRIGGER_NONE              0x00
+    #define SCANNING_TRIGGER_AUTO              0x01
+    #define SCANNING_TRIGGER_MANUAL            0x02
+    */
+
+//    if (g_file_test (CONFIG_SCANNER_PATH, G_FILE_TEST_EXISTS))
+//    {
+//        pModeFile = g_open (CONFIG_SCANNER_PATH, O_RDWR);
+//        if(pModeFile==-1)
+//        {
+//            STYL_ERROR("g_open: %d - %s", errno, strerror(errno));
+//            return SCANNING_TRIGGER_NONE;
+//        }
+//        else
+//        {
+//            if(read(pModeFile, &modeString, 1)<=0)
+//            {
+//                STYL_ERROR("read: %d - %s", errno, strerror(errno));
+//            }
+//
+//            STYL_INFO("Value read from configure file of scanner is: %c", modeString);
+//
+//            g_close(pModeFile, NULL);
+//
+//            switch(modeString)
+//            {
+//            case '0':
+//                return SCANNING_TRIGGER_NONE;
+//            case '1':
+//                return SCANNING_TRIGGER_AUTO;
+//            case '2':
+//                return SCANNING_TRIGGER_MANUAL;
+//            default:
+//                return SCANNING_TRIGGER_NONE;
+//        }
+//    }
+//    retur;n SCANNING_TRIGGER_NONE;
+}
+
+/*@}*/

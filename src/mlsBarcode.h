@@ -36,26 +36,11 @@ extern "C"
 
 /********** Function declaration section **************************************/
 /*!
- * \brief mlsBarcodeReader_GetDevice: Get the device node file name of the udev device
- * \return 	the device node file name of the udev device, or NULL if no device node exists
- */
-const char *mlsBarcodeReader_GetDevice(void);
-
-/*!
- * \brief mlsBarcodeReader_GetVersion: provide software version
- * \return string of software version
- * -
- */
-//const char * mlsBarcodeReader_GetVersion(void);
-char * GetVersion(void);
-
-/*!
- * \brief mlsBarcodeReader_Open: Open Reader descriptor file for read write automatic.
+ * \brief mlsBarcodeReader_Open: Open scanner port with before configure scanning mode.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-//int mlsBarcodeReader_Open(const char *name);
 char mlsBarcodeReader_Open(const char *name);
 
 /*!
@@ -64,8 +49,23 @@ char mlsBarcodeReader_Open(const char *name);
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-//int mlsBarcodeReader_Reopen(const char *name);
 char mlsBarcodeReader_Reopen(const char *name);
+
+/*!
+ * \brief mlsBarcodeReader_Open_ManualMode: Open then set configure for scanner via manual scanning.
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+char mlsBarcodeReader_Open_ManualMode(const char *name);
+
+/*!
+ * \brief mlsBarcodeReader_Open_AutoMode: Open then set configure for scanner via auto scanning.
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+char mlsBarcodeReader_Open_AutoMode(const char *name);
 
 /*!
  * \brief mlsBarcodeReader_ReadData: Reader data from descriptor file (blocking read)
@@ -82,29 +82,12 @@ unsigned int mlsBarcodeReader_ReadData(char *buffer, const int bufferLength, con
 unsigned int mlsBarcodeReader_ReadData_Manual(char *buffer, const int bufferLength, const int timeout);
 
 /*!
- * \brief mlsBarcodeReader_ManualMode: Set configure for scanner via manual scanning.
+ * \brief mlsBarcodeReader_close: Close scanner port device.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-int mlsBarcodeReader_ManualMode();
-
-/*!
- * \brief mlsBarcodeReader_close close Reader file descriptor.
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-//int mlsBarcodeReader_Close();
 char mlsBarcodeReader_Close();
-
-/*!
- * \brief mlsBarcodeReader_Revision Check reversion number of decoder.
- * \return
- * - EXIT_SUCCESS: Success
- */
-char mlsBarcodeReader_Revision(const char *name);
-
 
 /*!
  * \brief mlsBarcodeReader_Setup: Open Reader descriptor file for read write automatic.
@@ -112,7 +95,37 @@ char mlsBarcodeReader_Revision(const char *name);
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-int mlsBarcodeReader_Setup(const char *scannerPort, const int scannerMode);
+char mlsBarcodeReader_Setup(const char *scannerPort, const int scannerMode);
+
+/*!
+ * \brief mlsBarcodeReader_GetRevision: Get revision number of decoder.
+ * \return
+ * - length of revision string: success
+ * - 0: failure.
+ */
+unsigned int mlsBarcodeReader_GetRevision(char *buffer, int bufferLength, int deciTimeout);
+
+/*!
+ * \brief mlsBarcodeReader_GetDevice: Get the device node file name of the udev device
+ * \return 	the device node file name of the udev device, or NULL if no device node exists
+ */
+const char *mlsBarcodeReader_GetDevice(void);
+
+/*!
+ * \brief mlsBarcodeReader_GetMode: Get the current mode of scanner
+ * \return
+ * - 0: scanner is not setup before
+ * - 1: presentation/auto-trigger mode
+ * - 2: host/manual-trigger mode
+ */
+unsigned int mlsBarcodeReader_GetMode(void);
+
+/*!
+ * \brief mlsBarcodeReader_GetVersion: provide software version
+ * \return string of software version
+ * -
+ */
+char * GetVersion(void);
 
 #ifdef __cplusplus
 }

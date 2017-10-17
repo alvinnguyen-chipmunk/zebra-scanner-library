@@ -46,7 +46,8 @@ void mlsScannerPackage_Display(byte *package, gint length);
  * - barcode length: Success
  * - 0             : Fail
  */
-gint mlsScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *package, const gint buffLength);
+gint mlsScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *package,
+                               const gint buffLength, gboolean isDecodeData);
 
 /*!
  * \brief mlsScannerPackage_Dump: Dump content of message.
@@ -57,4 +58,4 @@ void mlsScannerPackage_Dump (byte *buffer, gint length, gboolean isRead);
 }
 #endif
 #endif // MLSSCANNERPACKAGE_H_INCLUDED
-/**@}*/
+/*@}*/

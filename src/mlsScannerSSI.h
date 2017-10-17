@@ -83,14 +83,13 @@ gint mlsScannerSSI_CorrectPackage(byte *package);
 gint mlsScannerSSI_SendCommand(gint pFile, byte opCode);
 
 /*!
- * \brief mlsScannerSSI_GetACK: get ACK raw package
+ * \brief mlsScannerSSI_GetResponse: Get response raw data.
  * \return number of read bytes
  */
-gint mlsScannerSSI_GetACK(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout_ms);
+gint mlsScannerSSI_GetResponse(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout_ms);
 
 #ifdef __cplusplus
 }
 #endif
-
 #endif // MLSSCANNERSSI_H_INCLUDED
-/**@}*/
+/*@}*/

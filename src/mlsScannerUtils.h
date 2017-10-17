@@ -37,8 +37,7 @@ extern "C"
 /********** Type definition section *******************************************/
 typedef unsigned char byte;
 
-/********** Macro definition section ******************************************/
-#define ANSI_COLOR_RED     "\x1b[31m"
+/********** Macro definition section ******************************************/#define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_YELLOW  "\x1b[33m"
 #define ANSI_COLOR_BLUE    "\x1b[34m"
@@ -46,61 +45,27 @@ typedef unsigned char byte;
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
-#ifdef __RELEASE__
-#define __DEBUG_CMD__(format, ...)
-#else
-#define __DEBUG_CMD__(format, ...) fprintf(stderr, "%s", ANSI_COLOR_RESET); fprintf (stderr, format, ## __VA_ARGS__)
-#endif // __RELEASE__
-#define DEBUG_BEGIN(format, args...) __DEBUG_CMD__("[STYLSSI-DEBUG]: %s||%s():[%d] " format ": ",__FILE__,__FUNCTION__, __LINE__, ##args)
-#define DEBUG_END(format, args...) __DEBUG_CMD__(format "\n", ##args)
-#define DEBUG(format, args...) __DEBUG_CMD__("[STYLSSI-DEBUG]: %s||%s():[%d] " format "\n",__FILE__,__FUNCTION__, __LINE__, ##args)
-#define DEBUG_1(format, ...) DEBUG("\n"      format, ##__VA_ARGS__)
-#define DEBUG_0() DEBUG("\n")
-#define STYL_DEBUG(format, ...) DEBUG(format, ##__VA_ARGS__)
+#define STYL_INFO(format, ...)          printf(ANSI_COLOR_BLUE); \
+                                        mlsScannerUtils_Print(0, "[STYL SSI SCANNER INFO]: " format "\n", ##__VA_ARGS__); \
+                                        printf(ANSI_COLOR_RESET);
+#define STYL_INFO_INLINE(format, ...)   printf(ANSI_COLOR_BLUE); \
+                                        mlsScannerUtils_Print(0, "[STYL SSI SCANNER INFO]: " format, ##__VA_ARGS__); \
+                                        printf(ANSI_COLOR_RESET);
 
-#define STYL_DEBUG_BEGIN(format, ...) DEBUG_BEGIN(format, ##__VA_ARGS__)
-#define STYL_DEBUG_END(format, ...) DEBUG_END(format, ##__VA_ARGS__)
 
-#if 1
-#define __ERROR__(format, ...) fprintf (stderr, format, ## __VA_ARGS__) ; fprintf(stderr, "%s", ANSI_COLOR_RESET)
-#else
-#define __ERROR__(format, ...)
-#endif // 0
-#ifdef __RELEASE__
-#define ERROR(format, args...) __ERROR__("%s [STYLSSI-ERROR]: " format "%s \n",ANSI_COLOR_RED, ##args, ANSI_COLOR_RED)
-#else
-#define ERROR(format, args...) __ERROR__("%s [STYLSSI-ERROR]: %s():[%d] " format "%s \n",ANSI_COLOR_RED, __FUNCTION__, __LINE__, ##args, ANSI_COLOR_RED)
-#endif // __RELEASE__
-#define STYL_ERROR(format, ...) ERROR(format, ##__VA_ARGS__)
-#define STYL_ERROR_INLINE(format, ...) __ERROR__("%s" format "%s", ANSI_COLOR_RED, ##__VA_ARGS__, ANSI_COLOR_RED)
+#define STYL_ERROR(format, ...)         printf(ANSI_COLOR_RED); \
+                                        mlsScannerUtils_Print(1, "[STYL SSI SCANNER ERROR]: " format "\n", ##__VA_ARGS__); \
+                                        printf(ANSI_COLOR_RESET);
+#define STYL_ERROR_INLINE(format, ...)  printf(ANSI_COLOR_RED); \
+                                        mlsScannerUtils_Print(1, "[STYL SSI SCANNER ERROR]: " format, ##__VA_ARGS__); \
+                                        printf(ANSI_COLOR_RESET);
 
-#ifndef __DEBUG__
-#define __WARNING__(format, ...)
-#else
-#define __WARNING__(format, ...) fprintf (stderr, format, ## __VA_ARGS__); fprintf(stderr, "%s", ANSI_COLOR_RESET)
-#endif // __DEBUG__
-#ifdef __RELEASE__
-#define WARNING(format, args...) __WARNING__("%s [STYLSSI-WARNING]: " format "%s \n",ANSI_COLOR_YELLOW, ##args, ANSI_COLOR_YELLOW)
-#else
-#define WARNING(format, args...) __WARNING__("%s [STYLSSI-WARNING]: %s():[%d] " format "%s \n",ANSI_COLOR_YELLOW, __FUNCTION__, __LINE__, ##args, ANSI_COLOR_YELLOW)
-#endif // __RELEASE__
-#define STYL_WARNING(format, ...) WARNING(format, ##__VA_ARGS__)
-#define STYL_WARNING_INLINE(format, ...) __WARNING__("%s" format "%s", ANSI_COLOR_YELLOW, ##__VA_ARGS__, ANSI_COLOR_YELLOW)
-
-#ifndef __DEBUG__
-#define __INFO__(format, ...)
-#else
-#define __INFO__(format, ...) fprintf (stdout, format, ## __VA_ARGS__); fprintf(stdout, "%s", ANSI_COLOR_RESET)
-#endif // __DEBUG__
-#ifdef __RELEASE__
-#define INFO(format, args...) __INFO__("%s [STYLSSI-INFO]: " format "%s \n",ANSI_COLOR_GREEN, ##args, ANSI_COLOR_GREEN)
-#else
-#define INFO(format, args...) __INFO__("%s [STYLSSI-INFO]: %s():[%d] " format "%s \n",ANSI_COLOR_GREEN, __FUNCTION__, __LINE__, ##args, ANSI_COLOR_GREEN)
-#endif // __RELEASE__
-#define STYL_INFO(format, ...) INFO(format, ##__VA_ARGS__)
-#define STYL_INFO_INLINE(format, ...) __INFO__("%s" format "%s", ANSI_COLOR_GREEN, ##__VA_ARGS__, ANSI_COLOR_GREEN)
-#define STYL_INFO_OTHER(format, ...) __INFO__("%s" format "%s", ANSI_COLOR_MAGENTA, ##__VA_ARGS__, ANSI_COLOR_MAGENTA)
-
+#define STYL_WARNING(format, ...)       printf(ANSI_COLOR_YELLOW); \
+                                        mlsScannerUtils_Print(0, "[STYL SSI SCANNER WARN]: " format "\n", ##__VA_ARGS__); \
+                                        printf(ANSI_COLOR_RESET);
+#define STYL_WARNING_INLINE(format, ...) printf(ANSI_COLOR_YELLOW); \
+                                        mlsScannerUtils_Print(0, "[STYL SSI SCANNER WARN]: " format, ##__VA_ARGS__); \
+                                        printf(ANSI_COLOR_RESET);
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define BAUDRATE            B9600
@@ -184,32 +149,22 @@ typedef unsigned char byte;
 #define EXIT_WARNING                        2
 
 /* ************** TTY configure **************************/
-#define TTY_BUFF_MAXSIZE                   0xFF
-#define TTY_TIMEOUT                        2000 /* mili-seconds */
+#define WRITE_TTY_TIMEOUT                  2000  /* mili-seconds */
+#define ACK_TIMEOUT                        10000 /* mili-seconds */
 
 /* ************** Scanning mode **************************/
-#define SCANNING_TRIGGER_AUTO              0x0
-#define SCANNING_TRIGGER_MANUAL            0x1
-
-
-#define STYL_LOG_VERBOSE_1              1
-#define STYL_LOG_VERBOSE_2              2
-#define STYL_LOG_VERBOSE_3              3
-#define STYL_LOG_1(buffer)                mlsScannerUtils_Print(buffer, STYL_LOG_VERBOSE_1);
-#define STYL_LOG_2(buffer)                mlsScannerUtils_Print(buffer, STYL_LOG_VERBOSE_2);
-#define STYL_LOG_3(buffer)                mlsScannerUtils_Print(buffer, STYL_LOG_VERBOSE_3);
+#define SCANNING_TRIGGER_NONE              0x00
+#define SCANNING_TRIGGER_AUTO              0x01
+#define SCANNING_TRIGGER_MANUAL            0x02
 
 /********** Function declaration section **************************************/
-
-
 /*!
- * \brief mlsScannerPackage_Dump: Dump content of buffer.
+ * \brief mlsScannerUtils_Print: Print out some information.
  */
-void mlsScannerUtils_Print (gchar *buffer, gint verbose);
+void mlsScannerUtils_Print(gint isError, gchar *format, ...);
 
 #ifdef __cplusplus
 }
 #endif
-
 #endif // MLSSCANNERUTILS_H_INCLUDED
-/**@}*/
+/*@}*/

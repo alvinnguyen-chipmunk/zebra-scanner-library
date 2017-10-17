@@ -117,5 +117,5 @@ __exit:
     return deviceNode;
 }
 
-/**@}*/
+/*@}*/
 

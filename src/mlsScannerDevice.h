@@ -46,7 +46,6 @@ const char * mlsScannerDevice_GetNode(const char *devSubsystem, const char *devV
 #ifdef __cplusplus
 }
 #endif
-
 #endif // MLSSCANNERDEVICE_H_INCLUDED
-/**@}*/
+/*@}*/
 

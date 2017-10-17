@@ -61,11 +61,22 @@ Agreement referenced above.                                                    *
         "\n============================================================================="
 
 /********** Local (static) variable declaration section ***********************/
+static int isRunning = FALSE;
+
 /********** Local (static) function declaration section ***********************/
 static void     mlsScannerSetup_Help        ();
-static void mlsScannerSetup_Print(int isError, char *format, ...);
+static void     mlsScannerSetup_Print       (int isError, char *format, ...);
+static void     HandleSignal                (int sig);
 
 /********** Local (static) function definition section ************************/
+static void HandleSignal(int sig)
+{
+    if (SIGINT == sig)
+    {
+        psignal(sig, "Received");
+        isRunning = FALSE;
+    }
+}
 
 static void mlsScannerSetup_Help ()
 {
@@ -124,16 +135,30 @@ int main(int argc, const char * argv[])
     STYL_INFO("SSI Scanner Port %s", scannerPort);
     STYL_INFO("SSI Scanner Mode %d", scannerMode);
 
-    if(scannerMode==STYL_SCANNER_NONEMODE | !scannerPort)
+    if(scannerMode==STYL_SCANNER_NONEMODE || !scannerPort)
     {
         mlsScannerSetup_Help();
         return 1;
     }
 
-    if(mlsBarcodeReader_Setup(scannerPort, scannerMode)==EXIT_FAILURE)
+    isRunning = TRUE;
+    signal(SIGINT, HandleSignal);
+
+    gint countLoop = 10;
+    do
     {
-        STYL_ERROR("Configure SSI protocol for scanner fail.");
+        countLoop--;
+        if(mlsBarcodeReader_Setup(scannerPort, scannerMode)==EXIT_FAILURE)
+        {
+            STYL_ERROR("Configure SSI protocol for scanner fail.");
+            STYL_INFO("\n ********** Will be try one more. **********");
+        }
+        else
+        {
+            break;
+        }
     }
+    while(countLoop>0 && isRunning==TRUE);
 
     g_free(scannerPort);
     return 0;

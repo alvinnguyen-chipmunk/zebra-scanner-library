@@ -209,9 +209,9 @@ void mlsScannerPackage_Display(byte *package, gint length)
 
     for (gint i = 0; i < sizeBuffer; i++)
     {
-        STYL_INFO_OTHER(" 0x%02x", package[i]);
+        printf(" 0x%02x", package[i]);
     }
-    STYL_INFO_OTHER("\n");
+    printf("\n");
 }
 
 /*!
@@ -220,7 +220,8 @@ void mlsScannerPackage_Display(byte *package, gint length)
  * - barcode length: Success
  * - 0             : Fail
  */
-gint mlsScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *package, const gint buffLength)
+gint mlsScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *package,
+                               const gint buffLength, gboolean isDecodeData)
 {
     gchar *pBuffer  = buffer;
     byte *pPackage = package;
@@ -228,8 +229,11 @@ gint mlsScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *packag
     gint decodeLength = 0;
     gint partLength = 0;
 
-    const gchar * symbol = mlsScannerPackage_GetSymbology(package[PKG_INDEX_DECODE_TYPE]);
-    memcpy(symbolBuffer, symbol, strlen(symbol));
+    if(isDecodeData==TRUE) /* Only decode date have 1 bit at PKG_INDEX_DECODE_TYPE for type */
+    {
+        const gchar * symbol = mlsScannerPackage_GetSymbology(package[PKG_INDEX_DECODE_TYPE]);
+        memcpy(symbolBuffer, symbol, strlen(symbol));
+    }
 
     if (NULL != pPackage)
     {
@@ -243,8 +247,16 @@ gint mlsScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *packag
                 decodeLength = 0;
                 break;
             }
-            if(partLength >= 0)
-                memcpy(pBuffer, &pPackage[PKG_INDEX_DECODE_TYPE + 1], partLength);
+            if(isDecodeData==TRUE) /* Only decode date have 1 bit at PKG_INDEX_DECODE_TYPE for type */
+            {
+                if(partLength >= 0)
+                    memcpy(pBuffer, &pPackage[PKG_INDEX_DECODE_TYPE + 1], partLength);
+            }
+            else
+            {
+                if(partLength >= 0)
+                    memcpy(pBuffer, &pPackage[PKG_INDEX_DECODE_TYPE], partLength);
+            }
             decodeLength += partLength;
 
             /* Point to next pkg */
@@ -259,12 +271,19 @@ gint mlsScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *packag
         STYL_WARNING("Last partLength: %d", partLength);
         if(partLength >= 0)
         {
-            memcpy(pBuffer, &pPackage[PKG_INDEX_DECODE_TYPE + 1], partLength);
+            if(isDecodeData==TRUE) /* Only decode date have 1 bit at PKG_INDEX_DECODE_TYPE for type */
+            {
+                memcpy(pBuffer, &pPackage[PKG_INDEX_DECODE_TYPE + 1], partLength);
+            }
+            else
+            {
+                memcpy(pBuffer, &pPackage[PKG_INDEX_DECODE_TYPE], partLength);
+            }
             decodeLength += partLength;
         }
         else
         {
-            STYL_ERROR("Parsing last part of decode data got problem.");
+            STYL_ERROR("Parsing last part of received data get some problems.");
         }
     }
     return decodeLength;
@@ -310,4 +329,4 @@ void mlsScannerPackage_Dump (byte *buffer, gint length, gboolean isRead)
     printf("%s\n", ANSI_COLOR_RESET);
 }
 
-/**@}*/
+/*@}*/
