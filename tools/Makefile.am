@@ -3,7 +3,7 @@
 if DEBUG
 DEBUG_CFLAGS = -g -ggdb
 else
-DEBUG_CFLAGS = -D__RELEASE__
+DEBUG_CFLAGS = 
 endif
 
 ######################### STYL SCANNER AUTO DETECT MODE ############################

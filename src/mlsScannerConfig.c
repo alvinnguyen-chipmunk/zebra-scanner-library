@@ -126,7 +126,7 @@ gint mlsScannerConfig_OpenTTY(const gchar *deviceNode)
 {
     gint pFile = -1;
 
-    pFile = open(deviceNode, O_RDWR);
+    pFile = open(deviceNode, O_RDWR | O_NOCTTY);
     if (pFile == -1)
     {
         STYL_ERROR("Open Scanner device %s: open: %d - %s\n", deviceNode, errno, strerror(errno));
@@ -204,129 +204,83 @@ gint mlsScannerConfig_CloseTTY_Only(gint pFile)
  */
 gint mlsScannerConfig_ConfigTTY(gint pFile)
 {
-#if 0
-    int ret = EXIT_SUCCESS;
-    int flags = 0;
-    struct termios devConf;
-
-    // Set flags for blocking mode and sync for writing
-    flags = fcntl(pFile, F_GETFL);
-    if (0 > flags)
-    {
-        perror("F_GETFL");
-        ret = EXIT_FAILURE;
-        goto EXIT;
-    }
-    flags |= (O_FSYNC);
-    flags &= ~(O_NDELAY | O_ASYNC);
-
-    ret = fcntl(pFile, F_SETFL, flags);
-    if (ret)
-    {
-        perror("F_SETFL");
-        ret = EXIT_FAILURE;
-        goto EXIT;
-    }
-
-    // Configure tty dev
-    devConf.c_cflag = (CS8 | CLOCAL | CREAD);
-    devConf.c_iflag = 0;
-    devConf.c_oflag = 0;
-    devConf.c_lflag = 0;
-    devConf.c_cc[VMIN] = 0;
-    devConf.c_cc[VTIME] = TIMEOUT_MSEC;     // read non-blocking flush dump data. See blocking read timeout later
-
-    // Portability: Use cfsetspeed instead of CBAUD since c_cflag/CBAUD is not in POSIX
-    ret = cfsetspeed(&devConf, BAUDRATE);
-    if (ret)
-    {
-        perror("Set speed");
-        ret = EXIT_FAILURE;
-        goto EXIT;
-    }
-
-    ret = tcsetattr(pFile, TCSANOW, &devConf);
-    if (ret)
-    {
-        perror("Set attribute");
-        ret = EXIT_FAILURE;
-        goto EXIT;
-    }
-EXIT:
-    return ret;
-
-
-    #else
+    // fd = open(MODEMDEVICE, O_RDWR | O_NOCTTY );
+    /*
+    struct termios {
+            tcflag_t c_iflag;       // input mode flags   //
+            tcflag_t c_oflag;       // output mode flags  //
+            tcflag_t c_cflag;       // control mode flags //
+            tcflag_t c_lflag;       // local mode flags   //
+            cc_t c_line;            // line discipline    //
+            cc_t c_cc[NCCS];        // control characters //
+        };
+    */
+    gint retValue = EXIT_FAILURE;
+    struct termios serial_opt;
     speed_t br_speed = BAUDRATE;
-    gint mcs = 0;
 
-    /* ********** Check serial port is valid ********** */
     STYL_INFO("serialPort: %d\n", pFile);
 
-    /* ********** Check serial port is valid ********** */
-    struct termios serial_opt;
-    /* ********** Set file descriptor ***************** */
-    tcgetattr(pFile, &serial_opt);
+     /* ********** Clear struct for new port settings **************** */
+    bzero(&serial_opt, sizeof(serial_opt));
+#if 1
+    /* ********** IGNPAR  : ignore bytes with parity errors ********** */
+    serial_opt.c_iflag = IGNPAR;
+#else
+    serial_opt.c_iflag &= ~(BRKINT|PARMRK|IGNPAR|ISTRIP|INLCR|IGNCR|ICRNL|IXON|IXOFF|IXANY|INPCK);
+#endif
+    /* Raw output */
+    serial_opt.c_oflag = 0;
+
+#if 1
+    /*
+      BAUDRATE: Set bps rate. You could also use cfsetispeed and cfsetospeed.
+      CRTSCTS : output hardware flow control (only used if the cable has
+                all necessary lines. See sect. 7 of Serial-HOWTO)
+      CS8     : 8n1 (8bit,no parity,1 stopbit)
+      CLOCAL  : local connection, no modem contol
+      CREAD   : enable receiving characters
+    */
+    serial_opt.c_cflag = BAUDRATE | CRTSCTS | CS8 | CLOCAL | CREAD;
+#else
     /* ********** Set baudrate ************************ */
     cfsetispeed(&serial_opt, br_speed);
-    cfsetispeed(&serial_opt, br_speed);
-
     /* ********** Set parity: yes ********************* */
     serial_opt.c_cflag |= PARENB;
     /* ********** Set parity value: no **************** */
     serial_opt.c_cflag &= ~PARENB;
-    /* ********** Set parity value: odd **************** */
+    /* ********** Set parity value: odd *************** */
     //serial_opt.c_cflag |= PARODD;
-    /* ********** Set parity value: even *************** */
+    /* ********** Set parity value: even ************** */
     //serial_opt.c_cflag &= ~PARODD;
-    /* ********** Set stop bit is: 1 ******************* */
+    /* ********** Set stop bit is: 1 ****************** */
     serial_opt.c_cflag &= ~CSTOPB;
-    /* ********** Set stop bit is: 2 ******************* */
+    /* ********** Set stop bit is: 2 ****************** */
     //serial_opt.c_cflag |= CSTOPB;
+#endif
 
-    /** ********************************************** **/
-    /* *********** Reset data bits ********************* */
-    serial_opt.c_cflag &= ~CSIZE;
-    /* *********** Disable hardware flow control ******* */
-    serial_opt.c_cflag &=~CRTSCTS;
-    /* *********** Set data bits is: 8 ***************** */
-    serial_opt.c_cflag |= CS8;
-    serial_opt.c_cflag |= (CLOCAL | CREAD);
+#if 1
+    /* ********** Set input mode (non-canonical, no echo,...) ********** */
+    serial_opt.c_lflag = 0;
+#else
+    /* ICANON  : enable canonical input disable all echo functionality, and don't send signals to calling program */
+    serial_opt.c_lflag = ICANON;
+#endif
 
-    serial_opt.c_iflag &= ~(BRKINT|PARMRK|IGNPAR|ISTRIP|INLCR|IGNCR|ICRNL|IXON|IXOFF|IXANY|INPCK);
-    serial_opt.c_lflag=0;
-    serial_opt.c_oflag=0;
-
-    // One input byte is enough to return from read()
-	// Inter-character timer off
-	serial_opt.c_cc[VMIN]  = 1;
-	serial_opt.c_cc[VTIME] = 10; // was 0
-
-    /* ********** Configure for file descriptor ******** */
-    ioctl(pFile, TIOCMGET, &mcs);
-    mcs |= TIOCM_RTS;
-    ioctl(pFile, TIOCMSET, &mcs);
+    serial_opt.c_cc[VTIME]    = 0;      /* inter-character timer unused */
+    serial_opt.c_cc[VMIN]     = 0;      /* read will be satisfied immediately. */
+                                        /* The number of characters currently available,
+                                        /* or the number of characters requested will be returned */
 
     /* ********** Flush file descriptor ******** */
-    //tcflush(pFile, TCIFLUSH);
-    if (tcsetattr(pFile, TCIFLUSH, &serial_opt)==-1)
+    tcflush(pFile, TCIFLUSH);
+
+    /* ********** Set configure attribute for file descriptor ******** */
+    if(tcsetattr(pFile, TCSANOW, &serial_opt)==0)
     {
-        close(pFile);
-        return EXIT_FAILURE;
+        retValue = EXIT_SUCCESS;
     }
-    else
-    {
-        fcntl(pFile, F_SETFL, O_NONBLOCK);
-        if(pFile != -1)
-        {
-            STYL_INFO("Setup for TTY port was success.");
-            return EXIT_SUCCESS;
-        }
-        else
-            return EXIT_FAILURE;
-    }
-    return EXIT_FAILURE;
-    #endif
+    return retValue;
 }
 
 /*!
@@ -365,7 +319,7 @@ gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode, gboolean isPermane
 
     gint paramSize = sizeof(paramContent) / sizeof(*paramContent);
 
-    mlsScannerPackage_Dump(paramContent, paramSize, FALSE);
+    //mlsScannerPackage_Dump(paramContent, paramSize, FALSE);
 
     if (mlsScannerSSI_Write(pFile, SSI_CMD_PARAM, paramContent, paramSize, TRUE, isPermanent)==EXIT_SUCCESS)
     {
@@ -407,7 +361,7 @@ gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode, gboolean isPermane
  * - length of revision string: success
  * - 0: failure.
  */
-guint mlsScannerConfig_CheckRevision(gint pFile, gchar *buffer, gint bufferLength, gint msTimeout)
+guint mlsScannerConfig_CheckRevision(gint pFile, gchar *buffer, gint bufferLength, gchar deciTimeout)
 {
     byte recvBuff[PACKAGE_LEN_MAXIMUM];
     gint retValue = EXIT_FAILURE;
@@ -417,7 +371,7 @@ guint mlsScannerConfig_CheckRevision(gint pFile, gchar *buffer, gint bufferLengt
     retValue = mlsScannerSSI_Write(pFile, SSI_CMD_REVISION_REQUEST, NULL, 0, TRUE, FALSE);
     if(retValue==EXIT_SUCCESS)
     {
-        retValue = mlsScannerSSI_GetResponse(pFile, recvBuff, PACKAGE_LEN_MAXIMUM, msTimeout);
+        retValue = mlsScannerSSI_Read(pFile, recvBuff, PACKAGE_LEN_MAXIMUM, deciTimeout, FALSE);
         if(retValue>0)
         {
             mlsScannerPackage_Dump(recvBuff, NO_GIVEN, TRUE);
@@ -459,38 +413,39 @@ guint mlsScannerConfig_GetMode (void)
     #define SCANNING_TRIGGER_MANUAL            0x02
     */
 
-//    if (g_file_test (CONFIG_SCANNER_PATH, G_FILE_TEST_EXISTS))
-//    {
-//        pModeFile = g_open (CONFIG_SCANNER_PATH, O_RDWR);
-//        if(pModeFile==-1)
-//        {
-//            STYL_ERROR("g_open: %d - %s", errno, strerror(errno));
-//            return SCANNING_TRIGGER_NONE;
-//        }
-//        else
-//        {
-//            if(read(pModeFile, &modeString, 1)<=0)
-//            {
-//                STYL_ERROR("read: %d - %s", errno, strerror(errno));
-//            }
-//
-//            STYL_INFO("Value read from configure file of scanner is: %c", modeString);
-//
-//            g_close(pModeFile, NULL);
-//
-//            switch(modeString)
-//            {
-//            case '0':
-//                return SCANNING_TRIGGER_NONE;
-//            case '1':
-//                return SCANNING_TRIGGER_AUTO;
-//            case '2':
-//                return SCANNING_TRIGGER_MANUAL;
-//            default:
-//                return SCANNING_TRIGGER_NONE;
-//        }
-//    }
-//    retur;n SCANNING_TRIGGER_NONE;
+    if (g_file_test (CONFIG_SCANNER_PATH, G_FILE_TEST_EXISTS))
+    {
+        pModeFile = g_open (CONFIG_SCANNER_PATH, O_RDWR);
+        if(pModeFile==-1)
+        {
+            STYL_ERROR("g_open: %d - %s", errno, strerror(errno));
+            return SCANNING_TRIGGER_NONE;
+        }
+        else
+        {
+            if(read(pModeFile, &modeString, 1)<=0)
+            {
+                STYL_ERROR("read: %d - %s", errno, strerror(errno));
+            }
+
+            STYL_INFO("Value read from configure file of scanner is: %c", modeString);
+
+            g_close(pModeFile, NULL);
+
+            switch(modeString)
+            {
+            case '0':
+                return SCANNING_TRIGGER_NONE;
+            case '1':
+                return SCANNING_TRIGGER_AUTO;
+            case '2':
+                return SCANNING_TRIGGER_MANUAL;
+            default:
+                return SCANNING_TRIGGER_NONE;
+            }
+        }
+    }
+    return SCANNING_TRIGGER_NONE;
 }
 
 /*@}*/

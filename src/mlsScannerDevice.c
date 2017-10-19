@@ -96,8 +96,8 @@ const char * mlsScannerDevice_GetNode(const char *devSubsystem, const char *devV
             continue;
         }
 
-        vendor = udev_device_get_sysattr_value(dev,"idVendor");
-        product = udev_device_get_sysattr_value(dev,"idProduct");
+        vendor = udev_device_get_sysattr_value(dev, VID);
+        product = udev_device_get_sysattr_value(dev, PID);
 
         if(vendor && product &&
                 (strcmp (vendor , devVendorID ) == 0) &&

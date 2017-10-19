@@ -72,14 +72,14 @@ char mlsBarcodeReader_Open_AutoMode(const char *name);
  * \param buff point to buffer which store data.
  * \return number of byte(s) read.
  */
-unsigned int mlsBarcodeReader_ReadData(char *buffer, const int bufferLength, const int timeout);
+unsigned int mlsBarcodeReader_ReadData(char *buffer, const int bufferLength, const char deciTimeout);
 
 /*!
  * \brief mlsBarcodeReader_ReadData_Manual: Reader data from descriptor file (blocking read)
  * \param buff point to buffer which store data.
  * \return number of byte(s) read.
  */
-unsigned int mlsBarcodeReader_ReadData_Manual(char *buffer, const int bufferLength, const int timeout);
+unsigned int mlsBarcodeReader_ReadData_Manual(char *buffer, const int bufferLength, const char deciTimeout);
 
 /*!
  * \brief mlsBarcodeReader_close: Close scanner port device.
@@ -103,7 +103,7 @@ char mlsBarcodeReader_Setup(const char *scannerPort, const int scannerMode);
  * - length of revision string: success
  * - 0: failure.
  */
-unsigned int mlsBarcodeReader_GetRevision(char *buffer, int bufferLength, int deciTimeout);
+unsigned int mlsBarcodeReader_GetRevision(char *buffer, int bufferLength, char deciTimeout);
 
 /*!
  * \brief mlsBarcodeReader_GetDevice: Get the device node file name of the udev device

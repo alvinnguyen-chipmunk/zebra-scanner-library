@@ -85,7 +85,7 @@ gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode, gboolean isPermane
  * - length of revision string: success
  * - 0: failure.
  */
-guint mlsScannerConfig_CheckRevision(gint pFile, gchar *buffer, gint bufferLength, gint msTimeout);
+guint mlsScannerConfig_CheckRevision(gint pFile, gchar *buffer, gint bufferLength, gchar deciTimeout);
 
 
 /*!

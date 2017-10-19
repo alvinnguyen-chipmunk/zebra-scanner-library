@@ -39,7 +39,7 @@ extern "C"
  * \brief mlsScannerSSI_Read: read formatted package and response ACK from/to scanner via file descriptor
  * \return number of read bytes
  */
-gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout_ms);
+gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gchar deciTimeout, gboolean sendACK);
 
 /*!
  * \brief mlsScannerSSI_Write: write formatted package and check ACK to/from scanner via file descriptor
@@ -81,12 +81,6 @@ gint mlsScannerSSI_CorrectPackage(byte *package);
  * - EXIT_FAILURE: Fail
  */
 gint mlsScannerSSI_SendCommand(gint pFile, byte opCode);
-
-/*!
- * \brief mlsScannerSSI_GetResponse: Get response raw data.
- * \return number of read bytes
- */
-gint mlsScannerSSI_GetResponse(gint pFile, byte *buffer, gint sizeBuffer, const gint timeout_ms);
 
 #ifdef __cplusplus
 }

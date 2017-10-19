@@ -150,7 +150,7 @@ typedef unsigned char byte;
 
 /* ************** TTY configure **************************/
 #define WRITE_TTY_TIMEOUT                  2000  /* mili-seconds */
-#define ACK_TIMEOUT                        10000 /* mili-seconds */
+#define ACK_TIMEOUT                        100000 /* mili-seconds */
 
 /* ************** Scanning mode **************************/
 #define SCANNING_TRIGGER_NONE              0x00

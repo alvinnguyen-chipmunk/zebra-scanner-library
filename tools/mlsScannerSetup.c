@@ -53,11 +53,9 @@ Agreement referenced above.                                                    *
 #define HELP_STRING                                                                         \
         "============================================================================="     \
         "\n\tSTYL program - configure for scanner SSI device.\n"                            \
-        "\n\tUsage: StylScannerSetup"                                                       \
-        "\n\t(Auto-scaning for scanner device and setup auto mode)"                         \
-        "\n\tUsage: StylScannerSetup manual|auto"                                           \
-        "\n\t(Auto-scaning for scanner device)"                                             \
-        "\n\tUsage: StylScannerSetup /dev/ttyxxx manual|auto"                               \
+        "\n\n\tUsage:\n\t     StylScannerSetup"                                             \
+        "\n\n\tUsage:\n\t     StylScannerSetup manual|auto"                                 \
+        "\n\n\tUsage:\n\t     StylScannerSetup /dev/ttyxxx manual|auto"                     \
         "\n============================================================================="
 
 /********** Local (static) variable declaration section ***********************/
@@ -91,9 +89,7 @@ static void mlsScannerSetup_Print(int isError, char *format, ...)
 
     va_list args;
     va_start(args, format);
-    //printf(ANSI_COLOR_BLUE);
     vprintf(format, args);
-    //printf(ANSI_COLOR_RESET);
     va_end(args);
 }
 

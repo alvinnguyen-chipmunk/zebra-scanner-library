@@ -69,25 +69,22 @@ GLIB_VERSION=`$PKG_CONFIG --modversion ${glib_modules}`
 
 dnl ================================================================
 
-AC_ARG_ENABLE([debug],
-[  --enable-debug    Turn on print debug information to console.],
+AC_ARG_ENABLE([debug],[  --enable-debug            Turn on print debug information to console.],
 [case "${enableval}" in
-  yes) debug=true ;;
-  no)  debug=false ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
+	yes) debug=true ;;
+	no)  debug=false ;;
+	*) AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
 esac],[debug=false])
-
 AM_CONDITIONAL([DEBUG], [test x$debug = xtrue])
 
-AC_ARG_ENABLE([release],
-[  --enable-release    Do not show position of alert information line],
-[case "${enableval}" in
-  yes) release=true ;;
-  no)  release=false ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --enable-release]) ;;
-esac],[release=false])
 
-AM_CONDITIONAL([RELEASE], [test x$release = xtrue])
+AC_ARG_ENABLE([blocking],[  --enable-blocking     Enable serial blocking for scanner device port.],
+[case "${enableval}" in
+ 	yes) 	blocking=true ;;
+	no)  	blocking=false ;;
+  	*) 	AC_MSG_ERROR([bad value ${enableval} for --enable-blocking]) ;;
+esac],[blocking=false])
+AM_CONDITIONAL([BLOCKING], [test x$blocking = xtrue])
 
 dnl ================================================================
 
