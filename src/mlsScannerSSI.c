@@ -320,6 +320,8 @@ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gchar d
 
     gint isError      = FALSE;
 
+    gint sizeFirst    = 7;
+
     struct termios serial_opt;
 
     // Backup old value
@@ -329,7 +331,7 @@ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gchar d
     {
         memset(&recvBuff, 0, PACKAGE_LEN_MAXIMUM);
         /* Read 1 first byte for length */
-        sizeRequest = 1;
+        sizeRequest = sizeFirst;
         /* Setup timeout read 1 byte for length of package */
         serial_opt.c_cc[VTIME] = deciTimeout;
         serial_opt.c_cc[VMIN] = 0;
@@ -345,6 +347,7 @@ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gchar d
         /* Read */
         sizeReceived = (int) read(pFile, &recvBuff[PKG_INDEX_LEN], sizeRequest);
         STYL_INFO("Fisrt byte size: %d", sizeReceived);
+	mlsScannerPackage_Dump(recvBuff, sizeReceived, TRUE);
 
         if(sizeReceived == sizeRequest)
         {
@@ -353,7 +356,7 @@ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gchar d
             if(recvBuff[PKG_INDEX_LEN] <= PACKAGE_LEN_MAXIMUM-2) /* length maximum is 255 */
             {
                 /* Re-calculate for size for rest of package */
-                sizeRequest = recvBuff[PKG_INDEX_LEN] + SSI_LEN_CHECKSUM - 1; /* 1 is byte read before */
+                sizeRequest = recvBuff[PKG_INDEX_LEN] + SSI_LEN_CHECKSUM - sizeFirst; /* sizeFirst is byte read before */
                 STYL_INFO("Rest byte is: %d", sizeRequest);
 
                 /* Setup timeout enough to read all of rest bytes */
@@ -374,7 +377,7 @@ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gchar d
 
                 if(sizeReceived == sizeRequest)
                 {
-                    sizeReceived += 1;
+                    sizeReceived += sizeFirst;
                     totalReceived += sizeReceived;
                     STYL_INFO("Current total byte received is: %d", totalReceived);
                     mlsScannerPackage_Dump(recvBuff, sizeReceived, TRUE);
