@@ -126,7 +126,7 @@ gint mlsScannerConfig_OpenTTY(const gchar *deviceNode)
 {
     gint pFile = -1;
 
-    pFile = open(deviceNode, O_RDWR | O_NOCTTY);
+    pFile = open(deviceNode, O_RDWR);
     if (pFile == -1)
     {
         STYL_ERROR("Open Scanner device %s: open: %d - %s\n", deviceNode, errno, strerror(errno));
@@ -202,6 +202,61 @@ gint mlsScannerConfig_CloseTTY_Only(gint pFile)
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
+#if 0
+gint mlsScannerConfig_ConfigTTY(gint pFile)
+{
+	gint ret = EXIT_SUCCESS;
+	gint flags = 0;
+	struct termios devConf;
+
+	// Set flags for blocking mode and sync for writing
+	flags = fcntl(pFile, F_GETFL);
+	if (0 > flags)
+	{
+		perror("F_GETFL");
+		ret = EXIT_FAILURE;
+		goto EXIT;
+	}
+	flags |= (O_FSYNC);
+	flags &= ~(O_NDELAY | O_ASYNC);
+
+	ret = fcntl(pFile, F_SETFL, flags);
+	if (ret)
+	{
+		perror("F_SETFL");
+		ret = EXIT_FAILURE;
+		goto EXIT;
+	}
+
+	// Configure tty dev
+	devConf.c_cflag = (CS8 | CLOCAL | CREAD);
+	devConf.c_iflag = 0;
+	devConf.c_oflag = 0;
+	devConf.c_lflag = 0;
+	devConf.c_cc[VMIN] = 0;
+	devConf.c_cc[VTIME] = TIMEOUT_MSEC;	// read non-blocking flush dump data. See blocking read timeout later
+
+	// Portability: Use cfsetspeed instead of CBAUD since c_cflag/CBAUD is not in POSIX
+	ret = cfsetspeed(&devConf, BAUDRATE);
+	if (ret)
+	{
+		perror("Set speed");
+		ret = EXIT_FAILURE;
+		goto EXIT;
+	}
+
+	ret = tcsetattr(pFile, TCSANOW, &devConf);
+	if (ret)
+	{
+		perror("Set attribute");
+		ret = EXIT_FAILURE;
+		goto EXIT;
+	}
+
+EXIT:
+	return ret;
+}
+#else
 gint mlsScannerConfig_ConfigTTY(gint pFile)
 {
     // fd = open(MODEMDEVICE, O_RDWR | O_NOCTTY );
@@ -282,6 +337,7 @@ gint mlsScannerConfig_ConfigTTY(gint pFile)
     }
     return retValue;
 }
+#endif // 1
 
 /*!
  * \brief mlsScannerConfig_ConfigSSI: Send parameters to configure scanner as SSI interface.

@@ -46,6 +46,10 @@ Agreement referenced above.                                                    *
                                     mlsScannerSetup_Print(0, "[STYL SSI SCANNER]: " format "\n", ##__VA_ARGS__); \
                                     printf(ANSI_COLOR_RESET);
 
+#define STYL_SHOW(format, ...)      printf(ANSI_COLOR_GREEN); \
+                                    mlsScannerSetup_Print(0, "[STYL SSI SCANNER]: " format "\n", ##__VA_ARGS__); \
+                                    printf(ANSI_COLOR_RESET);
+
 #define STYL_ERROR(format, ...)     printf(ANSI_COLOR_RED); \
                                     mlsScannerSetup_Print(1, "[STYL SSI SCANNER]: " format "\n", ##__VA_ARGS__); \
                                     printf(ANSI_COLOR_RESET);
@@ -140,21 +144,25 @@ int main(int argc, const char * argv[])
     isRunning = TRUE;
     signal(SIGINT, HandleSignal);
 
-    gint countLoop = 10;
-    do
-    {
-        countLoop--;
+//    gint countLoop = 3;
+//    do
+//    {
+//        countLoop--;
         if(mlsBarcodeReader_Setup(scannerPort, scannerMode)==EXIT_FAILURE)
         {
             STYL_ERROR("Configure SSI protocol for scanner fail.");
-            STYL_INFO("\n ********** Will be try one more. **********");
+
         }
         else
         {
-            break;
+            STYL_SHOW("\n ******************* CONFIGURE OK ******************* \n");
         }
-    }
-    while(countLoop>0 && isRunning==TRUE);
+//        else
+//        {
+//            break;
+//        }
+//    }
+//    while(countLoop>0 && isRunning==TRUE);
 
     g_free(scannerPort);
     return 0;

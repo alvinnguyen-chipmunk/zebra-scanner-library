@@ -309,6 +309,76 @@ static uint16_t mlsScannerSSI_CalculateChecksum(byte *package, gint length)
  * \brief mlsScannerSSI_Read: Only read raw data form serial port.
  * \return number of read bytes
  */
+ #if 0
+ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gchar deciTimeout, gboolean sendACK)
+{
+	int ret = 0;
+	int lastIndex = 0;
+	int oldVTIME = 0;
+	int oldVMIN = 0;
+	int readRequest = 0;
+	struct termios devConf;
+	byte recvBuff[PACKAGE_LEN_MAXIMUM];
+	char *debugLevel = getenv("STYL_DEBUG");
+
+	// Backup old value
+	tcgetattr(pFile, &devConf);
+	oldVTIME = devConf.c_cc[VTIME];
+	oldVMIN = devConf.c_cc[VMIN];
+
+	do
+	{
+		// Read 1 first byte for length
+		// Setup deciTimeout read
+		readRequest = 1;
+		devConf.c_cc[VTIME] = deciTimeout;
+		devConf.c_cc[VMIN] = 0;
+		tcsetattr(pFile, TCSANOW, &devConf);
+		ret += (int) read(pFile, &recvBuff[PKG_INDEX_LEN], readRequest);
+		if (ret <= 0)
+		{
+			goto EXIT;
+		}
+
+		readRequest = recvBuff[PKG_INDEX_LEN] + 2 - 1; 	// read package + cksum - first_byte
+		if (NULL != debugLevel)
+		{
+			printf("read request = %d\n", readRequest);
+		}
+
+		// Change reading condition to ensure read enough bytes
+		devConf.c_cc[VTIME] = 0;
+		devConf.c_cc[VMIN] = readRequest;
+		tcsetattr(pFile, TCSANOW, &devConf);
+
+		// Get n next bytes (n = length + 2 - 1), 2 last bytes are cksum
+		ret += (int) read(pFile, &recvBuff[PKG_INDEX_LEN + 1], readRequest);
+
+		if ( (ret > 0) || (mlsScannerSSI_IsChecksumOK(recvBuff)) )
+		{
+			if(mlsScannerSSI_Write(pFile, SSI_CMD_ACK, NULL, 0, FALSE, FALSE) != EXIT_SUCCESS)
+            {
+                STYL_INFO("Send ACK for received package fail");
+            }
+			memcpy(&buffer[lastIndex], recvBuff, PACKAGE_LEN(recvBuff) + 2);
+			lastIndex += PACKAGE_LEN(recvBuff) + 2;
+		}
+		else
+		{
+			printf("%s: ERROR", __func__);
+			ret = -1;
+			goto EXIT;
+		}
+	} while (mlsScannerSSI_IsContinue(recvBuff));
+
+EXIT:
+	// Return old value
+	devConf.c_cc[VTIME] = oldVTIME;
+	devConf.c_cc[VMIN] = oldVMIN;
+	tcsetattr(pFile, TCSANOW, &devConf);
+	return ret;
+}
+ #else
 gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gchar deciTimeout, gboolean sendACK)
 {
     byte recvBuff[PACKAGE_LEN_MAXIMUM];
@@ -320,7 +390,7 @@ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gchar d
 
     gint isError      = FALSE;
 
-    gint sizeFirst    = 7;
+    gint sizeFirst    = 1;
 
     struct termios serial_opt;
 
@@ -347,12 +417,11 @@ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gchar d
         /* Read */
         sizeReceived = (int) read(pFile, &recvBuff[PKG_INDEX_LEN], sizeRequest);
         STYL_INFO("Fisrt byte size: %d", sizeReceived);
-	mlsScannerPackage_Dump(recvBuff, sizeReceived, TRUE);
+        mlsScannerPackage_Dump(recvBuff, sizeReceived, TRUE);
 
         if(sizeReceived == sizeRequest)
         {
             STYL_INFO("Size of package is: 0x%x  (hex) ; %d  (dec)", recvBuff[PKG_INDEX_LEN], recvBuff[PKG_INDEX_LEN]);
-            mlsScannerPackage_Dump(recvBuff, sizeReceived, TRUE);
             if(recvBuff[PKG_INDEX_LEN] <= PACKAGE_LEN_MAXIMUM-2) /* length maximum is 255 */
             {
                 /* Re-calculate for size for rest of package */
@@ -360,7 +429,7 @@ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gchar d
                 STYL_INFO("Rest byte is: %d", sizeRequest);
 
                 /* Setup timeout enough to read all of rest bytes */
-                serial_opt.c_cc[VTIME] = 0;
+                serial_opt.c_cc[VTIME] = READ_TTY_TIMEOUT;
                 serial_opt.c_cc[VMIN]  = sizeRequest;
                 STYL_INFO("Set value of VTIME is: %d", serial_opt.c_cc[VTIME]);
                 STYL_INFO("Set value of VMIN is : %d", serial_opt.c_cc[VMIN]);
@@ -469,7 +538,7 @@ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gchar d
     mlsScannerPackage_Dump(buffer, totalReceived, TRUE);
     return totalReceived;
 }
-
+#endif // 1
 /*!
  * \brief mlsScannerSSI_Write: write formatted package and check ACK to/from scanner via file descriptor
  * \return
@@ -548,7 +617,7 @@ gint mlsScannerSSI_CheckACK(gint pFile)
     gint retValue = EXIT_SUCCESS;
     byte recvBuff[PACKAGE_LEN_ACK_MAXIMUM];
     memset(recvBuff, 0, PACKAGE_LEN_ACK_MAXIMUM);
-    retValue = mlsScannerSSI_Read(pFile, recvBuff, PACKAGE_LEN_ACK_MAXIMUM, ACK_TIMEOUT, FALSE);
+    retValue = mlsScannerSSI_Read(pFile, recvBuff, PACKAGE_LEN_ACK_MAXIMUM, (guint)ACK_TIMEOUT, FALSE);
     if ( (retValue > 0) && (SSI_CMD_ACK == recvBuff[PKG_INDEX_OPCODE]) )
     {
         retValue = EXIT_SUCCESS;

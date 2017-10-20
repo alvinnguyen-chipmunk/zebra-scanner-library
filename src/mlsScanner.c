@@ -341,12 +341,12 @@ unsigned int mlsBarcodeReader_ReadData(char *buffer, const int bufferLength, con
         }
     }
 
-    /* Flush buffer of scanner one time for next read section */
-    if(mlsScannerSSI_SendCommand(gStylScannerFD, SSI_CMD_FLUSH_QUEUE) != EXIT_SUCCESS)
-    {
-        STYL_ERROR("Can not flush buffer of device");
-    }
-    usleep(50000); /* waiting for scanner flush buffer */
+//    /* Flush buffer of scanner one time for next read section */
+//    if(mlsScannerSSI_SendCommand(gStylScannerFD, SSI_CMD_FLUSH_QUEUE) != EXIT_SUCCESS)
+//    {
+//        STYL_ERROR("Can not flush buffer of device");
+//    }
+//    usleep(50000); /* waiting for scanner flush buffer */
 
     return retValue;
 }
