@@ -42,12 +42,12 @@
 static void     mlsScannerSSI_PreparePackage            (byte *package, byte opcode, byte *param, byte paramLen, gboolean isPermanent);
 static uint16_t mlsScannerSSI_CalculateChecksum        (byte *package, gint length);
 static gint     mlsScannerSSI_IsChecksumOK             (byte *package);
-//static gint     mlsScannerSSI_SerialRead               (gint pFile, byte* buffer, guint sizeBuffer, guint timeout_ms);
-//static gint     mlsScannerSSI_SerialWrite              (gint pFile, byte* buffer, guint sizeBuffer, guint timeout_ms);
+static gint     mlsScannerSSI_SerialRead               (gint pFile, byte* buffer, guint sizeBuffer, guint timeout_ms);
+static gint     mlsScannerSSI_SerialWrite              (gint pFile, byte* buffer, guint sizeBuffer, guint timeout_ms);
 
 /********** Local (static) function definition section ************************/
 
-#if 0
+#if 1
 /*!
  * \brief mlsScannerSSI_SerialRead: read data from serial port
  * \return
@@ -56,9 +56,10 @@ static gint     mlsScannerSSI_IsChecksumOK             (byte *package);
 static gint mlsScannerSSI_SerialRead(gint pFile, byte* buffer, guint sizeBuffer, guint timeout_ms)
 {
     /*  Initialize the file descriptor set.*/
-    fd_set      fds;
-    FD_ZERO     (&fds);
-    FD_SET      (pFile, &fds);
+    fd_set      read_fs;
+    FD_ZERO     (&read_fs);
+	FD_SET      (pFile, &read_fs);
+
     gint        readBytes = 0;
 
     /* Initialize the timeout. */
@@ -87,44 +88,56 @@ static gint mlsScannerSSI_SerialRead(gint pFile, byte* buffer, guint sizeBuffer,
 
         STYL_INFO("Scanner file descriptor: %d", pFile);
 
-        gint rc = select (pFile + 1, &fds, NULL, NULL, &tv);
-        /* TODO: Recalculate timeout here! */
-        if (rc == -1)
+        while (1)
         {
-            /* ********* Error during select call **************** */
-            STYL_ERROR("select: %d - %s", errno, strerror(errno));
-            break;
-        }
-        else if (rc == 0)
-        {
-            /* ********* Timeout ********************************* */
-            STYL_WARNING("Read serial get timeout over.");
-            break;
-        }
-        else
-        {
-            /* ********* Read the available data. ******************** */
-            if (FD_ISSET(pFile, &fds))
+            gint select_retval = select(pFile + 1,
+                                        &read_fs,			/* readfds */
+                                        NULL,				/* writefds */
+                                        NULL,				/* exceptfds */
+                                        &tv);				/* timeout */
+            if (select_retval >= 1)
             {
-                gint n = read (pFile, buffer + readBytes, sizeBuffer - readBytes);
-                STYL_INFO("Now, number of byte received is: %d", n);
-                if (n == -1)
+                /* Serial port ready to read, break loop */
+                break;
+            }
+            else if (select_retval == 0)
+            {
+                STYL_WARNING("Read serial port TIMEOUT.");
+                return readBytes;
+            }
+            else
+            {
+                switch (errno)
                 {
-                    /* ********* Error during select call **************** */
-                    STYL_ERROR("read: %d - %s", errno, strerror(errno));
-                    return 0;
-                }
-                else if (n == 0)
-                {
-                    break; /* EOF reached. */
-                }
-                else
-                {
-                    /* Increase the number of bytes read. */
-                    readBytes += n;
+                case EINTR:
+                    STYL_ERROR("select: %d - %s", errno, strerror(errno));
+                    return readBytes;
+                default:
+                    continue;
                 }
             }
+        }
 
+        /* ********* Read the available data. ******************** */
+        if (FD_ISSET(pFile, &read_fs))
+        {
+            gint n = read (pFile, buffer + readBytes, sizeBuffer - readBytes);
+            STYL_INFO("Now, number of byte received is: %d", n);
+            if (n == -1)
+            {
+                /* ********* Error during select call **************** */
+                STYL_ERROR("read: %d - %s", errno, strerror(errno));
+                return 0;
+            }
+            else if (n == 0)
+            {
+                break; /* EOF reached. */
+            }
+            else
+            {
+                /* Increase the number of bytes read. */
+                readBytes += n;
+            }
         }
     }
     /* ********* Return the number of bytes read. ***************** */
@@ -139,13 +152,14 @@ static gint mlsScannerSSI_SerialRead(gint pFile, byte* buffer, guint sizeBuffer,
  */
 static gint mlsScannerSSI_SerialWrite(gint pFile, byte* buffer, guint sizeBuffer, guint timeout_ms)
 {
-    guint   sizeSent    = 0;
-    guint   n           = 0;
-    struct  timeval     tv ;
-    fd_set  fds;
+    fd_set      write_fs;
+    FD_ZERO     (&write_fs);
+	FD_SET      (pFile, &write_fs);
 
-    FD_ZERO(&fds);
-    FD_SET(pFile, &fds);
+    gint        writeBytes = 0;
+
+    /* Initialize the timeout. */
+    struct timeval tv;
 
     guint min_timeout_ms = TIMEOUT_BYTE_MS * sizeBuffer;
 
@@ -161,45 +175,55 @@ static gint mlsScannerSSI_SerialWrite(gint pFile, byte* buffer, guint sizeBuffer
         tv.tv_usec = (min_timeout_ms % 1000) * 1000;
     }
 
-    while (sizeSent < sizeBuffer)
+    while (writeBytes < sizeBuffer)
     {
-        gint rc = select(pFile + 1, NULL, &fds, NULL, &tv);
-        if(rc == -1)
+        while (1)
         {
-            STYL_ERROR("select: %d - %s", errno, strerror(errno));
-            break;
-        }
-        else if (rc == 0)
-        {
-            STYL_WARNING("Write serial get timeout over.");
-            break;
-        }
-        else
-        {
-            if (FD_ISSET(pFile, &fds))
+            gint select_retval = select(pFile + 1,
+                                        NULL,			    /* readfds */
+                                        &write_fs,          /* writefds */
+                                        NULL,				/* exceptfds */
+                                        &tv);				/* timeout */
+            if (select_retval >= 1)
             {
-                n = write(pFile, buffer + sizeSent, sizeBuffer - sizeSent);
-                if(n==0)
-                {
-                    break; /* Send all bytes done*/
-                }
-                else if(n==-1)
-                {
-                    STYL_ERROR("write: %d - %s", errno, strerror(errno));
-                    break;
-                }
-                else
-                {
-                    /* Increase the number of bytes read. */
-                    sizeSent += n;
-                }
-
+                /* Serial port ready to read, break loop */
+                break;
             }
+            else
+            {
+                switch (errno)
+                {
+                case EINTR:
+                    STYL_ERROR("select: %d - %s", errno, strerror(errno));
+                    return writeBytes;
+                default:
+                    continue;
+                }
+            }
+        }
+        if (FD_ISSET(pFile, &write_fs))
+        {
+            gint n = write(pFile, buffer + writeBytes, sizeBuffer - writeBytes);
+            if(n==0)
+            {
+                break; /* Send all bytes done*/
+            }
+            else if(n==-1)
+            {
+                STYL_ERROR("write: %d - %s", errno, strerror(errno));
+                break;
+            }
+            else
+            {
+                /* Increase the number of bytes read. */
+                writeBytes += n;
+            }
+
         }
     }
 
-    STYL_INFO("Serial sent %d bytes", sizeSent);
-    return sizeSent;
+    STYL_INFO("Serial sent %d bytes", writeBytes);
+    return writeBytes;
 }
 #endif // 0
 
@@ -378,7 +402,9 @@ EXIT:
 	tcsetattr(pFile, TCSANOW, &devConf);
 	return ret;
 }
- #else
+#else
+#define MANUAL_READ
+#define MANUAL_WRITE
 gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gchar deciTimeout, gboolean sendACK)
 {
 	struct termios serial_opt;
@@ -394,20 +420,22 @@ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gchar d
 	int     isNAK        = FALSE;
 	int     isFlush      = FALSE;
 
+	int 	sizeFirst    = 1;
+#ifdef MANUAL_READ
+    guint timeout_ms = (deciTimeout*1000)/10;
+#else
 	cc_t 	oldVTIME = 0;
 	cc_t 	oldVMIN  = 0;
-
-	int 	sizeFirst = 1;
-
 	/* ************* Backup old value ************* */
 	tcgetattr(pFile, &serial_opt);
 	oldVTIME = serial_opt.c_cc[VTIME];
 	oldVMIN = serial_opt.c_cc[VMIN];
-
+#endif // MANUAL_READ
 	do
 	{
 		memset(&recvBuff, 0, PACKAGE_LEN_MAXIMUM);
 		/* ************* Setup timeout read 1 byte for length of package ************* */
+		#ifndef MANUAL_READ
         serial_opt.c_cc[VTIME] = (cc_t)deciTimeout;
         serial_opt.c_cc[VMIN] = (cc_t)0;
         STYL_INFO("Set value of VTIME is: %d", serial_opt.c_cc[VTIME]);
@@ -418,10 +446,15 @@ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gchar d
         tcgetattr(pFile, &serial_opt);
         STYL_INFO("Current value of VTIME is: %d", serial_opt.c_cc[VTIME]);
         STYL_INFO("Current value of VMIN is : %d", serial_opt.c_cc[VMIN]);
+        #endif // MANUAL_READ
 
          /* ************* Read 1 first byte for length ************* */
         sizeRequest = sizeFirst;
-		sizeReceived = (int) read(pFile, &recvBuff[PKG_INDEX_LEN], sizeRequest);
+        #ifdef MANUAL_READ
+		sizeReceived = mlsScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN], sizeRequest, timeout_ms);
+		#else
+        sizeReceived = (int) read(pFile, &recvBuff[PKG_INDEX_LEN], sizeRequest);
+		#endif
 		STYL_INFO("1st byte number is: %d", sizeReceived);
         mlsScannerPackage_Dump(recvBuff, sizeReceived, TRUE);
 		if (sizeReceived == sizeRequest)
@@ -432,19 +465,22 @@ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gchar d
 			STYL_INFO("Rest byte is: %d", sizeRequest);
 
 			/* Setup timeout enough to read all of rest bytes */
-			serial_opt.c_cc[VTIME] = (cc_t)0;
+//			serial_opt.c_cc[VTIME] = (cc_t)0;
             //serial_opt.c_cc[VTIME] = (cc_t)READ_TTY_TIMEOUT;
-            serial_opt.c_cc[VMIN]  = (cc_t)sizeRequest;
-            STYL_INFO("Set value of VTIME is: %d", serial_opt.c_cc[VTIME]);
-            STYL_INFO("Set value of VMIN is : %d", serial_opt.c_cc[VMIN]);
-            tcsetattr(pFile, TCSANOW, &serial_opt);
+//            serial_opt.c_cc[VMIN]  = (cc_t)sizeRequest;
+//            STYL_INFO("Set value of VTIME is: %d", serial_opt.c_cc[VTIME]);
+//            STYL_INFO("Set value of VMIN is : %d", serial_opt.c_cc[VMIN]);
+//            tcsetattr(pFile, TCSANOW, &serial_opt);
 
-            /* Get again for debug */
-            tcgetattr(pFile, &serial_opt);
-            STYL_INFO("Current value of VTIME is: %d", serial_opt.c_cc[VTIME]);
-            STYL_INFO("Current value of VMIN is : %d", serial_opt.c_cc[VMIN]);
-
-			sizeReceived = (int) read(pFile, &recvBuff[PKG_INDEX_LEN + 1], sizeRequest);
+//            /* Get again for debug */
+//            tcgetattr(pFile, &serial_opt);
+//            STYL_INFO("Current value of VTIME is: %d", serial_opt.c_cc[VTIME]);
+//            STYL_INFO("Current value of VMIN is : %d", serial_opt.c_cc[VMIN]);
+            #ifdef MANUAL_READ
+            sizeReceived = mlsScannerSSI_SerialRead(pFile, &recvBuff[PKG_INDEX_LEN+1], sizeRequest, timeout_ms);
+			#else
+            sizeReceived = (int) read(pFile, &recvBuff[PKG_INDEX_LEN + 1], sizeRequest);
+			#endif // 0
 			STYL_INFO("2nd byte number is: %d", sizeReceived);
             mlsScannerPackage_Dump(recvBuff, sizeReceived, TRUE);
 			if(sizeReceived == sizeRequest)
@@ -525,7 +561,7 @@ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gchar d
 		}
 		else
 		{
-			STYL_ERROR("Read first byte of package: TIMEOUT");
+			STYL_WARNING("Read first byte of package: TIMEOUT");
             isError=TRUE;
             break;
 		}
@@ -533,9 +569,11 @@ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gchar d
 	while (mlsScannerSSI_IsContinue(recvBuff));
 
 	/* ************* Return old value for serial configure ************* */
+    #ifndef MANUAL_READ
 	serial_opt.c_cc[VTIME] = oldVTIME;
 	serial_opt.c_cc[VMIN] = oldVMIN;
 	tcsetattr(pFile, TCSANOW, &serial_opt);
+    #endif // MANUAL_READ
 
 	if(isNAK == TRUE)
 	{
@@ -605,18 +643,18 @@ gint mlsScannerSSI_Write(gint pFile, byte opcode, byte *param, byte paramLen, gb
     if(sendWakeup==TRUE)
     {
         mlsScannerPackage_Dump(bufferWakeup, SSI_LEN_WAKEUP, FALSE);
-        #if 1
+        #ifdef MANUAL_WRITE
+        if(mlsScannerSSI_SerialWrite(pFile, bufferWakeup, SSI_LEN_WAKEUP, WRITE_TTY_TIMEOUT) != SSI_LEN_WAKEUP)
+        {
+            STYL_ERROR("Send wakeup data to scanner got problem.");
+            return EXIT_FAILURE;
+        }
+        #else
         if ( write(pFile, bufferWakeup, SSI_LEN_WAKEUP) == -1)
         {
             STYL_ERROR("Send wakeup data to scanner got problem.");
             STYL_ERROR("write: %d - %s", errno, strerror(errno));
             retValue = EXIT_FAILURE;
-        }
-        #else
-        if(mlsScannerSSI_SerialWrite(pFile, bufferWakeup, SSI_LEN_WAKEUP, WRITE_TTY_TIMEOUT) != SSI_LEN_WAKEUP)
-        {
-            STYL_ERROR("Send wakeup data to scanner got problem.");
-            return EXIT_FAILURE;
         }
         #endif // 1
         /* ***************** Sleep waiting for scanner wakeup done ************* */
@@ -629,18 +667,17 @@ gint mlsScannerSSI_Write(gint pFile, byte opcode, byte *param, byte paramLen, gb
     mlsScannerSSI_PreparePackage(bufferContent, opcode, param, paramLen, isPermanent);
     mlsScannerPackage_Dump(bufferContent, bufferSize, FALSE);
     sizeSend = PACKAGE_LEN(bufferContent) + SSI_LEN_CHECKSUM;
-    #if 1
+    #ifdef MANUAL_WRITE
+    if(mlsScannerSSI_SerialWrite(pFile, bufferContent, sizeSend, WRITE_TTY_TIMEOUT) != sizeSend)
+    {
+        STYL_ERROR("Send data to scanner got problem.");
+        retValue = EXIT_FAILURE;
+    }
+    #else
     if ( write(pFile, bufferContent, sizeSend) == -1)
     {
         STYL_ERROR("Send data to scanner got problem.");
         STYL_ERROR("write: %d - %s", errno, strerror(errno));
-        retValue = EXIT_FAILURE;
-    }
-
-    #else
-    if(mlsScannerSSI_SerialWrite(pFile, bufferContent, sizeSend, WRITE_TTY_TIMEOUT) != sizeSend)
-    {
-        STYL_ERROR("Send data to scanner got problem.");
         retValue = EXIT_FAILURE;
     }
     #endif // 1

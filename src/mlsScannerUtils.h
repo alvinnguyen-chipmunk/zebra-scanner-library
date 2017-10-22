@@ -37,7 +37,8 @@ extern "C"
 /********** Type definition section *******************************************/
 typedef unsigned char byte;
 
-/********** Macro definition section ******************************************/#define ANSI_COLOR_RED     "\x1b[31m"
+/********** Macro definition section ******************************************/
+#define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_YELLOW  "\x1b[33m"
 #define ANSI_COLOR_BLUE    "\x1b[34m"
@@ -45,27 +46,18 @@ typedef unsigned char byte;
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
-#define STYL_INFO(format, ...)          printf(ANSI_COLOR_BLUE); \
-                                        mlsScannerUtils_Print(0, "[STYL SSI SCANNER INFO]: " format "\n", ##__VA_ARGS__); \
-                                        printf(ANSI_COLOR_RESET);
-#define STYL_INFO_INLINE(format, ...)   printf(ANSI_COLOR_BLUE); \
-                                        mlsScannerUtils_Print(0, "[STYL SSI SCANNER INFO]: " format, ##__VA_ARGS__); \
-                                        printf(ANSI_COLOR_RESET);
+#define STYL_INFO(format, ...)  \
+    mlsScannerUtils_Print(0, "%s[STYL INFO] %s():%d: " format "%s\n", ANSI_COLOR_BLUE, __FUNCTION__,__LINE__, ##__VA_ARGS__, ANSI_COLOR_RESET);
 
+#define STYL_INFO_1(format, ...)  \
+    mlsScannerUtils_Print(0, "%s[STYL INFO] %s():%d: " format "%s\n", ANSI_COLOR_GREEN, __FUNCTION__,__LINE__, ##__VA_ARGS__, ANSI_COLOR_RESET);
 
-#define STYL_ERROR(format, ...)         printf(ANSI_COLOR_RED); \
-                                        mlsScannerUtils_Print(1, "[STYL SSI SCANNER ERROR]: " format "\n", ##__VA_ARGS__); \
-                                        printf(ANSI_COLOR_RESET);
-#define STYL_ERROR_INLINE(format, ...)  printf(ANSI_COLOR_RED); \
-                                        mlsScannerUtils_Print(1, "[STYL SSI SCANNER ERROR]: " format, ##__VA_ARGS__); \
-                                        printf(ANSI_COLOR_RESET);
+#define STYL_ERROR(format, ...) \
+    mlsScannerUtils_Print(1, "%s[STYL ERROR] %s():%d: " format "%s\n", ANSI_COLOR_RED, __FUNCTION__,__LINE__, ##__VA_ARGS__, ANSI_COLOR_RESET);
 
-#define STYL_WARNING(format, ...)       printf(ANSI_COLOR_YELLOW); \
-                                        mlsScannerUtils_Print(0, "[STYL SSI SCANNER WARN]: " format "\n", ##__VA_ARGS__); \
-                                        printf(ANSI_COLOR_RESET);
-#define STYL_WARNING_INLINE(format, ...) printf(ANSI_COLOR_YELLOW); \
-                                        mlsScannerUtils_Print(0, "[STYL SSI SCANNER WARN]: " format, ##__VA_ARGS__); \
-                                        printf(ANSI_COLOR_RESET);
+#define STYL_WARNING(format, ...)  \
+    mlsScannerUtils_Print(0, "%s[STYL WARNING] %s():%d: " format "%s\n", ANSI_COLOR_YELLOW, __FUNCTION__,__LINE__, ##__VA_ARGS__, ANSI_COLOR_RESET);
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define BAUDRATE            B9600

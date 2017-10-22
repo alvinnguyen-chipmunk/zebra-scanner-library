@@ -39,17 +39,17 @@ extern "C"
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
-#define STYL_INFO(format, ...)      printf(ANSI_COLOR_BLUE); \
-                                    mlsScannerExample_Print(0, "[STYL SSI SCANNER EXAMPLE]: " format "\n", ##__VA_ARGS__); \
-                                    printf(ANSI_COLOR_RESET);
+#define STYL_INFO(format, ...)  \
+    mlsScannerExample_Print(0, "%s[STYL INFO]: %s():%d" format "%s\n", ANSI_COLOR_BLUE, __FUNCTION__,__LINE__, ##__VA_ARGS__, ANSI_COLOR_RESET);
 
-#define STYL_ERROR(format, ...)     printf(ANSI_COLOR_RED); \
-                                    mlsScannerExample_Print(1, "[STYL SSI SCANNER EXAMPLE]: " format "\n", ##__VA_ARGS__); \
-                                    printf(ANSI_COLOR_RESET);
+#define STYL_INFO_1(format, ...)  \
+    mlsScannerExample_Print(0, "%s[STYL INFO]: %s():%d" format "%s\n", ANSI_COLOR_GREEN, __FUNCTION__,__LINE__, ##__VA_ARGS__, ANSI_COLOR_RESET);
 
-#define STYL_WARNING(format, ...)   printf(ANSI_COLOR_YELLOW); \
-                                    mlsScannerExample_Print(1, "[STYL SSI SCANNER EXAMPLE]: " format "\n", ##__VA_ARGS__); \
-                                    printf(ANSI_COLOR_RESET);
+#define STYL_ERROR(format, ...) \
+    mlsScannerExample_Print(0, "%s[STYL ERROR]: %s():%d" format "%s\n", ANSI_COLOR_RED, __FUNCTION__,__LINE__, ##__VA_ARGS__, ANSI_COLOR_RESET);
+
+#define STYL_WARNING(format, ...)  \
+    mlsScannerExample_Print(0, "%s[STYL WARNING]: %s():%d" format "%s\n", ANSI_COLOR_YELLOW, __FUNCTION__,__LINE__, ##__VA_ARGS__, ANSI_COLOR_RESET);
 
 #define STYL_STRING_MAXLEN          4096
 

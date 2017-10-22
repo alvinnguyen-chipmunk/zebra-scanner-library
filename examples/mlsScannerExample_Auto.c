@@ -153,6 +153,10 @@ int main(int argc, const char * argv[])
             {
                 printf("\nBarcode(%d):%s\n%s%s\n", decodeLength, ANSI_COLOR_GREEN, buffer, ANSI_COLOR_RESET);
             }
+            else
+            {
+                printf("\nNo Data!\n");
+            }
             sleep(2);
         }
         mlsBarcodeReader_Close();

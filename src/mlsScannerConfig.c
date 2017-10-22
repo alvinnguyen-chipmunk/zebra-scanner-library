@@ -26,6 +26,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <linux/serial.h>
 #include <termios.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -126,7 +127,7 @@ gint mlsScannerConfig_OpenTTY(const gchar *deviceNode)
 {
     gint pFile = -1;
 
-    pFile = open(deviceNode, O_RDWR);
+    pFile = open(deviceNode, O_RDWR | O_NOCTTY | O_SYNC);
     if (pFile == -1)
     {
         STYL_ERROR("Open Scanner device %s: open: %d - %s\n", deviceNode, errno, strerror(errno));
@@ -270,7 +271,6 @@ EXIT:
 #else
 gint mlsScannerConfig_ConfigTTY(gint pFile)
 {
-    // fd = open(MODEMDEVICE, O_RDWR | O_NOCTTY );
     /*
     struct termios {
             tcflag_t c_iflag;       // input mode flags   //
@@ -289,16 +289,26 @@ gint mlsScannerConfig_ConfigTTY(gint pFile)
 
      /* ********** Clear struct for new port settings **************** */
     bzero(&serial_opt, sizeof(serial_opt));
-#if 0
-    /* ********** IGNPAR  : ignore bytes with parity errors ********** */
-    serial_opt.c_iflag = IGNPAR;
-#else
-    serial_opt.c_iflag &= ~(BRKINT|PARMRK|IGNPAR|ISTRIP|INLCR|IGNCR|ICRNL|IXON|IXOFF|IXANY|INPCK);
-#endif
-    /* Raw output */
-    serial_opt.c_oflag = 0;
 
-#if 1
+    struct serial_struct serial;
+	/* **SET_LOW_LATENCY** */
+	ioctl(pFile, TIOCGSERIAL, &serial);
+	serial.flags |= ASYNC_LOW_LATENCY;
+	ioctl(pFile, TIOCSSERIAL, &serial);
+
+    /*  Input mode flags setup */
+    serial_opt.c_iflag &= ~(IXON | IXOFF | IXANY);		/* Disable Software Flow control */
+    //LINUX DOUBLE '\n' issue
+	//port->options.c_iflag |= (ICRNL|INLCR);//(IGNCR);INLCR
+	serial_opt.c_iflag &= ~(IGNCR); //receive CR
+	serial_opt.c_iflag &= ~(ICRNL); //not convert CR to NL
+	serial_opt.c_iflag &= ~(INLCR); //not convert NR to CR
+	serial_opt.c_iflag |= (IGNPAR); //ignore framing errors and parity errors
+	serial_opt.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP);
+
+    /* Output mode flags */
+    //serial_opt.c_oflag = 0;
+    serial_opt.c_oflag &= ~OPOST;        /* Chose raw (not processed) output */
     /*
       BAUDRATE: Set bps rate. You could also use cfsetispeed and cfsetospeed.
       CRTSCTS : output hardware flow control (only used if the cable has
@@ -307,37 +317,32 @@ gint mlsScannerConfig_ConfigTTY(gint pFile)
       CLOCAL  : local connection, no modem contol
       CREAD   : enable receiving characters
     */
-    serial_opt.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
-    //serial_opt.c_cflag = BAUDRATE | CRTSCTS | CS8 | CLOCAL | CREAD;
-#else
-    /* ********** Set baudrate ************************ */
-    cfsetispeed(&serial_opt, br_speed);
-    /* ********** Set parity: yes ********************* */
-    serial_opt.c_cflag |= PARENB;
-    /* ********** Set parity value: no **************** */
+    /* ********** Set baud rate ************************ */
+    cfsetispeed( &serial_opt, br_speed);
+    cfsetospeed( &serial_opt, br_speed);
+    /* ********** Enable the receiver and set local mode */
+    serial_opt.c_cflag |= ( CLOCAL | CREAD );
+    /* ********** Mask the character size bits ******** */
+    serial_opt.c_cflag &= ~CSIZE;
+    /* ********** Select 8 data bits ****************** */
+    serial_opt.c_cflag |= CS8;
+    /* ********** Hardware flow control --not supported */
+    serial_opt.c_cflag &= ~CRTSCTS;
+    /* ********** Set parity NONE ********************* */
     serial_opt.c_cflag &= ~PARENB;
-    /* ********** Set parity value: odd *************** */
-    //serial_opt.c_cflag |= PARODD;
-    /* ********** Set parity value: even ************** */
-    //serial_opt.c_cflag &= ~PARODD;
     /* ********** Set stop bit is: 1 ****************** */
     serial_opt.c_cflag &= ~CSTOPB;
-    /* ********** Set stop bit is: 2 ****************** */
-    //serial_opt.c_cflag |= CSTOPB;
-#endif
 
-#if 1
     /* ********** Set input mode (non-canonical, no echo,...) ********** */
-    serial_opt.c_lflag = 0;
-#else
     /* ICANON  : enable canonical input disable all echo functionality, and don't send signals to calling program */
-    serial_opt.c_lflag = ICANON;
-#endif
+    serial_opt.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG | IEXTEN | ECHONL);
 
+#ifdef __SERIAL_BLOCKING__
     serial_opt.c_cc[VTIME]    = 0;      /* inter-character timer unused */
-    serial_opt.c_cc[VMIN]     = 0;      /* read will be satisfied immediately. */
+    serial_opt.c_cc[VMIN]     = 1;      /* read will be satisfied immediately. */
                                         /* The number of characters currently available,
                                         /* or the number of characters requested will be returned */
+#endif
 
     /* ********** Flush file descriptor ******** */
     tcflush(pFile, TCIFLUSH);

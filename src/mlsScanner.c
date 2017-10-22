@@ -327,13 +327,13 @@ unsigned int mlsBarcodeReader_ReadData(char *buffer, const int bufferLength, con
     if ( (retValue > 0) && (SSI_CMD_DECODE_DATA == recvBuff[PKG_INDEX_OPCODE]) )
     {
         retValue = mlsScannerPackage_Extract((gchar *)buffer, symbolBuff, recvBuff, (const gint)bufferLength, TRUE);
-        STYL_ERROR("Code Type: %s", symbolBuff);
+        STYL_INFO_1("Code Type: %s", symbolBuff);
     }
     else
     {
         if(retValue <= 0)
         {
-            STYL_WARNING("Nothing is received.");
+            STYL_WARNING("No Data!");
         }
         else
         {
@@ -382,7 +382,7 @@ unsigned int mlsBarcodeReader_ReadData_Manual(char *buffer, const int bufferLeng
 
     if ( (retValue > 0) && (SSI_CMD_DECODE_DATA == recvBuff[PKG_INDEX_OPCODE]) )
     {
-        mlsScannerPackage_Dump(recvBuff, retValue, TRUE);
+//        mlsScannerPackage_Dump(recvBuff, retValue, TRUE);
         retValue = mlsScannerPackage_Extract((gchar *)buffer, symbolBuff, recvBuff, (const gint)bufferLength, TRUE);
         STYL_INFO("Code Type: %s", symbolBuff);
     }
@@ -465,8 +465,8 @@ char mlsBarcodeReader_Setup(const char *scannerPort, const int scannerMode)
                 }
             }
         }
+        mlsScannerConfig_CloseTTY_Only(scannerFD);
     }
-    mlsScannerConfig_CloseTTY_Only(scannerFD);
     return retValue;
 }
 
