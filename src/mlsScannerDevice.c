@@ -50,12 +50,12 @@
  */
 const char * mlsScannerDevice_GetNode(const char *devSubsystem, const char *devVendorID, const char *devProductID)
 {
-    struct udev *udev;
-    struct udev_enumerate *enumerate;
-    struct udev_list_entry *devices, *dev_list_entry;
-    struct udev_device *dev;
+    struct udev *udev = NULL;
+    struct udev_enumerate *enumerate = NULL;
+    struct udev_list_entry *devices = NULL, *dev_list_entry = NULL;
+    struct udev_device *dev = NULL;
 
-    const char *deviceNode;
+    const char *deviceNode = NULL;
     /* Create the udev object */
     udev = udev_new();
     if (!udev)

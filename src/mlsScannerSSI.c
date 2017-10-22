@@ -381,162 +381,205 @@ EXIT:
  #else
 gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gchar deciTimeout, gboolean sendACK)
 {
-    byte recvBuff[PACKAGE_LEN_MAXIMUM];
-    gint lastIndex = 0;
+	struct termios serial_opt;
+	byte recvBuff[PACKAGE_LEN_MAXIMUM];
 
-    gint totalReceived = 0;
-    gint sizeReceived  = 0;
-    gint sizeRequest   = 0;
+	int 	totalReceived = 0;
+	int 	sizeReceived  = 0;
+	int		sizeRequest   = 0;
 
-    gint isError      = FALSE;
+	int 	lastIndex = 0;
 
-    gint sizeFirst    = 1;
+	int     isError      = FALSE;
+	int     isNAK        = FALSE;
+	int     isFlush      = FALSE;
 
-    struct termios serial_opt;
+	cc_t 	oldVTIME = 0;
+	cc_t 	oldVMIN  = 0;
 
-    // Backup old value
-    tcgetattr(pFile, &serial_opt);
+	int 	sizeFirst = 1;
 
-    do
-    {
-        memset(&recvBuff, 0, PACKAGE_LEN_MAXIMUM);
-        /* Read 1 first byte for length */
-        sizeRequest = sizeFirst;
-        /* Setup timeout read 1 byte for length of package */
-        serial_opt.c_cc[VTIME] = deciTimeout;
-        serial_opt.c_cc[VMIN] = 0;
+	/* ************* Backup old value ************* */
+	tcgetattr(pFile, &serial_opt);
+	oldVTIME = serial_opt.c_cc[VTIME];
+	oldVMIN = serial_opt.c_cc[VMIN];
+
+	do
+	{
+		memset(&recvBuff, 0, PACKAGE_LEN_MAXIMUM);
+		/* ************* Setup timeout read 1 byte for length of package ************* */
+        serial_opt.c_cc[VTIME] = (cc_t)deciTimeout;
+        serial_opt.c_cc[VMIN] = (cc_t)0;
         STYL_INFO("Set value of VTIME is: %d", serial_opt.c_cc[VTIME]);
         STYL_INFO("Set value of VMIN is : %d", serial_opt.c_cc[VMIN]);
         tcsetattr(pFile, TCSANOW, &serial_opt);
 
-        /* Get again for debug */
+        /* ************* Get again for debug ************* */
         tcgetattr(pFile, &serial_opt);
         STYL_INFO("Current value of VTIME is: %d", serial_opt.c_cc[VTIME]);
         STYL_INFO("Current value of VMIN is : %d", serial_opt.c_cc[VMIN]);
 
-        /* Read */
-        sizeReceived = (int) read(pFile, &recvBuff[PKG_INDEX_LEN], sizeRequest);
-        STYL_INFO("Fisrt byte size: %d", sizeReceived);
+         /* ************* Read 1 first byte for length ************* */
+        sizeRequest = sizeFirst;
+		sizeReceived = (int) read(pFile, &recvBuff[PKG_INDEX_LEN], sizeRequest);
+		STYL_INFO("1st byte number is: %d", sizeReceived);
         mlsScannerPackage_Dump(recvBuff, sizeReceived, TRUE);
+		if (sizeReceived == sizeRequest)
+		{
+			/* Re-calculate for size for rest of package */
+			/* sizeFirst is byte read before */
+            sizeRequest = recvBuff[PKG_INDEX_LEN] + SSI_LEN_CHECKSUM - sizeFirst;
+			STYL_INFO("Rest byte is: %d", sizeRequest);
 
-        if(sizeReceived == sizeRequest)
-        {
-            STYL_INFO("Size of package is: 0x%x  (hex) ; %d  (dec)", recvBuff[PKG_INDEX_LEN], recvBuff[PKG_INDEX_LEN]);
-            if(recvBuff[PKG_INDEX_LEN] <= PACKAGE_LEN_MAXIMUM-2) /* length maximum is 255 */
-            {
-                /* Re-calculate for size for rest of package */
-                sizeRequest = recvBuff[PKG_INDEX_LEN] + SSI_LEN_CHECKSUM - sizeFirst; /* sizeFirst is byte read before */
-                STYL_INFO("Rest byte is: %d", sizeRequest);
+			/* Setup timeout enough to read all of rest bytes */
+			serial_opt.c_cc[VTIME] = (cc_t)0;
+            //serial_opt.c_cc[VTIME] = (cc_t)READ_TTY_TIMEOUT;
+            serial_opt.c_cc[VMIN]  = (cc_t)sizeRequest;
+            STYL_INFO("Set value of VTIME is: %d", serial_opt.c_cc[VTIME]);
+            STYL_INFO("Set value of VMIN is : %d", serial_opt.c_cc[VMIN]);
+            tcsetattr(pFile, TCSANOW, &serial_opt);
 
-                /* Setup timeout enough to read all of rest bytes */
-                serial_opt.c_cc[VTIME] = READ_TTY_TIMEOUT;
-                serial_opt.c_cc[VMIN]  = sizeRequest;
-                STYL_INFO("Set value of VTIME is: %d", serial_opt.c_cc[VTIME]);
-                STYL_INFO("Set value of VMIN is : %d", serial_opt.c_cc[VMIN]);
-                tcsetattr(pFile, TCSANOW, &serial_opt);
+            /* Get again for debug */
+            tcgetattr(pFile, &serial_opt);
+            STYL_INFO("Current value of VTIME is: %d", serial_opt.c_cc[VTIME]);
+            STYL_INFO("Current value of VMIN is : %d", serial_opt.c_cc[VMIN]);
 
-                /* Get again for debug */
-                tcgetattr(pFile, &serial_opt);
-                STYL_INFO("Current value of VTIME is: %d", serial_opt.c_cc[VTIME]);
-                STYL_INFO("Current value of VMIN is : %d", serial_opt.c_cc[VMIN]);
-
-                sizeReceived = (int) read(pFile, &recvBuff[PKG_INDEX_LEN + 1], sizeRequest);
-                STYL_INFO("Received byte is: %d", sizeReceived);
+			sizeReceived = (int) read(pFile, &recvBuff[PKG_INDEX_LEN + 1], sizeRequest);
+			STYL_INFO("2nd byte number is: %d", sizeReceived);
+            mlsScannerPackage_Dump(recvBuff, sizeReceived, TRUE);
+			if(sizeReceived == sizeRequest)
+			{
+				sizeReceived += sizeFirst;
+                totalReceived += sizeReceived;
+                STYL_INFO("One section byte number is: %d", sizeReceived);
                 mlsScannerPackage_Dump(recvBuff, sizeReceived, TRUE);
 
-                if(sizeReceived == sizeRequest)
+                STYL_INFO("Check package is correct from decoder");
+                if(mlsScannerSSI_CorrectPackage(recvBuff))
                 {
-                    sizeReceived += sizeFirst;
-                    totalReceived += sizeReceived;
-                    STYL_INFO("Current total byte received is: %d", totalReceived);
-                    mlsScannerPackage_Dump(recvBuff, sizeReceived, TRUE);
-
-                    STYL_INFO("Check package is correct from decoder");
-                    if(mlsScannerSSI_CorrectPackage(recvBuff))
+                	STYL_INFO("Check package is correct from decoder success.");
+                	STYL_INFO("Check checksum for received package");
+                    if (mlsScannerSSI_IsChecksumOK(recvBuff))
                     {
-                        STYL_INFO("Check package is correct from decoder success.");
-                        STYL_INFO("Check checksum for received package");
-                        if (mlsScannerSSI_IsChecksumOK(recvBuff))
+                        STYL_INFO("Check checksum for received package success");
+                        gboolean doneACK = TRUE;
+                        if(sendACK == TRUE)
                         {
-                            STYL_INFO("Check checksum for received package success");
-                            gboolean doneACK = TRUE;
-                            if(sendACK == TRUE)
+                            doneACK = FALSE;
+                            /* Send ACK for buffer received */
+                            STYL_INFO("Send ACK for received package");
+                            if(mlsScannerSSI_Write(pFile, SSI_CMD_ACK, NULL, 0, FALSE, FALSE) == EXIT_SUCCESS)
                             {
-                                doneACK = FALSE;
-                                /* Send ACK for buffer received */
-                                STYL_INFO("Send ACK for received package");
-                                if(mlsScannerSSI_Write(pFile, SSI_CMD_ACK, NULL, 0, FALSE, FALSE) == EXIT_SUCCESS)
-                                {
-                                    STYL_INFO("Send ACK for received package success");
-                                    doneACK = TRUE;
-                                }
+                                STYL_INFO("Send ACK for received package success");
+                                doneACK = TRUE;
                             }
-                            if(doneACK==TRUE)
+                        }
+                        if(doneACK==TRUE)
+                        {
+                            if(sizeBuffer > (lastIndex + PACKAGE_LEN(recvBuff) + SSI_LEN_CHECKSUM))
                             {
-                                if(sizeBuffer > (lastIndex + PACKAGE_LEN(recvBuff) + SSI_LEN_CHECKSUM))
-                                {
-                                    /* Copy current buffer to finally buffer */
-                                    gint sizeMemcpy = PACKAGE_LEN(recvBuff) + SSI_LEN_CHECKSUM;
-                                    memcpy(&buffer[lastIndex], recvBuff, sizeMemcpy);
-                                    lastIndex += sizeMemcpy;
-                                }
-                                else
-                                {
-                                    STYL_ERROR("Length of all package of data is large.");
-                                    isError=TRUE;
-                                    break;
-                                }
+                                /* Copy current buffer to finally buffer */
+                                gint sizeMemcpy = PACKAGE_LEN(recvBuff) + SSI_LEN_CHECKSUM;
+                                memcpy(&buffer[lastIndex], recvBuff, sizeMemcpy);
+                                lastIndex += sizeMemcpy;
                             }
                             else
                             {
-                                STYL_INFO("Send ACK for received package fail");
+                                STYL_ERROR("Length of all package of data is large.");
                                 isError=TRUE;
+                                isFlush = TRUE;
                                 break;
                             }
                         }
                         else
                         {
-                            STYL_ERROR("Check checksum for received package fail");
+                            STYL_INFO("Send ACK for received package fail");
                             isError=TRUE;
+                            isFlush = TRUE;
                             break;
                         }
                     }
                     else
                     {
-                        STYL_ERROR("Check package is correct from decoder fail.");
+                    	STYL_ERROR("Check checksum for received package fail");
                         isError=TRUE;
+                        isNAK = TRUE;
                         break;
                     }
                 }
                 else
                 {
-                    STYL_ERROR("Package invalid. Only read %d bytes of %d bytes", sizeReceived, sizeRequest);
+                	STYL_ERROR("Check package is correct from decoder fail.");
                     isError=TRUE;
+                    isFlush = TRUE;
                     break;
                 }
-            }
-            else
-            {
-                STYL_ERROR("Length of package over 255 bytes.");
-                isError=TRUE;
-                break;
-            }
+			}
+			else
+			{
+				STYL_ERROR("Package invalid. Only read %d bytes of %d bytes", sizeReceived, sizeRequest);
+	            isError = TRUE;
+	            isFlush = TRUE;
+	            break;
+			}
+		}
+		else
+		{
+			STYL_ERROR("Read first byte of package: TIMEOUT");
+            isError=TRUE;
+            break;
+		}
+	}
+	while (mlsScannerSSI_IsContinue(recvBuff));
+
+	/* ************* Return old value for serial configure ************* */
+	serial_opt.c_cc[VTIME] = oldVTIME;
+	serial_opt.c_cc[VMIN] = oldVMIN;
+	tcsetattr(pFile, TCSANOW, &serial_opt);
+
+	if(isNAK == TRUE)
+	{
+		/* Send ACK for buffer received */
+        STYL_INFO("Send NAK for received package");
+        if(mlsScannerSSI_Write(pFile, SSI_CMD_NAK, NULL, 0, FALSE, FALSE) != EXIT_SUCCESS)
+        {
+            STYL_ERROR("Send NAK for received package fail");
+        }
+        {
+            STYL_INFO("Send NAK for received package success");
+        }
+	}
+
+	if(isFlush == TRUE)
+    {
+        STYL_INFO("Request stop section.");
+        if(mlsScannerSSI_SendCommand(pFile, SSI_CMD_SESSION_STOP) != EXIT_SUCCESS)
+        {
+            STYL_ERROR("Request stop section fail.");
         }
         else
         {
-            STYL_ERROR("Read first byte of package: TIMEOUT");
-            isError=TRUE;
-            break;
+            STYL_ERROR("Request stop section success.");
         }
+        /* Eliminates content of decoder’s transmission queue. */
+        STYL_INFO("Request flush queue of decoder.");
+        if(mlsScannerSSI_Write(pFile, SSI_CMD_FLUSH_QUEUE, NULL, 0, FALSE, FALSE) != EXIT_SUCCESS)
+        {
+            STYL_ERROR("Request flush queue of decoder fail.");
+        }
+        else
+        {
+            STYL_INFO("Request flush queue of decoder success.");
+        }
+        usleep(50000);
     }
-    while(mlsScannerSSI_IsContinue(recvBuff));
 
-    if(isError==TRUE)
+	if(isError == TRUE)
         return 0;
 
-    STYL_INFO("Total length of received data is: %d", totalReceived);
+    STYL_INFO("Total byte number received from all section is: %d", totalReceived);
     mlsScannerPackage_Dump(buffer, totalReceived, TRUE);
-    return totalReceived;
+	return totalReceived;
 }
 #endif // 1
 /*!

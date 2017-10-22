@@ -205,7 +205,18 @@ gint mlsScannerConfig_CloseTTY_Only(gint pFile)
 #if 0
 gint mlsScannerConfig_ConfigTTY(gint pFile)
 {
-	gint ret = EXIT_SUCCESS;
+    /*
+    struct termios {
+            tcflag_t c_iflag;       // input mode flags   //
+            tcflag_t c_oflag;       // output mode flags  //
+            tcflag_t c_cflag;       // control mode flags //
+            tcflag_t c_lflag;       // local mode flags   //
+            cc_t c_line;            // line discipline    //
+            cc_t c_cc[NCCS];        // control characters //
+        };
+    */
+
+	gint retValue = EXIT_SUCCESS;
 	gint flags = 0;
 	struct termios devConf;
 
@@ -278,7 +289,7 @@ gint mlsScannerConfig_ConfigTTY(gint pFile)
 
      /* ********** Clear struct for new port settings **************** */
     bzero(&serial_opt, sizeof(serial_opt));
-#if 1
+#if 0
     /* ********** IGNPAR  : ignore bytes with parity errors ********** */
     serial_opt.c_iflag = IGNPAR;
 #else
@@ -296,7 +307,8 @@ gint mlsScannerConfig_ConfigTTY(gint pFile)
       CLOCAL  : local connection, no modem contol
       CREAD   : enable receiving characters
     */
-    serial_opt.c_cflag = BAUDRATE | CRTSCTS | CS8 | CLOCAL | CREAD;
+    serial_opt.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
+    //serial_opt.c_cflag = BAUDRATE | CRTSCTS | CS8 | CLOCAL | CREAD;
 #else
     /* ********** Set baudrate ************************ */
     cfsetispeed(&serial_opt, br_speed);
@@ -356,7 +368,7 @@ gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode, gboolean isPermane
     byte paramContent[12] = {     SSI_PARAM_VALUE_BEEP         // Beep Code - 0xFF is NO BEEP
                                  ,SSI_PARAM_DEF_FORMAT_B,      SSI_PARAM_VALUE_ENABLE
                                  ,SSI_PARAM_B_DEF_SW_ACK,      SSI_PARAM_VALUE_ENABLE
-                                 ,SSI_PARAM_B_DEF_SCAN,        SSI_PARAM_VALUE_ENABLE
+                                 ,SSI_PARAM_B_DEF_SCAN,        SSI_PARAM_VALUE_DISABLE
                            };
     if (triggerMode == SCANNING_TRIGGER_MANUAL)
     {
