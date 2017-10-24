@@ -1,10 +1,14 @@
 ######################### STYL SCANNER COMMON VARIABLE ############################
 if DEBUG
-DEBUG_CFLAGS = -g -ggdb -D__DEBUG__
+DEBUG_CFLAGS = -g -ggdb
+else
+DEBUG_CFLAGS = 
 endif
 
-if RELEASE
-RELEASE_CFLAGS = -D__RELEASE__
+if BLOCKING
+SERIAL_CFLAGS = -D__SERIAL_BLOCKING__
+else
+SERIAL_CFLAGS =
 endif
 
 #STYLSCANNER_includedir = $(includedir)/styl
@@ -13,6 +17,7 @@ STYLSCANNER_includedir = $(includedir)
 STYLSCANNER_SOURCES = mlsBarcode.h          \
                       mlsScanner.c          \
                       mlsScannerUtils.h     \
+                      mlsScannerUtils.c     \
                       mlsScannerConfig.h    \
                       mlsScannerConfig.c    \
                       mlsScannerDevice.h    \
@@ -24,7 +29,7 @@ STYLSCANNER_SOURCES = mlsBarcode.h          \
 
 
 STYLSCANNER_include_HEADERS = mlsBarcode.h
-STYLSCANNER_CFLAGS = $(DEBUG_CFLAGS) $(RELEASE_CFLAGS) $(LIBUDEV_CFLAGS) $(GLIB_CFLAGS) \
+STYLSCANNER_CFLAGS = $(DEBUG_CFLAGS) ${SERIAL_CFLAGS} $(LIBUDEV_CFLAGS) $(GLIB_CFLAGS) \
 					-std=c99 -D_BSD_SOURCE -D_DEFAULT_SOURCE
 STYLSCANNER_LDFLAGS = $(LIBUDEV_LIBS) $(GLIB_LIBS) -version-info @STYL_VERSION_INFO@
 

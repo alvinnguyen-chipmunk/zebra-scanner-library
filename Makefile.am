@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = src examples
+SUBDIRS = src  tools examples
 
 AUTOMAKE_OPTIONS = 1.7
 

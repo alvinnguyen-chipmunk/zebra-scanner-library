@@ -43,7 +43,7 @@ extern "C"
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-gint mlsScannerConfig_OpenTTY(gchar *deviceNode);
+gint mlsScannerConfig_OpenTTY(const gchar *deviceNode);
 
 /*!
  * \brief mlsScannerConfig_CloseTTY: Close TTY port of device.
@@ -75,12 +75,30 @@ gint mlsScannerConfig_ConfigTTY(gint pFile);
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode);
+gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode, gboolean isPermanent);
 
+/*!
+ * \brief mlsScannerConfig_CheckRevision: Request revision number of decoder
+ * \param
+ * - File descriptor of scanner device
+ * \return
+ * - length of revision string: success
+ * - 0: failure.
+ */
+guint mlsScannerConfig_CheckRevision(gint pFile, gchar *buffer, gint bufferLength, gchar deciTimeout);
+
+
+/*!
+ * \brief mlsScannerConfig_GetMode: Get current mode of scanner
+ * \return
+ * - 0: scanner is not setup before
+ * - 1: presentation/auto-trigger mode
+ * - 2: host/manual-trigger mode
+ */
+guint mlsScannerConfig_GetMode (void);
 
 #ifdef __cplusplus
 }
 #endif
-
 #endif // MLSSCANNERCONFIG_H_INCLUDED
-/**@}*/
+/*@}*/

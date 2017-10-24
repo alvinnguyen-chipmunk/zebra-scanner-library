@@ -28,6 +28,7 @@
 #include "mlsScannerUtils.h"
 #include "mlsScannerPackage.h"
 #include "mlsScannerSSI.h"
+
 /********** Local Type definition section *************************************/
 /********** Local Constant and compile switch definition section **************/
 /********** Local Macro definition section ************************************/
@@ -208,9 +209,9 @@ void mlsScannerPackage_Display(byte *package, gint length)
 
     for (gint i = 0; i < sizeBuffer; i++)
     {
-        STYL_INFO_OTHER(" 0x%02x", package[i]);
+        printf(" 0x%02x", package[i]);
     }
-    STYL_INFO_OTHER("\n");
+    printf("\n");
 }
 
 /*!
@@ -219,7 +220,8 @@ void mlsScannerPackage_Display(byte *package, gint length)
  * - barcode length: Success
  * - 0             : Fail
  */
-gint mlsScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *package, const gint buffLength)
+gint mlsScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *package,
+                               const gint buffLength, gboolean isDecodeData)
 {
     gchar *pBuffer  = buffer;
     byte *pPackage = package;
@@ -227,8 +229,11 @@ gint mlsScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *packag
     gint decodeLength = 0;
     gint partLength = 0;
 
-    const gchar * symbol = mlsScannerPackage_GetSymbology(package[PKG_INDEX_DECODE_TYPE]);
-    memcpy(symbolBuffer, symbol, strlen(symbol));
+    if(isDecodeData==TRUE) /* Only decode date have 1 bit at PKG_INDEX_DECODE_TYPE for type */
+    {
+        const gchar * symbol = mlsScannerPackage_GetSymbology(package[PKG_INDEX_DECODE_TYPE]);
+        memcpy(symbolBuffer, symbol, strlen(symbol));
+    }
 
     if (NULL != pPackage)
     {
@@ -242,8 +247,16 @@ gint mlsScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *packag
                 decodeLength = 0;
                 break;
             }
-            if(partLength >= 0)
-                memcpy(pBuffer, &pPackage[PKG_INDEX_DECODE_TYPE + 1], partLength);
+            if(isDecodeData==TRUE) /* Only decode date have 1 bit at PKG_INDEX_DECODE_TYPE for type */
+            {
+                if(partLength >= 0)
+                    memcpy(pBuffer, &pPackage[PKG_INDEX_DECODE_TYPE + 1], partLength);
+            }
+            else
+            {
+                if(partLength >= 0)
+                    memcpy(pBuffer, &pPackage[PKG_INDEX_DECODE_TYPE], partLength);
+            }
             decodeLength += partLength;
 
             /* Point to next pkg */
@@ -252,22 +265,65 @@ gint mlsScannerPackage_Extract(gchar *buffer, gchar * symbolBuffer, byte *packag
         }
 
         /* Get the last part of barcode */
-        STYL_INFO("");
-        mlsScannerPackage_Display(pPackage, NO_GIVEN);
         partLength = PACKAGE_LEN(pPackage) - SSI_LEN_HEADER - SSI_LEN_DECODE_TYPE;
-        STYL_WARNING("Last partLength: %d", partLength);
         if(partLength >= 0)
         {
-            memcpy(pBuffer, &pPackage[PKG_INDEX_DECODE_TYPE + 1], partLength);
+            if(isDecodeData==TRUE) /* Only decode date have 1 bit at PKG_INDEX_DECODE_TYPE for type */
+            {
+                memcpy(pBuffer, &pPackage[PKG_INDEX_DECODE_TYPE + 1], partLength);
+            }
+            else
+            {
+                memcpy(pBuffer, &pPackage[PKG_INDEX_DECODE_TYPE], partLength);
+            }
             decodeLength += partLength;
         }
         else
         {
-            STYL_ERROR("Parsing last part of decode data got problem.");
+            STYL_ERROR("Parsing last part of received data get some problems.");
         }
     }
     return decodeLength;
 }
 
+/*!
+ * \brief mlsScannerPackage_Dump: Dump content of buffer.
+ */
+void mlsScannerPackage_Dump (byte *buffer, gint length, gboolean isRead)
+{
+    gint sizeBuffer = 0;
 
-/**@}*/
+    if(getenv("STYL_DEBUG")==NULL)
+        return;
+
+    if (length==NO_GIVEN)
+        sizeBuffer = PACKAGE_LEN(buffer)+SSI_LEN_CHECKSUM;
+    else
+        sizeBuffer = length;
+
+    if(isRead==TRUE)
+        printf("** READ **%s\n", ANSI_COLOR_YELLOW);
+    else
+        printf("** WRITE **%s\n", ANSI_COLOR_YELLOW);
+
+    switch(buffer[PKG_INDEX_OPCODE])
+    {
+    case SSI_CMD_ACK:
+        printf("%s(ACK)%s", ANSI_COLOR_RED, ANSI_COLOR_RESET);
+        break;
+    case SSI_CMD_NAK:
+        printf("%s(NAK)%s", ANSI_COLOR_RED, ANSI_COLOR_RESET);
+        break;
+    default:
+        break;
+    }
+
+
+    for (gint i = 0; i < sizeBuffer; i++)
+    {
+        printf(" 0x%02x", buffer[i]);
+    }
+    printf("%s\n", ANSI_COLOR_RESET);
+}
+
+/*@}*/

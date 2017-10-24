@@ -46,7 +46,6 @@ static gint gStylScannerFD          = -1;
  * \return string of software version
  * -
  */
-//const char *mlsBarcodeReader_GetVersion(void)
 char * GetVersion(void)
 {
     return VERSION;
@@ -58,22 +57,26 @@ char * GetVersion(void)
  */
 const char *mlsBarcodeReader_GetDevice(void)
 {
-    const char * temp = mlsScannerDevice_GetNode(SCANNER_SUBSYSTEM, SCANNER_VENDOR_ID, SCANNER_PRODUCT_ID);
+    const char * temp = mlsScannerDevice_GetNode(SCANNER_SUBSYSTEM,
+                                                 SCANNER_VENDOR_ID,
+                                                 SCANNER_PRODUCT_ID);
     return temp;
 }
 
+
 /*!
- * \brief mlsBarcodeReader_Open: Open Reader descriptor file for read write automatic.
+ * \brief mlsBarcodeReader_Open: Open serial device port of scanner camera.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-//int mlsBarcodeReader_Open(const char *name)
-char mlsBarcodeReader_Open(char *name)
+
+char mlsBarcodeReader_Open(const char *name)
 {
     gchar    *deviceNode = NULL;
     gboolean scannerReady = FALSE;
     gint     retValue = EXIT_SUCCESS;
+    gint     StylScannerFD = -1;
 
     if(name == NULL)
     {
@@ -94,145 +97,196 @@ char mlsBarcodeReader_Open(char *name)
         return EXIT_FAILURE;
     }
 
-    STYL_INFO(" ** Scanner port: %s", deviceNode);
+    STYL_INFO(" ** Scanner device port: %s **", deviceNode);
 
-    #if 0
-    gint     tryNumber = 1;
-    do
+    StylScannerFD = mlsScannerConfig_OpenTTY(deviceNode);
+
+    STYL_INFO(" ** Scanner device file descriptor: %d **", StylScannerFD);
+
+    g_free(deviceNode);
+
+    if(StylScannerFD != -1)
     {
-        STYL_WARNING("Try more time ..............");
-        tryNumber--;
-        /* ***************** Open device node ********************* */
-        gStylScannerFD = mlsScannerConfig_OpenTTY(deviceNode);
-        if (gStylScannerFD != -1)
+        if(mlsScannerConfig_ConfigTTY(StylScannerFD) == EXIT_SUCCESS)
         {
-            /* ***************** Configure TTY port ******************* */
-            if(mlsScannerConfig_ConfigTTY(gStylScannerFD) == EXIT_SUCCESS)
-            {
-                if(mlsScannerConfig_ConfigSSI(gStylScannerFD, SCANNING_TRIGGER_AUTO) == EXIT_SUCCESS)
-                {
-                    scannerReady = TRUE;
-                    break;
-                }
-                else
-                {
-                    STYL_ERROR("Can not set configure for SSI protocol.");
-                    mlsScannerConfig_CloseTTY_Only(gStylScannerFD);
-                }
-            }
+            gStylScannerFD = StylScannerFD;
+            return EXIT_SUCCESS;
         }
-        sleep(3);
-    }
-    while(tryNumber > 0);
-    #else
-    ///////////////////////////////////////////////////////////////////
-    STYL_ERROR("Configure first time.");
-    gStylScannerFD = mlsScannerConfig_OpenTTY(deviceNode);
-    if(mlsScannerConfig_ConfigTTY(gStylScannerFD) == EXIT_SUCCESS)
-    {
-        if(mlsScannerConfig_ConfigSSI(gStylScannerFD, SCANNING_TRIGGER_AUTO)==EXIT_FAILURE)
-            sleep(10);
-    }
-    mlsScannerConfig_CloseTTY_Only(gStylScannerFD);
-    gStylScannerFD = -1;
-
-    sleep(2);
-    ///////////////////////////////////////////////////////////////////
-    gint tryNumber = 1;
-    do
-    {
-        tryNumber--;
-        STYL_ERROR("Reopen for working section.");
-        gStylScannerFD = mlsScannerConfig_OpenTTY(deviceNode);
-
-        g_free(deviceNode);
-
-        if (gStylScannerFD != -1)
+        else
         {
-            /* ***************** Configure TTY port ******************* */
-            if(mlsScannerConfig_ConfigTTY(gStylScannerFD) == EXIT_SUCCESS)
-            {
-                retValue = mlsScannerConfig_ConfigSSI(gStylScannerFD, SCANNING_TRIGGER_AUTO);
-                #if 0
-                switch(retValue)
-                {
-                case EXIT_SUCCESS:
-                    scannerReady = TRUE;
-                    break;
-                case EXIT_FAILURE:
-                    STYL_ERROR("Can not set configure for SSI protocol.");
-                    mlsScannerConfig_CloseTTY_Only(gStylScannerFD);
-                    goto __error;
-                    break;
-                case EXIT_WARNING:
-                    scannerReady = FALSE;
-                    break;
-                }
-                #else
-                if(mlsScannerConfig_ConfigSSI(gStylScannerFD, SCANNING_TRIGGER_AUTO) == EXIT_SUCCESS)
-                {
-                    scannerReady = TRUE;
-                    break;
-                }
-                else
-                {
-                    STYL_ERROR("Can not set configure for SSI protocol.");
-                    mlsScannerConfig_CloseTTY_Only(gStylScannerFD);
-                }
-                #endif
-            }
+            mlsScannerConfig_CloseTTY_Only(StylScannerFD);
         }
     }
-    while(tryNumber > 0);
-    #endif
-
-    if(scannerReady==FALSE)
-        goto __error;
-
-    /* Flush buffer of device*/
-    if(mlsScannerSSI_SendCommand(gStylScannerFD, SSI_CMD_FLUSH_QUEUE) != EXIT_SUCCESS)
-    {
-        STYL_ERROR("Can not flush buffer of device");
-        goto __error;
-    }
-    /* Enable device to scanning */
-    if(mlsScannerSSI_SendCommand(gStylScannerFD,SSI_CMD_SCAN_ENABLE) != EXIT_SUCCESS)
-    {
-        STYL_ERROR("Can not enable device to scanning");
-        goto __error;
-    }
-
-__exit:
-    return EXIT_SUCCESS;
-
-__error:
-    /* ***************** Close TTY port ******************* */
-    //mlsScannerConfig_CloseTTY_Only(gStylScannerFD);
-    gStylScannerFD = -1;
     return EXIT_FAILURE;
 }
 
 /*!
- * \brief mlsBarcodeReader_close close Reader file descriptor.
+ * \brief mlsBarcodeReader_Open_AutoMode: Open serial port then set configure for scanner is auto-trigger mode.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-//int mlsBarcodeReader_Close()
-char mlsBarcodeReader_Close()
+char mlsBarcodeReader_Open_AutoMode(const char *name)
 {
-    STYL_INFO("Close scanner device.");
-    return (char) mlsScannerConfig_CloseTTY(gStylScannerFD);
+    gchar    *deviceNode = NULL;
+    gint     StylScannerFD = -1;
+    if(name == NULL)
+    {
+        /* ***************** Auto-detect for device node string ********************* */
+        STYL_WARNING("Device node string is not give. Auto-detect enabled.");
+        deviceNode = g_strdup(mlsScannerDevice_GetNode(SCANNER_SUBSYSTEM,
+                                               SCANNER_VENDOR_ID,
+                                               SCANNER_PRODUCT_ID));
+    }
+    else
+    {
+        deviceNode = g_strdup(name);
+    }
+
+    if(!deviceNode)
+    {
+        STYL_ERROR("Device node path is invalid.");
+        return EXIT_FAILURE;
+    }
+
+    STYL_INFO(" ** Scanner device port: %s **", deviceNode);
+
+    StylScannerFD = mlsScannerConfig_OpenTTY(deviceNode);
+
+    STYL_INFO(" ** Scanner device file descriptor: %d **", StylScannerFD);
+
+    g_free(deviceNode);
+
+    if (StylScannerFD != -1)
+    {
+            /* ***************** Configure TTY port ******************* */
+            if(mlsScannerConfig_ConfigTTY(StylScannerFD) == EXIT_SUCCESS)
+            {
+                if(mlsScannerConfig_ConfigSSI(StylScannerFD, SCANNING_TRIGGER_AUTO, FALSE) == EXIT_SUCCESS)
+                {
+                    gStylScannerFD = StylScannerFD;
+                    STYL_INFO("Setup scanner with SSI parameter of auto-trigger scanning mode success.");
+                    return EXIT_SUCCESS;
+                }
+                else
+                {
+                    STYL_ERROR("Setup scanner with SSI parameter of auto-trigger scanning mode fail.");
+                    mlsScannerConfig_CloseTTY_Only(StylScannerFD);
+                }
+            }
+    }
+    return EXIT_FAILURE;
 }
 
 /*!
- * \brief mlsBarcodeReader_Reopen closes then opens device
+ * \brief mlsBarcodeReader_Open_ManualMode: Open serial port then set configure for scanner is manual-trigger mode.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
-//int mlsBarcodeReader_Reopen(const char *name)
-char mlsBarcodeReader_Reopen(char *name)
+char mlsBarcodeReader_Open_ManualMode(const char *name)
+{
+    gchar    *deviceNode = NULL;
+    gint     StylScannerFD = -1;
+
+    if(name == NULL)
+    {
+        /* ***************** Auto-detect for device node string ********************* */
+        STYL_WARNING("Device node string is not give. Auto-detect enabled.");
+        deviceNode = g_strdup(mlsScannerDevice_GetNode(SCANNER_SUBSYSTEM,
+                                               SCANNER_VENDOR_ID,
+                                               SCANNER_PRODUCT_ID));
+    }
+    else
+    {
+        deviceNode = g_strdup(name);
+    }
+
+    if(!deviceNode)
+    {
+        STYL_ERROR("Device node path is invalid.");
+        return EXIT_FAILURE;
+    }
+
+    STYL_INFO(" ** Scanner device port: %s **", deviceNode);
+
+    StylScannerFD = mlsScannerConfig_OpenTTY(deviceNode);
+
+    STYL_INFO(" ** Scanner device file descriptor: %d **", StylScannerFD);
+
+    g_free(deviceNode);
+
+    if (StylScannerFD != -1)
+    {
+            /* ***************** Configure TTY port ******************* */
+            if(mlsScannerConfig_ConfigTTY(StylScannerFD) == EXIT_SUCCESS)
+            {
+                if(mlsScannerConfig_ConfigSSI(StylScannerFD, SCANNING_TRIGGER_MANUAL, FALSE) == EXIT_SUCCESS)
+                {
+                    gStylScannerFD = StylScannerFD;
+                    STYL_INFO("Setup scanner with SSI parameter of manual-trigger scanning mode.");
+                    return EXIT_SUCCESS;
+                }
+                else
+                {
+                    STYL_ERROR("Setup scanner with SSI parameter of manual-trigger scanning mode fail.");
+                    mlsScannerConfig_CloseTTY_Only(StylScannerFD);
+                }
+            }
+    }
+    return EXIT_FAILURE;
+}
+
+/*!
+ * \brief mlsBarcodeReader_GetRevision: Get revision number of decoder.
+ * \return
+ * - length of revision string: success
+ * - 0: failure.
+ */
+unsigned int mlsBarcodeReader_GetRevision(char *buffer, int bufferLength, char deciTimeout)
+{
+    gint retValue = 0;
+
+    if(gStylScannerFD==-1)
+    {
+        STYL_ERROR("Scanner device port is invalid.");
+        return EXIT_FAILURE;
+    }
+
+    retValue = mlsScannerConfig_CheckRevision(gStylScannerFD, buffer, bufferLength, deciTimeout);
+    return retValue;
+}
+
+/*!
+ * \brief mlsBarcodeReader_close: Close serial device port of scanner camera.
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+char mlsBarcodeReader_Close()
+{
+    char retValue = EXIT_FAILURE;
+    if(gStylScannerFD==-1)
+    {
+        STYL_ERROR("Scanner device port is invalid.");
+        return EXIT_FAILURE;
+    }
+    #if 0
+    return (char) mlsScannerConfig_CloseTTY(gStylScannerFD);
+    #else
+    retValue = (char)mlsScannerConfig_CloseTTY_Only(gStylScannerFD);
+    gStylScannerFD = -1;
+    return retValue;
+    #endif // 0
+}
+
+/*!
+ * \brief mlsBarcodeReader_Reopen: Close then re-open serial device port of scanner camera.
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+char mlsBarcodeReader_Reopen(const char *name)
 {
     char retValue = EXIT_SUCCESS;
     retValue = mlsBarcodeReader_Close();
@@ -244,118 +298,103 @@ char mlsBarcodeReader_Reopen(char *name)
 }
 
 /*!
- * \brief mlsBarcodeReader_ReadData Reader data from descriptor file (blocking read)
+ * \brief mlsBarcodeReader_ReadData: Read decode data from already serial port opened before via auto-trigger mode.
  * \param buff point to buffer which store data.
  * \return number of byte(s) read.
  */
-unsigned int mlsBarcodeReader_ReadData(char *buffer, const int bufferLength, const int timeout)
+unsigned int mlsBarcodeReader_ReadData(char *buffer, const int bufferLength, const char deciTimeout)
 {
-    gint retValue = 0;
+    gint    retValue = 0;
 
-    byte  recvBuff[bufferLength];
-    gchar symbolBuff[DATA_SYMBOL_LEN_MAXIMUM];
+    byte    recvBuff[bufferLength];
+    gchar   symbolBuff[DATA_SYMBOL_LEN_MAXIMUM];
+
+    if(gStylScannerFD==-1)
+    {
+        STYL_ERROR("Scanner device port is invalid.");
+        return EXIT_FAILURE;
+    }
 
     memset(recvBuff,   0, bufferLength           );
     memset(symbolBuff, 0, DATA_SYMBOL_LEN_MAXIMUM);
 
-    STYL_INFO("Invoke mlsScannerSSI_Read");
-
-    /* Convert 1/10 seconds to mili-seconds */
-    guint timeout_ms = (timeout*1000)/10;
-
-    retValue = mlsScannerSSI_Read(gStylScannerFD, recvBuff, bufferLength, timeout_ms);
+    retValue = mlsScannerSSI_Read(gStylScannerFD, recvBuff, bufferLength, deciTimeout, TRUE);
 
     if ( (retValue > 0) && (SSI_CMD_DECODE_DATA == recvBuff[PKG_INDEX_OPCODE]) )
     {
-        STYL_INFO("READ DATA SIZE: %d", retValue);
-        mlsScannerPackage_Display(recvBuff, retValue);
-        retValue = mlsScannerPackage_Extract((gchar *)buffer, symbolBuff, recvBuff, (const gint)bufferLength);
-        STYL_INFO("Code Type: %s", symbolBuff);
-//        STYL_DEBUG("Send to stop section after receive a valid decode data.");
-//        if(mlsScannerSSI_SendCommand(gStylScannerFD, SSI_CMD_SESSION_STOP) != EXIT_SUCCESS)
-//        {
-//            STYL_ERROR("Stop section request was fail.");
-//        }
+        retValue = mlsScannerPackage_Extract((gchar *)buffer, symbolBuff, recvBuff, (const gint)bufferLength, TRUE);
+        STYL_INFO_1("Code Type: %s", symbolBuff);
     }
     else
     {
-        if(retValue <=0 )
+        if(retValue <= 0)
         {
-            STYL_WARNING("Nothing is received.");
+            STYL_WARNING("No Data!");
         }
         else
         {
             STYL_ERROR("Received data is invalid.");
         }
+        retValue = 0;
     }
+
+//    /* Flush buffer of scanner one time for next read section */
+//    if(mlsScannerSSI_SendCommand(gStylScannerFD, SSI_CMD_FLUSH_QUEUE) != EXIT_SUCCESS)
+//    {
+//        STYL_ERROR("Can not flush buffer of device");
+//    }
+//    usleep(50000); /* waiting for scanner flush buffer */
 
     return retValue;
 }
 
 /*!
- * \brief mlsBarcodeReader_ManualMode: Set configure for scanner via manual scanning.
- * \return
- * - EXIT_SUCCESS: Success
- * - EXIT_FAILURE: Fail
- */
-int mlsBarcodeReader_ManualMode()
-{
-    if(mlsScannerConfig_ConfigSSI(gStylScannerFD, SCANNING_TRIGGER_MANUAL) != EXIT_SUCCESS )
-    {
-        STYL_ERROR("Can not configure SSI for device");
-    }
-}
-
-/*!
- * \brief mlsBarcodeReader_ReadData_Manual: Reader data from descriptor file (blocking read)
+ * \brief mlsBarcodeReader_ReadData_Manual: Read decode data from already serial port opened before via manual-trigger mode.
  * \param buff point to buffer which store data.
  * \return number of byte(s) read.
  */
-unsigned int mlsBarcodeReader_ReadData_Manual(char *buffer, const int bufferLength, const int timeout)
+unsigned int mlsBarcodeReader_ReadData_Manual(char *buffer, const int bufferLength, const char deciTimeout)
 {
-    gint retValue = 0;
+    gint    retValue = 0;
 
-    byte  recvBuff[bufferLength];
-    gchar symbolBuff[DATA_SYMBOL_LEN_MAXIMUM];
+    byte    recvBuff[bufferLength];
+    gchar   symbolBuff[DATA_SYMBOL_LEN_MAXIMUM];
+
+    if(gStylScannerFD==-1)
+    {
+        STYL_ERROR("Scanner device port is invalid.");
+        return EXIT_FAILURE;
+    }
 
     memset(recvBuff,   0, bufferLength           );
     memset(symbolBuff, 0, DATA_SYMBOL_LEN_MAXIMUM);
 
-
-    STYL_INFO("Send START SECTION");
     if(mlsScannerSSI_SendCommand(gStylScannerFD, SSI_CMD_SESSION_START) != EXIT_SUCCESS)
     {
         STYL_ERROR("Start section request was fail.");
         return 0;
     }
 
-    /* Convert 1/10 seconds to mili-seconds */
-    guint timeout_ms = (timeout*1000)/10;
-
-    STYL_INFO("************************************** Invoke mlsScannerSSI_Read");
-    retValue = mlsScannerSSI_Read(gStylScannerFD, recvBuff, bufferLength, timeout_ms);
+    retValue = mlsScannerSSI_Read(gStylScannerFD, recvBuff, bufferLength, deciTimeout, TRUE);
 
     if ( (retValue > 0) && (SSI_CMD_DECODE_DATA == recvBuff[PKG_INDEX_OPCODE]) )
     {
-        STYL_INFO("READ DATA SIZE: %d", retValue);
-        mlsScannerPackage_Display(recvBuff, retValue);
-        retValue = mlsScannerPackage_Extract((gchar *)buffer, symbolBuff, recvBuff, (const gint)bufferLength);
-        STYL_INFO("Code Type: %s", symbolBuff);
+        retValue = mlsScannerPackage_Extract((gchar *)buffer, symbolBuff, recvBuff, (const gint)bufferLength, TRUE);
+        STYL_INFO_1("Code Type: %s", symbolBuff);
     }
     else
     {
-        if(retValue <= 0 )
+        if(retValue <= 0)
         {
-            STYL_WARNING("Nothing was received.");
+            STYL_WARNING("No Data!");
         }
         else
         {
-            STYL_ERROR("Received data was invalid.");
+            STYL_ERROR("Received data is invalid.");
         }
         retValue = 0;
     }
 
-    STYL_INFO("Send STOP SECTION");
     if(mlsScannerSSI_SendCommand(gStylScannerFD, SSI_CMD_SESSION_STOP) != EXIT_SUCCESS)
     {
         STYL_ERROR("Stop section request was fail.");
@@ -364,28 +403,78 @@ unsigned int mlsBarcodeReader_ReadData_Manual(char *buffer, const int bufferLeng
     return retValue;
 }
 
+/*!
+ * \brief mlsBarcodeReader_Setup: Open serial port then set configure for scanner is "scannerMode" mode.
+ * \return
+ * - EXIT_SUCCESS: Success
+ * - EXIT_FAILURE: Fail
+ */
+char mlsBarcodeReader_Setup(const char *scannerPort, const int scannerMode)
+{
+    gint    scannerFD   = -1;
+    char    retValue    = EXIT_FAILURE;
+
+
+    STYL_INFO(" ** Scanner device port: %s **", scannerPort);
+
+    scannerFD = mlsScannerConfig_OpenTTY(scannerPort);
+
+    STYL_INFO(" ** Scanner device file descriptor: %d **", scannerFD);
+
+    if(scannerFD != -1)
+    {
+        if(mlsScannerConfig_ConfigTTY(scannerFD) == EXIT_SUCCESS)
+        {
+            if (scannerMode == STYL_SCANNER_AUTOMODE)
+            {
+                if(mlsScannerConfig_ConfigSSI(scannerFD, SCANNING_TRIGGER_AUTO, TRUE) == EXIT_SUCCESS)
+                {
+                    STYL_INFO("Setup scanner with SSI parameter of auto-trigger scanning mode success.");
+                    retValue = EXIT_SUCCESS;
+                }
+                else
+                {
+                    STYL_ERROR("Setup scanner with SSI parameter of auto-trigger scanning mode fail.");
+                }
+            }
+            else if (scannerMode == STYL_SCANNER_MANUALMODE)
+            {
+                if(mlsScannerConfig_ConfigSSI(scannerFD, SCANNING_TRIGGER_MANUAL, TRUE) == EXIT_SUCCESS)
+                {
+                    STYL_INFO("Setup scanner with SSI parameter of manual-trigger scanning mode success.");
+                    retValue = EXIT_SUCCESS;
+
+                        /* Flush buffer of device*/
+                    if(mlsScannerSSI_SendCommand(scannerFD, SSI_CMD_FLUSH_QUEUE) != EXIT_SUCCESS)
+                    {
+                        STYL_ERROR("Flush buffer of decoder fail.");
+                    }
+                    else
+                    {
+                        STYL_INFO("Flush buffer of decoder success.");
+                    }
+                }
+                else
+                {
+                    STYL_ERROR("Setup scanner with SSI parameter of manual-trigger scanning mode fail.");
+                }
+            }
+        }
+        mlsScannerConfig_CloseTTY_Only(scannerFD);
+    }
+    return retValue;
+}
+
+/*!
+ * \brief mlsBarcodeReader_GetMode: Get the current mode of scanner
+ * \return
+ * - 0: scanner is not setup before
+ * - 1: presentation/auto-trigger mode
+ * - 2: host/manual-trigger mode
+ */
+unsigned int mlsBarcodeReader_GetMode(void)
+{
+    return (unsigned int)mlsScannerConfig_GetMode();
+}
 /*@}*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
