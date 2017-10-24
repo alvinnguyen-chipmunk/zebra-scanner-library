@@ -113,6 +113,7 @@ static gint mlsScannerSSI_SerialRead(gint pFile, byte* buffer, guint sizeBuffer,
                     STYL_ERROR("select: %d - %s", errno, strerror(errno));
                     return readBytes;
                 default:
+                    STYL_WARNING("select: %d - %s", errno, strerror(errno));
                     continue;
                 }
             }
