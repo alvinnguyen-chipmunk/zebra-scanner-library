@@ -47,16 +47,16 @@ typedef unsigned char byte;
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
 #define STYL_INFO(format, ...)  \
-    mlsScannerUtils_Print(0, "%s[STYL INFO] %s():%d: " format "%s\n", ANSI_COLOR_BLUE, __FUNCTION__,__LINE__, ##__VA_ARGS__, ANSI_COLOR_RESET);
+    mlsScannerUtils_Print(0, "%s[STYL INFO]: " format " %s\n", ANSI_COLOR_BLUE, ##__VA_ARGS__, ANSI_COLOR_RESET);
 
 #define STYL_INFO_1(format, ...)  \
-    mlsScannerUtils_Print(0, "%s[STYL INFO] %s():%d: " format "%s\n", ANSI_COLOR_GREEN, __FUNCTION__,__LINE__, ##__VA_ARGS__, ANSI_COLOR_RESET);
+    mlsScannerUtils_Print(0, "%s[STYL INFO]: " format " %s\n", ANSI_COLOR_GREEN, ##__VA_ARGS__, ANSI_COLOR_RESET);
 
 #define STYL_ERROR(format, ...) \
-    mlsScannerUtils_Print(1, "%s[STYL ERROR] %s():%d: " format "%s\n", ANSI_COLOR_RED, __FUNCTION__,__LINE__, ##__VA_ARGS__, ANSI_COLOR_RESET);
+    mlsScannerUtils_Print(1, "%s[STYL ERROR]: " format " %s\n", ANSI_COLOR_RED, ##__VA_ARGS__, ANSI_COLOR_RESET);
 
 #define STYL_WARNING(format, ...)  \
-    mlsScannerUtils_Print(0, "%s[STYL WARNING] %s():%d: " format "%s\n", ANSI_COLOR_YELLOW, __FUNCTION__,__LINE__, ##__VA_ARGS__, ANSI_COLOR_RESET);
+    mlsScannerUtils_Print(0, "%s[STYL WARNING]: " format " %s\n", ANSI_COLOR_YELLOW, ##__VA_ARGS__, ANSI_COLOR_RESET);
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

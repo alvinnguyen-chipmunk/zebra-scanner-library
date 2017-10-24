@@ -40,6 +40,7 @@ Agreement referenced above.                                                    *
         "\n\n\tUsage:\n\t     StylScannerExample_Maual /dev/ttyxxx"                          \
         "\n\n\tUsage:\n\t     StylScannerExample_Maual reconfig"                             \
         "\n\n\tUsage:\n\t     StylScannerExample_Maual /dev/ttyxxx reconfig"                 \
+        "\n\n\tUsage:\n\t     StylScannerExample_Maual -h|--help"                            \
         "\n============================================================================="
 
 /********** Local (static) variable declaration section ***********************/
@@ -47,7 +48,7 @@ static int isRunning = FALSE;
 
 /********** Local (static) function declaration section ***********************/
 static void HandleSignal(int sig);
-
+static void mlsScannerExample_Help();
 /********** Local (static) function definition section ************************/
 static void HandleSignal(int sig)
 {
@@ -56,6 +57,11 @@ static void HandleSignal(int sig)
         psignal(sig, "Received");
         isRunning = FALSE;
     }
+}
+
+static void mlsScannerExample_Help ()
+{
+    printf("%s\n%s\n%s\n", ANSI_COLOR_YELLOW, HELP_STRING, ANSI_COLOR_RESET);
 }
 
 /********** Global function declaration section *******************************/
@@ -80,7 +86,12 @@ int main(int argc, const char * argv[])
         break;
     case 2:
         {
-            if(strcmp("reconfig", argv[1])==0)
+            if (strcmp("-h", argv[1])==0 || strcmp("--help", argv[1])==0)
+            {
+                mlsScannerExample_Help();
+                return 0;
+            }
+            else if(strcmp("reconfig", argv[1])==0)
             {
                 doConfig   = TRUE;
                 doScanPort = TRUE;
@@ -151,11 +162,11 @@ int main(int argc, const char * argv[])
             decodeLength = mlsBarcodeReader_ReadData_Manual(buffer, STYL_STRING_MAXLEN, deciTimeout);
             if (decodeLength > 0)
             {
-                printf("\nBarcode(%d):%s\n%s%s\n", decodeLength, ANSI_COLOR_GREEN, buffer, ANSI_COLOR_RESET);
+                STYL_INFO_1("**** Decode data (%d):%s\n%s", decodeLength, ANSI_COLOR_YELLOW, buffer);
             }
             else
             {
-                printf("\nNo Data!\n");
+                STYL_INFO_2("**** No decode data");
             }
             sleep(2);
         }

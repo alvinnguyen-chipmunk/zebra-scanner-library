@@ -42,24 +42,25 @@ Agreement referenced above.                                                    *
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
-#define STYL_INFO(format, ...)      printf(ANSI_COLOR_BLUE); \
-                                    mlsScannerSetup_Print(0, "[STYL SSI SCANNER]: " format "\n", ##__VA_ARGS__); \
-                                    printf(ANSI_COLOR_RESET);
+#define STYL_INFO(format, ...)  \
+    mlsScannerSetup_Print(0, "%s[STYL INFO]: %s():%d " format "%s\n", ANSI_COLOR_BLUE, __FUNCTION__,__LINE__, ##__VA_ARGS__, ANSI_COLOR_RESET);
 
-#define STYL_SHOW(format, ...)      printf(ANSI_COLOR_GREEN); \
-                                    mlsScannerSetup_Print(0, "[STYL SSI SCANNER]: " format "\n", ##__VA_ARGS__); \
-                                    printf(ANSI_COLOR_RESET);
+#define STYL_WARNING(format, ...)  \
+    mlsScannerSetup_Print(0, "%s[STYL WARNING]: %s():%d " format "%s\n", ANSI_COLOR_YELLOW, __FUNCTION__,__LINE__, ##__VA_ARGS__, ANSI_COLOR_RESET);
 
-#define STYL_ERROR(format, ...)     printf(ANSI_COLOR_RED); \
-                                    mlsScannerSetup_Print(1, "[STYL SSI SCANNER]: " format "\n", ##__VA_ARGS__); \
-                                    printf(ANSI_COLOR_RESET);
+#define STYL_SHOW(format, ...)  \
+    mlsScannerSetup_Print(1, "%s[STYL INFO]: %s():%d " format "%s\n", ANSI_COLOR_GREEN, __FUNCTION__,__LINE__, ##__VA_ARGS__, ANSI_COLOR_RESET);
+
+#define STYL_ERROR(format, ...) \
+    mlsScannerSetup_Print(1, "%s[STYL ERROR]: %s():%d " format "%s\n", ANSI_COLOR_RED, __FUNCTION__,__LINE__, ##__VA_ARGS__, ANSI_COLOR_RESET);
 
 #define HELP_STRING                                                                         \
         "============================================================================="     \
-        "\n\tSTYL program - configure for scanner SSI device.\n"                            \
+        "\n\tSTYL program - configure scanning mode for SSI Scanner device.\n"              \
         "\n\n\tUsage:\n\t     StylScannerSetup"                                             \
         "\n\n\tUsage:\n\t     StylScannerSetup manual|auto"                                 \
         "\n\n\tUsage:\n\t     StylScannerSetup /dev/ttyxxx manual|auto"                     \
+        "\n\n\tUsage:\n\t     StylScannerSetup -h|--help"                                   \
         "\n============================================================================="
 
 /********** Local (static) variable declaration section ***********************/
@@ -67,7 +68,7 @@ static int isRunning = FALSE;
 
 /********** Local (static) function declaration section ***********************/
 static void     mlsScannerSetup_Help        ();
-static void     mlsScannerSetup_Print       (int isError, char *format, ...);
+static void     mlsScannerSetup_Print       (int isForce, char *format, ...);
 static void     HandleSignal                (int sig);
 
 /********** Local (static) function definition section ************************/
@@ -85,9 +86,9 @@ static void mlsScannerSetup_Help ()
     printf("%s\n%s\n%s\n", ANSI_COLOR_YELLOW, HELP_STRING, ANSI_COLOR_RESET);
 }
 
-static void mlsScannerSetup_Print(int isError, char *format, ...)
+static void mlsScannerSetup_Print(int isForce, char *format, ...)
 {
-    if (isError == 0)
+    if (isForce == 0)
         if(getenv("STYL_DEBUG")==NULL)
             return;
 
@@ -114,6 +115,11 @@ int main(int argc, const char * argv[])
         scannerMode = STYL_SCANNER_AUTOMODE;
         break;
     case 2:
+        if (g_strcmp0("-h", argv[1])==0 || g_strcmp0("--help", argv[1])==0)
+        {
+            mlsScannerSetup_Help();
+            return 0;
+        }
         scannerPort = g_strdup(mlsBarcodeReader_GetDevice());
         if (g_strcmp0("auto", argv[1])==0)
             scannerMode = STYL_SCANNER_AUTOMODE;
@@ -135,10 +141,10 @@ int main(int argc, const char * argv[])
     STYL_INFO("SSI Scanner Port %s", scannerPort);
     STYL_INFO("SSI Scanner Mode %d", scannerMode);
 
-    if(scannerMode==STYL_SCANNER_NONEMODE || !scannerPort)
+    if(scannerMode==STYL_SCANNER_NONEMODE || scannerPort==NULL)
     {
         mlsScannerSetup_Help();
-        return 1;
+        goto __exit__;
     }
 
     isRunning = TRUE;
@@ -150,12 +156,12 @@ int main(int argc, const char * argv[])
 //        countLoop--;
         if(mlsBarcodeReader_Setup(scannerPort, scannerMode)==EXIT_FAILURE)
         {
-            STYL_ERROR("Configure SSI protocol for scanner fail.");
+            STYL_ERROR("******************* Unsuccessful ******************* \n");
 
         }
         else
         {
-            STYL_SHOW("\n ******************* CONFIGURE OK ******************* \n");
+            STYL_SHOW("******************* Successful ********************* \n");
         }
 //        else
 //        {
@@ -163,7 +169,7 @@ int main(int argc, const char * argv[])
 //        }
 //    }
 //    while(countLoop>0 && isRunning==TRUE);
-
+__exit__:
     g_free(scannerPort);
     return 0;
 }

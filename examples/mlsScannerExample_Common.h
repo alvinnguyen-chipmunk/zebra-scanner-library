@@ -40,16 +40,23 @@ extern "C"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
 #define STYL_INFO(format, ...)  \
-    mlsScannerExample_Print(0, "%s[STYL INFO]: %s():%d" format "%s\n", ANSI_COLOR_BLUE, __FUNCTION__,__LINE__, ##__VA_ARGS__, ANSI_COLOR_RESET);
+    mlsScannerExample_Print(0, "%s[STYL INFO]: " format "%s\n", ANSI_COLOR_BLUE, ##__VA_ARGS__, ANSI_COLOR_RESET);
+
+#define STYL_INFO_0(format, ...)  \
+    mlsScannerExample_Print(1, "%s" format "%s", ANSI_COLOR_CYAN, ##__VA_ARGS__, ANSI_COLOR_RESET);
 
 #define STYL_INFO_1(format, ...)  \
-    mlsScannerExample_Print(0, "%s[STYL INFO]: %s():%d" format "%s\n", ANSI_COLOR_GREEN, __FUNCTION__,__LINE__, ##__VA_ARGS__, ANSI_COLOR_RESET);
+    mlsScannerExample_Print(1, "%s[STYL INFO]: " format "%s\n", ANSI_COLOR_GREEN, ##__VA_ARGS__, ANSI_COLOR_RESET);
+
+#define STYL_INFO_2(format, ...)  \
+    mlsScannerExample_Print(1, "%s[STYL INFO]: " format "%s\n", ANSI_COLOR_MAGENTA, ##__VA_ARGS__, ANSI_COLOR_RESET);
 
 #define STYL_ERROR(format, ...) \
-    mlsScannerExample_Print(0, "%s[STYL ERROR]: %s():%d" format "%s\n", ANSI_COLOR_RED, __FUNCTION__,__LINE__, ##__VA_ARGS__, ANSI_COLOR_RESET);
+    mlsScannerExample_Print(1, "%s[STYL ERROR]: " format " %s\n", ANSI_COLOR_RED, ##__VA_ARGS__, ANSI_COLOR_RESET);
 
 #define STYL_WARNING(format, ...)  \
-    mlsScannerExample_Print(0, "%s[STYL WARNING]: %s():%d" format "%s\n", ANSI_COLOR_YELLOW, __FUNCTION__,__LINE__, ##__VA_ARGS__, ANSI_COLOR_RESET);
+    mlsScannerExample_Print(0, "%s[STYL WARNING]: " format "%s\n", ANSI_COLOR_YELLOW, ##__VA_ARGS__, ANSI_COLOR_RESET);
+
 
 #define STYL_STRING_MAXLEN          4096
 

@@ -61,24 +61,24 @@ int main(int argc, const char * argv[])
     const char      deciTimeout     = 5;	// decisecond (1/10 second)
     char            buffer[STYL_STRING_MAXLEN];
     int             decodeLength    = 0;
-    char            retValue        = EXIT_FAILURE;
 
     do
     {
-        printf("\n\n******************************************************\n%s", ANSI_COLOR_BLUE);
-        printf("\nSTYL Barcode/QrCode Scanner Demo. Please choose:\n");
-        printf("  1. Connect scanner\n");
-        printf("  2. Disconnect scanner\n");
-        printf("  3. Get device port\n");
-        printf("  4. Get library version\n");
-        printf("  5. Get firmware revision (scanner connected)\n");
-        printf("  6. Get current scanning mode (scanner connected)\n");
-        printf("  7. Execute scanning automatic mode\n");
-        printf("  8. Execute scanning manual mode\n");
-        printf("  0. Exit (also disconnect scanner)\n");
-        printf("\n%sYour choose: ", ANSI_COLOR_RESET);
+        STYL_INFO_0("\n\n******************************************************\n");
+        STYL_INFO_0("\nSTYL Barcode/QrCode Scanner Demo Application.\nPlease choose:\n");
+        STYL_INFO_0("  1. Connect scanner\n");
+        STYL_INFO_0("  2. Disconnect scanner\n");
+        STYL_INFO_0("  3. Get device port\n");
+        STYL_INFO_0("  4. Get library version\n");
+        STYL_INFO_0("  5. Get firmware revision (scanner connected)\n");
+        STYL_INFO_0("  6. Get current scanning mode (scanner connected)\n");
+        STYL_INFO_0("  7. Execute scanning automatic mode (scanner connected)\n");
+        STYL_INFO_0("  8. Execute scanning manual mode (scanner connected)\n");
+        STYL_INFO_0("  0. Exit\n");
+        STYL_INFO_0("\n===> Your choose: ");
 
-        int tmp = scanf("%s", chooseString); printf("\n");
+        memset(chooseString, 0, 256);
+        chooseNumber = scanf("%s", chooseString); printf("\n");
         sscanf(chooseString, "%[0-9]d", chooseString);
         chooseNumber = atoi(chooseString);
 
@@ -87,30 +87,38 @@ int main(int argc, const char * argv[])
             case 1:
             {
                 if(mlsBarcodeReader_Open(deviceName)==EXIT_SUCCESS)
-                    printf("%s\nScanner device was opened.%s", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
+                {
+                    STYL_INFO_1("**** Scanner connect successful.");
+                }
                 else
-                    printf("%s\nScanner device cannot open.%s", ANSI_COLOR_RED, ANSI_COLOR_RESET);
+                {
+                    STYL_ERROR("**** Scanner connect unsuccessful.");
+                }
             }
                 break;
 
             case 2:
             {
                 if(mlsBarcodeReader_Close()==EXIT_SUCCESS)
-                    printf("%s\nScanner device was closed.%s", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
+                {
+                    STYL_INFO_1("**** Scanner disconnect successful.");
+                }
                 else
-                    printf("%s\nScanner device cannot close.%s", ANSI_COLOR_RED, ANSI_COLOR_RESET);
+                {
+                    STYL_ERROR("**** Scanner disconnect unsuccessful.");
+                }
             }
                 break;
 
             case 3:
             {
-                printf("Version:%s %s%s\n", ANSI_COLOR_GREEN, mlsBarcodeReader_GetDevice(), ANSI_COLOR_RESET);
+                STYL_INFO_1("**** Scanner serial device port name: %s.", mlsBarcodeReader_GetDevice());
             }
                 break;
 
             case 4:
             {
-                printf("Version:%s %s%s\n", ANSI_COLOR_GREEN, GetVersion(), ANSI_COLOR_RESET);
+                STYL_INFO_1("**** Scanner SSI library version: %s.", mlsBarcodeReader_GetDevice());
             }
                 break;
 
@@ -120,29 +128,28 @@ int main(int argc, const char * argv[])
                 decodeLength = mlsBarcodeReader_GetRevision(buffer, STYL_STRING_MAXLEN, deciTimeout);
                 if (decodeLength != 0)
                 {
-                    printf("\nFirmware revision number: %s%s%s\n", ANSI_COLOR_GREEN, buffer, ANSI_COLOR_RESET);
+                    STYL_INFO_1("**** Decoder firmware revision number: %s.", buffer);
                 }
                 else
                 {
-                    printf("%s\nGet firmware revision number fail.%s", ANSI_COLOR_RED, ANSI_COLOR_RESET);
+                    STYL_ERROR("**** Get Decoder firmware revision failure: %s.", buffer);
                 }
             }
                 break;
 
             case 6:
             {
-                unsigned int modeNumber = mlsBarcodeReader_GetMode();
-                if(modeNumber == 1)
+                switch(mlsBarcodeReader_GetMode())
                 {
-                    printf("\nScanner mode is: %sauto-trigger%s\n", ANSI_COLOR_RED, ANSI_COLOR_RESET);
-                }
-                else if (modeNumber == 2)
-                {
-                    printf("\nScanner mode is: %smanual-trigger%s\n", ANSI_COLOR_RED, ANSI_COLOR_RESET);
-                }
-                else
-                {
-                    printf("\nGet mode scanner fail.%s\n", ANSI_COLOR_RED, ANSI_COLOR_RESET);
+                    case 1:
+                        STYL_INFO_1("**** Scanner mode is: auto-trigger scanning.");
+                        break;
+                    case 2:
+                        STYL_INFO_1("**** Scanner mode is: manual-trigger scanning.");
+                        break;
+                    default:
+                        STYL_ERROR("**** Get scanner current mode scanning failure.");
+                        break;
                 }
             }
                 break;
@@ -158,13 +165,13 @@ int main(int argc, const char * argv[])
                     decodeLength = mlsBarcodeReader_ReadData(buffer, STYL_STRING_MAXLEN, deciTimeout);
                     if (decodeLength > 0)
                     {
-                        printf("\nBarcode(%d):%s\n%s%s\n", decodeLength, ANSI_COLOR_GREEN, buffer, ANSI_COLOR_RESET);
+                        STYL_INFO_1("**** Decode data (%d):%s\n%s", decodeLength, ANSI_COLOR_YELLOW, buffer);
                     }
                     else
                     {
-                        printf("\nNo data\n");
+                        STYL_INFO_2("**** No decode data");
                     }
-                    sleep(1);
+                    sleep(2);
                 }
             }
                 break;
@@ -180,20 +187,18 @@ int main(int argc, const char * argv[])
                     decodeLength = mlsBarcodeReader_ReadData_Manual(buffer, STYL_STRING_MAXLEN, deciTimeout);
                     if (decodeLength > 0)
                     {
-                        printf("\nBarcode(%d):%s\n%s%s\n", decodeLength, ANSI_COLOR_GREEN, buffer, ANSI_COLOR_RESET);
+                        STYL_INFO_1("**** Decode data (%d):%s\n%s", decodeLength, ANSI_COLOR_YELLOW, buffer);
                     }
                     else
                     {
-                        printf("\nNo data\n");
+                        STYL_INFO_2("**** No decode data");
                     }
-                    sleep(1);
+                    sleep(2);
                 }
             }
                 break;
 
             case 0:
-                break;
-
             default:
                 break;
         };
