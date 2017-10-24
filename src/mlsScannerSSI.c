@@ -601,7 +601,7 @@ gint mlsScannerSSI_Read(gint pFile, byte *buffer, gint sizeBuffer, const gchar d
         }
         /* Eliminates content of decoder’s transmission queue. */
         STYL_INFO("Request flush queue of decoder.");
-        if(mlsScannerSSI_Write(pFile, SSI_CMD_FLUSH_QUEUE, NULL, 0, FALSE, FALSE) != EXIT_SUCCESS)
+        if(mlsScannerSSI_SendCommand(pFile, SSI_CMD_FLUSH_QUEUE) != EXIT_SUCCESS)
         {
             STYL_ERROR("Request flush queue of decoder fail.");
         }
@@ -727,6 +727,7 @@ gint mlsScannerSSI_SendCommand(gint pFile, byte opCode)
         retValue = mlsScannerSSI_Write(pFile, opCode, NULL, 0, TRUE, FALSE);
         if(retValue==EXIT_SUCCESS)
         {
+            STYL_INFO("Waiting for ACK message from decoder.");
             retValue = mlsScannerSSI_CheckACK(pFile);
             if(retValue == EXIT_SUCCESS)
                 break;
