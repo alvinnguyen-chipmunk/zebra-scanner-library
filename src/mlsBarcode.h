@@ -36,7 +36,7 @@ extern "C"
 
 /********** Function declaration section **************************************/
 /*!
- * \brief mlsBarcodeReader_Open: Open scanner port with before configure scanning mode.
+ * \brief mlsBarcodeReader_Open: Open serial device port of scanner camera.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
@@ -44,7 +44,7 @@ extern "C"
 char mlsBarcodeReader_Open(const char *name);
 
 /*!
- * \brief mlsBarcodeReader_Reopen: closes and re-opens scanner device file
+ * \brief mlsBarcodeReader_Reopen: Close then re-open serial device port of scanner camera.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
@@ -52,7 +52,7 @@ char mlsBarcodeReader_Open(const char *name);
 char mlsBarcodeReader_Reopen(const char *name);
 
 /*!
- * \brief mlsBarcodeReader_Open_ManualMode: Open then set configure for scanner via manual scanning.
+ * \brief mlsBarcodeReader_Open_ManualMode: Open serial port then set configure for scanner is manual-trigger mode.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
@@ -60,7 +60,7 @@ char mlsBarcodeReader_Reopen(const char *name);
 char mlsBarcodeReader_Open_ManualMode(const char *name);
 
 /*!
- * \brief mlsBarcodeReader_Open_AutoMode: Open then set configure for scanner via auto scanning.
+ * \brief mlsBarcodeReader_Open_AutoMode: Open serial port then set configure for scanner is auto-trigger mode.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
@@ -68,21 +68,21 @@ char mlsBarcodeReader_Open_ManualMode(const char *name);
 char mlsBarcodeReader_Open_AutoMode(const char *name);
 
 /*!
- * \brief mlsBarcodeReader_ReadData: Reader data from descriptor file (blocking read)
+ * \brief mlsBarcodeReader_ReadData: Read decode data from already serial port opened before via auto-trigger mode.
  * \param buff point to buffer which store data.
  * \return number of byte(s) read.
  */
 unsigned int mlsBarcodeReader_ReadData(char *buffer, const int bufferLength, const char deciTimeout);
 
 /*!
- * \brief mlsBarcodeReader_ReadData_Manual: Reader data from descriptor file (blocking read)
+ * \brief mlsBarcodeReader_ReadData_Manual: Read decode data from already serial port opened before via manual-trigger mode.
  * \param buff point to buffer which store data.
  * \return number of byte(s) read.
  */
 unsigned int mlsBarcodeReader_ReadData_Manual(char *buffer, const int bufferLength, const char deciTimeout);
 
 /*!
- * \brief mlsBarcodeReader_close: Close scanner port device.
+ * \brief mlsBarcodeReader_close: Close serial device port of scanner camera.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
@@ -90,7 +90,7 @@ unsigned int mlsBarcodeReader_ReadData_Manual(char *buffer, const int bufferLeng
 char mlsBarcodeReader_Close();
 
 /*!
- * \brief mlsBarcodeReader_Setup: Open Reader descriptor file for read write automatic.
+ * \brief mlsBarcodeReader_Setup: Open serial port then set configure for scanner is "scannerMode" mode.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail

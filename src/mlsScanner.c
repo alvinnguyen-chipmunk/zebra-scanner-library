@@ -65,7 +65,7 @@ const char *mlsBarcodeReader_GetDevice(void)
 
 
 /*!
- * \brief mlsBarcodeReader_Open: Open scanner device port.
+ * \brief mlsBarcodeReader_Open: Open serial device port of scanner camera.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
@@ -121,7 +121,7 @@ char mlsBarcodeReader_Open(const char *name)
 }
 
 /*!
- * \brief mlsBarcodeReader_Open_AutoMode: Open then set configure for scanner via auto scanning.
+ * \brief mlsBarcodeReader_Open_AutoMode: Open serial port then set configure for scanner is auto-trigger mode.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
@@ -129,8 +129,6 @@ char mlsBarcodeReader_Open(const char *name)
 char mlsBarcodeReader_Open_AutoMode(const char *name)
 {
     gchar    *deviceNode = NULL;
-    gboolean scannerReady = FALSE;
-    gint     retValue = EXIT_SUCCESS;
     gint     StylScannerFD = -1;
     if(name == NULL)
     {
@@ -181,7 +179,7 @@ char mlsBarcodeReader_Open_AutoMode(const char *name)
 }
 
 /*!
- * \brief mlsBarcodeReader_Open_ManualMode: Open then set configure for scanner via manual scanning.
+ * \brief mlsBarcodeReader_Open_ManualMode: Open serial port then set configure for scanner is manual-trigger mode.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
@@ -189,8 +187,6 @@ char mlsBarcodeReader_Open_AutoMode(const char *name)
 char mlsBarcodeReader_Open_ManualMode(const char *name)
 {
     gchar    *deviceNode = NULL;
-    gboolean scannerReady = FALSE;
-    gint     retValue = EXIT_SUCCESS;
     gint     StylScannerFD = -1;
 
     if(name == NULL)
@@ -262,7 +258,7 @@ unsigned int mlsBarcodeReader_GetRevision(char *buffer, int bufferLength, char d
 }
 
 /*!
- * \brief mlsBarcodeReader_close: Close scanner port device.
+ * \brief mlsBarcodeReader_close: Close serial device port of scanner camera.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
@@ -285,7 +281,7 @@ char mlsBarcodeReader_Close()
 }
 
 /*!
- * \brief mlsBarcodeReader_Reopen: Close then open scanner device port.
+ * \brief mlsBarcodeReader_Reopen: Close then re-open serial device port of scanner camera.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
@@ -302,16 +298,16 @@ char mlsBarcodeReader_Reopen(const char *name)
 }
 
 /*!
- * \brief mlsBarcodeReader_ReadData Reader data from descriptor file (blocking read)
+ * \brief mlsBarcodeReader_ReadData: Read decode data from already serial port opened before via auto-trigger mode.
  * \param buff point to buffer which store data.
  * \return number of byte(s) read.
  */
 unsigned int mlsBarcodeReader_ReadData(char *buffer, const int bufferLength, const char deciTimeout)
 {
-    gint retValue = 0;
+    gint    retValue = 0;
 
-    byte  recvBuff[bufferLength];
-    gchar symbolBuff[DATA_SYMBOL_LEN_MAXIMUM];
+    byte    recvBuff[bufferLength];
+    gchar   symbolBuff[DATA_SYMBOL_LEN_MAXIMUM];
 
     if(gStylScannerFD==-1)
     {
@@ -339,6 +335,7 @@ unsigned int mlsBarcodeReader_ReadData(char *buffer, const int bufferLength, con
         {
             STYL_ERROR("Received data is invalid.");
         }
+        retValue = 0;
     }
 
 //    /* Flush buffer of scanner one time for next read section */
@@ -352,16 +349,16 @@ unsigned int mlsBarcodeReader_ReadData(char *buffer, const int bufferLength, con
 }
 
 /*!
- * \brief mlsBarcodeReader_ReadData_Manual: Read decode data from scanner with manual mode.
+ * \brief mlsBarcodeReader_ReadData_Manual: Read decode data from already serial port opened before via manual-trigger mode.
  * \param buff point to buffer which store data.
  * \return number of byte(s) read.
  */
 unsigned int mlsBarcodeReader_ReadData_Manual(char *buffer, const int bufferLength, const char deciTimeout)
 {
-    gint retValue = 0;
+    gint    retValue = 0;
 
-    byte  recvBuff[bufferLength];
-    gchar symbolBuff[DATA_SYMBOL_LEN_MAXIMUM];
+    byte    recvBuff[bufferLength];
+    gchar   symbolBuff[DATA_SYMBOL_LEN_MAXIMUM];
 
     if(gStylScannerFD==-1)
     {
@@ -382,19 +379,18 @@ unsigned int mlsBarcodeReader_ReadData_Manual(char *buffer, const int bufferLeng
 
     if ( (retValue > 0) && (SSI_CMD_DECODE_DATA == recvBuff[PKG_INDEX_OPCODE]) )
     {
-//        mlsScannerPackage_Dump(recvBuff, retValue, TRUE);
         retValue = mlsScannerPackage_Extract((gchar *)buffer, symbolBuff, recvBuff, (const gint)bufferLength, TRUE);
-        STYL_INFO("Code Type: %s", symbolBuff);
+        STYL_INFO_1("Code Type: %s", symbolBuff);
     }
     else
     {
-        if(retValue <= 0 )
+        if(retValue <= 0)
         {
-            STYL_WARNING("Nothing was received.");
+            STYL_WARNING("No Data!");
         }
         else
         {
-            STYL_ERROR("Received data was invalid.");
+            STYL_ERROR("Received data is invalid.");
         }
         retValue = 0;
     }
@@ -408,16 +404,15 @@ unsigned int mlsBarcodeReader_ReadData_Manual(char *buffer, const int bufferLeng
 }
 
 /*!
- * \brief mlsBarcodeReader_Setup: Open Scanner port, then send parameter for SSI protocol
+ * \brief mlsBarcodeReader_Setup: Open serial port then set configure for scanner is "scannerMode" mode.
  * \return
  * - EXIT_SUCCESS: Success
  * - EXIT_FAILURE: Fail
  */
 char mlsBarcodeReader_Setup(const char *scannerPort, const int scannerMode)
 {
-    gchar   *deviceNode = NULL;
     gint    scannerFD   = -1;
-    gint    retValue    = EXIT_FAILURE;
+    char    retValue    = EXIT_FAILURE;
 
 
     STYL_INFO(" ** Scanner device port: %s **", scannerPort);
@@ -452,11 +447,11 @@ char mlsBarcodeReader_Setup(const char *scannerPort, const int scannerMode)
                         /* Flush buffer of device*/
                     if(mlsScannerSSI_SendCommand(scannerFD, SSI_CMD_FLUSH_QUEUE) != EXIT_SUCCESS)
                     {
-                        STYL_WARNING("Can not flush buffer of device");
+                        STYL_ERROR("Flush buffer of decoder fail.");
                     }
                     else
                     {
-                        STYL_INFO("Flush decoder buffer success.");
+                        STYL_INFO("Flush buffer of decoder success.");
                     }
                 }
                 else

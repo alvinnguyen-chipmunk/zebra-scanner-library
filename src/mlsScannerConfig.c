@@ -453,7 +453,7 @@ guint mlsScannerConfig_CheckRevision(gint pFile, gchar *buffer, gint bufferLengt
                 if(retValue >= bufferLength)
                 {
                     STYL_ERROR("String buffer is not enough for received data.");
-                    return EXIT_FAILURE;
+                    return 0;
                 }
                 else
                 {
@@ -463,7 +463,6 @@ guint mlsScannerConfig_CheckRevision(gint pFile, gchar *buffer, gint bufferLengt
             }
         }
     }
-
     return 0;
 }
 
