@@ -118,7 +118,7 @@ int main(int argc, const char * argv[])
 
             case 4:
             {
-                STYL_INFO_1("**** Scanner SSI library version: %s.", mlsBarcodeReader_GetDevice());
+                STYL_INFO_1("**** Scanner SSI library version: %s.", GetVersion());
             }
                 break;
 
