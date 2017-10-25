@@ -156,12 +156,12 @@ int main(int argc, const char * argv[])
 //        countLoop--;
         if(mlsBarcodeReader_Setup(scannerPort, scannerMode)==EXIT_FAILURE)
         {
-            STYL_ERROR("******************* Unsuccessful ******************* \n");
+            STYL_ERROR("************ Setting Scanner unsuccessful ************ \n");
 
         }
         else
         {
-            STYL_SHOW("******************* Successful ********************* \n");
+            STYL_SHOW("************ Setting Scanner successful ************ \n");
         }
 //        else
 //        {
