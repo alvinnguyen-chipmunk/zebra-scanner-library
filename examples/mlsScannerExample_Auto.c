@@ -128,12 +128,18 @@ int main(int argc, const char * argv[])
         if (doScanPort)
         {
             if (mlsBarcodeReader_Open_AutoMode(NULL) == EXIT_SUCCESS)
+            {
+                STYL_INFO_1("Enable auto-trigger scanning mode success.");
                 isOpened = TRUE;
+            }
         }
         else
         {
             if (mlsBarcodeReader_Open_AutoMode(deviceName) == EXIT_SUCCESS)
+            {
+                STYL_INFO_1("Enable auto-trigger scanning mode success.");
                 isOpened = TRUE;
+            }
         }
     }
     else
