@@ -36,11 +36,11 @@ Agreement referenced above.                                                    *
 #define HELP_STRING                                                                          \
         "============================================================================="      \
         "\n\tSTYL SS Scanner example application - Auto trigger mode demo."                  \
-        "\n\n\tUsage:\n\t     StylScannerExample_Maual"                                      \
-        "\n\n\tUsage:\n\t     StylScannerExample_Maual /dev/ttyxxx"                          \
-        "\n\n\tUsage:\n\t     StylScannerExample_Maual reconfig"                             \
-        "\n\n\tUsage:\n\t     StylScannerExample_Maual /dev/ttyxxx reconfig"                 \
-        "\n\n\tUsage:\n\t     StylScannerExample_Maual -h|--help"                            \
+        "\n\n\tUsage:\n\t     StylScannerExample_Manual"                                      \
+        "\n\n\tUsage:\n\t     StylScannerExample_Manual /dev/ttyxxx"                          \
+        "\n\n\tUsage:\n\t     StylScannerExample_Manual reconfig"                             \
+        "\n\n\tUsage:\n\t     StylScannerExample_Manual /dev/ttyxxx reconfig"                 \
+        "\n\n\tUsage:\n\t     StylScannerExample_Manual -h|--help"                            \
         "\n============================================================================="
 
 /********** Local (static) variable declaration section ***********************/
