@@ -144,7 +144,8 @@ int main(int argc, const char * argv[])
     if(scannerMode==STYL_SCANNER_NONEMODE || scannerPort==NULL)
     {
         mlsScannerSetup_Help();
-        goto __exit__;
+        g_free(scannerPort);
+	return 2;
     }
 
     isRunning = TRUE;
