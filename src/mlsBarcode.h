@@ -30,6 +30,7 @@ extern "C"
 /********** Constant and compile switch definition section ********************/
 /********** Type definition section *******************************************/
 /********** Macro definition section*******************************************/
+/* ************** Scanning mode **************************/
 #define STYL_SCANNER_NONEMODE       0
 #define STYL_SCANNER_AUTOMODE       1
 #define STYL_SCANNER_MANUALMODE     2
@@ -121,11 +122,23 @@ const char *mlsBarcodeReader_GetDevice(void);
 unsigned int mlsBarcodeReader_GetMode(void);
 
 /*!
- * \brief mlsBarcodeReader_GetVersion: provide software version
+ * \brief GetVersion: provide software version
  * \return string of software version
- * -
  */
 char * GetVersion(void);
+
+/*!
+ * \brief mlsBarcodeReader_GetVersion: provide software version
+ * \return string of software version
+ */
+char * mlsBarcodeReader_GetVersion(void);
+
+#if 0
+/*!
+ * \brief mlsBarcodeReader_LedAlert: trigger aim led 2 time for alert
+ */
+ void mlsBarcodeReader_LedAlert(void);
+#endif
 
 #ifdef __cplusplus
 }

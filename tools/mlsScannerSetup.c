@@ -145,32 +145,23 @@ int main(int argc, const char * argv[])
     {
         mlsScannerSetup_Help();
         g_free(scannerPort);
-	return 2;
+        return 2;
     }
 
     isRunning = TRUE;
     signal(SIGINT, HandleSignal);
 
-//    gint countLoop = 3;
-//    do
-//    {
-//        countLoop--;
-        if(mlsBarcodeReader_Setup(scannerPort, scannerMode)==EXIT_FAILURE)
-        {
-            STYL_ERROR("************ Setting Scanner unsuccessful ************ \n");
 
-        }
-        else
-        {
-            STYL_SHOW("************ Setting Scanner successful ************ \n");
-        }
-//        else
-//        {
-//            break;
-//        }
-//    }
-//    while(countLoop>0 && isRunning==TRUE);
-__exit__:
+    if(mlsBarcodeReader_Setup(scannerPort, scannerMode)==EXIT_FAILURE)
+    {
+        STYL_ERROR("************ Setting Scanner unsuccessful ************ \n");
+
+    }
+    else
+    {
+        STYL_SHOW("************ Setting Scanner successful ************ \n");
+    }
+
     g_free(scannerPort);
     return 0;
 }

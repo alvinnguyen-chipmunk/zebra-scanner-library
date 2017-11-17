@@ -35,6 +35,7 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 
+#include "mlsBarcode.h"
 #include "mlsScannerUtils.h"
 #include "mlsScannerConfig.h"
 #include "mlsScannerSSI.h"
@@ -360,7 +361,7 @@ gint mlsScannerConfig_ConfigTTY(gint pFile)
  * \brief mlsScannerConfig_ConfigSSI: Send parameters to configure scanner as SSI interface.
  * \param
  * - File descriptor of scanner device
- * - triggerMode: SCANNING_TRIGGER_AUTO or SCANNING_TRIGGER_MANUAL
+ * - triggerMode: STYL_SCANNER_AUTOMODE or STYL_SCANNER_MANUALMODE
  * - isPermanent: Write SSI parameter to flash of decoder.
  * \return
  * - EXIT_SUCCESS: Success
@@ -373,9 +374,9 @@ gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode, gboolean isPermane
     byte paramContent[12] = {     SSI_PARAM_VALUE_BEEP         // Beep Code - 0xFF is NO BEEP
                                  ,SSI_PARAM_DEF_FORMAT_B,      SSI_PARAM_VALUE_ENABLE
                                  ,SSI_PARAM_B_DEF_SW_ACK,      SSI_PARAM_VALUE_ENABLE
-                                 ,SSI_PARAM_B_DEF_SCAN,        SSI_PARAM_VALUE_DISABLE
+                                 ,SSI_PARAM_B_DEF_SCAN,        SSI_PARAM_VALUE_ENABLE  /* Enable to scanning barcode to change mode */
                            };
-    if (triggerMode == SCANNING_TRIGGER_MANUAL)
+    if (triggerMode == STYL_SCANNER_MANUALMODE)
     {
         paramContent[7] = SSI_PARAM_INDEX_TRIGGER;
         paramContent[8] = SSI_PARAM_VALUE_TRIGGER_HOST;
@@ -480,9 +481,9 @@ guint mlsScannerConfig_GetMode (void)
     gchar   modeString  = '0';
 
     /*
-    #define SCANNING_TRIGGER_NONE              0x00
-    #define SCANNING_TRIGGER_AUTO              0x01
-    #define SCANNING_TRIGGER_MANUAL            0x02
+    #define STYL_SCANNER_NONEMODE       0
+    #define STYL_SCANNER_AUTOMODE       1
+    #define STYL_SCANNER_MANUALMODE     2
     */
 
     if (g_file_test (CONFIG_SCANNER_PATH, G_FILE_TEST_EXISTS))
@@ -491,7 +492,7 @@ guint mlsScannerConfig_GetMode (void)
         if(pModeFile==-1)
         {
             STYL_ERROR("g_open: %d - %s", errno, strerror(errno));
-            return SCANNING_TRIGGER_NONE;
+            return STYL_SCANNER_NONEMODE;
         }
         else
         {
@@ -506,18 +507,17 @@ guint mlsScannerConfig_GetMode (void)
 
             switch(modeString)
             {
-            case '0':
-                return SCANNING_TRIGGER_NONE;
             case '1':
-                return SCANNING_TRIGGER_AUTO;
+                return STYL_SCANNER_AUTOMODE;
             case '2':
-                return SCANNING_TRIGGER_MANUAL;
+                return STYL_SCANNER_MANUALMODE;
+            case '0':
             default:
-                return SCANNING_TRIGGER_NONE;
+                return STYL_SCANNER_NONEMODE;
             }
         }
     }
-    return SCANNING_TRIGGER_NONE;
+    return STYL_SCANNER_NONEMODE;
 }
 
 /*@}*/

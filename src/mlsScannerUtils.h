@@ -104,6 +104,7 @@ typedef unsigned char byte;
 
 /* ************** Parameter index **********************/
 #define SSI_PARAM_INDEX_TRIGGER             0x8A
+#define SSI_PARAM_INDEX_POWER               0x80
 #define SSI_PARAM_DEF_FORMAT_B              0xEE
 #define SSI_PARAM_B_DEF_SW_ACK              0x9F
 #define SSI_PARAM_B_DEF_SCAN                0xEC
@@ -116,6 +117,8 @@ typedef unsigned char byte;
 #define SSI_PARAM_VALUE_BEEP    			0xFF
 #define SSI_PARAM_VALUE_ENABLE              0x01
 #define SSI_PARAM_VALUE_DISABLE             0x00
+#define SSI_PARAM_VALUE_CONTINUOUS_POWER    0x00
+#define SSI_PARAM_VALUE_LOW_POWER           0x01
 
 /* ************** Package index *************************/
 #define PKG_INDEX_LEN						0x00
@@ -144,11 +147,6 @@ typedef unsigned char byte;
 #define WRITE_TTY_TIMEOUT                  2000  /* mili-seconds */
 #define ACK_TIMEOUT                        50 /* deci-seconds */
 #define READ_TTY_TIMEOUT                   20 /* deci-seconds */
-
-/* ************** Scanning mode **************************/
-#define SCANNING_TRIGGER_NONE              0x00
-#define SCANNING_TRIGGER_AUTO              0x01
-#define SCANNING_TRIGGER_MANUAL            0x02
 
 /********** Function declaration section **************************************/
 /*!

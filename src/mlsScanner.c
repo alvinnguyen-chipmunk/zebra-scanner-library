@@ -42,14 +42,23 @@ static gint gStylScannerFD          = -1;
 /********** Local (static) function definition section ************************/
 /********** Global function definition section ********************************/
 /*!
- * \brief mlsBarcodeReader_GetVersion provide software version
+ * \brief GetVersion: provide software version
  * \return string of software version
- * -
  */
 char * GetVersion(void)
 {
     return VERSION;
 }
+
+/*!
+ * \brief mlsBarcodeReader_GetVersion: provide software version
+ * \return string of software version
+ */
+char * mlsBarcodeReader_GetVersion(void)
+{
+    return VERSION;
+}
+
 
 /*!
  * \brief mlsBarcodeReader_GetDevice - Get the device node file name of the udev device
@@ -162,7 +171,7 @@ char mlsBarcodeReader_Open_AutoMode(const char *name)
             /* ***************** Configure TTY port ******************* */
             if(mlsScannerConfig_ConfigTTY(StylScannerFD) == EXIT_SUCCESS)
             {
-                if(mlsScannerConfig_ConfigSSI(StylScannerFD, SCANNING_TRIGGER_AUTO, FALSE) == EXIT_SUCCESS)
+                if(mlsScannerConfig_ConfigSSI(StylScannerFD, STYL_SCANNER_AUTOMODE, FALSE) == EXIT_SUCCESS)
                 {
                     gStylScannerFD = StylScannerFD;
                     STYL_INFO("Setup scanner with SSI parameter of auto-trigger scanning mode success.");
@@ -221,7 +230,7 @@ char mlsBarcodeReader_Open_ManualMode(const char *name)
             /* ***************** Configure TTY port ******************* */
             if(mlsScannerConfig_ConfigTTY(StylScannerFD) == EXIT_SUCCESS)
             {
-                if(mlsScannerConfig_ConfigSSI(StylScannerFD, SCANNING_TRIGGER_MANUAL, FALSE) == EXIT_SUCCESS)
+                if(mlsScannerConfig_ConfigSSI(StylScannerFD, STYL_SCANNER_MANUALMODE, FALSE) == EXIT_SUCCESS)
                 {
                     gStylScannerFD = StylScannerFD;
                     STYL_INFO("Setup scanner with SSI parameter of manual-trigger scanning mode.");
@@ -427,7 +436,7 @@ char mlsBarcodeReader_Setup(const char *scannerPort, const int scannerMode)
         {
             if (scannerMode == STYL_SCANNER_AUTOMODE)
             {
-                if(mlsScannerConfig_ConfigSSI(scannerFD, SCANNING_TRIGGER_AUTO, TRUE) == EXIT_SUCCESS)
+                if(mlsScannerConfig_ConfigSSI(scannerFD, STYL_SCANNER_AUTOMODE, TRUE) == EXIT_SUCCESS)
                 {
                     STYL_INFO("Setup scanner with SSI parameter of auto-trigger scanning mode success.");
                     retValue = EXIT_SUCCESS;
@@ -439,7 +448,7 @@ char mlsBarcodeReader_Setup(const char *scannerPort, const int scannerMode)
             }
             else if (scannerMode == STYL_SCANNER_MANUALMODE)
             {
-                if(mlsScannerConfig_ConfigSSI(scannerFD, SCANNING_TRIGGER_MANUAL, TRUE) == EXIT_SUCCESS)
+                if(mlsScannerConfig_ConfigSSI(scannerFD, STYL_SCANNER_MANUALMODE, TRUE) == EXIT_SUCCESS)
                 {
                     STYL_INFO("Setup scanner with SSI parameter of manual-trigger scanning mode success.");
                     retValue = EXIT_SUCCESS;
@@ -476,5 +485,15 @@ unsigned int mlsBarcodeReader_GetMode(void)
 {
     return (unsigned int)mlsScannerConfig_GetMode();
 }
+
+#if 0
+/*!
+ * \brief mlsBarcodeReader_LedAlert: trigger aim led 2 time for alert
+ */
+ void mlsBarcodeReader_LedAlert(void)
+ {
+
+ }
+ #endif
 /*@}*/
 
