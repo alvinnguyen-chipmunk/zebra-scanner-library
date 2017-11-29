@@ -34,6 +34,7 @@ extern "C"
 #define STYL_SCANNER_NONEMODE       0
 #define STYL_SCANNER_AUTOMODE       1
 #define STYL_SCANNER_MANUALMODE     2
+#define STYL_SCANNER_CONTINUOUSMODE 3
 
 /********** Function declaration section **************************************/
 /*!

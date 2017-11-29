@@ -112,6 +112,7 @@ typedef unsigned char byte;
 #define SSI_PARAM_INDEX_EVENT_DECODE        0x00
 
 /* ************** Parameter value **********************/
+#define SSI_PARAM_VALUE_TRIGGER_CONTINUOUS  0x00
 #define SSI_PARAM_VALUE_TRIGGER_PRESENT     0x07
 #define SSI_PARAM_VALUE_TRIGGER_HOST        0x08
 #define SSI_PARAM_VALUE_BEEP    			0xFF

@@ -381,10 +381,15 @@ gint mlsScannerConfig_ConfigSSI(gint pFile, byte triggerMode, gboolean isPermane
         paramContent[7] = SSI_PARAM_INDEX_TRIGGER;
         paramContent[8] = SSI_PARAM_VALUE_TRIGGER_HOST;
     }
-    else
+    else if (triggerMode == STYL_SCANNER_AUTOMODE)
     {
         paramContent[7] = SSI_PARAM_INDEX_TRIGGER;
         paramContent[8] = SSI_PARAM_VALUE_TRIGGER_PRESENT;
+    }
+    else if (triggerMode == STYL_SCANNER_CONTINUOUSMODE)
+    {
+        paramContent[7] = SSI_PARAM_INDEX_TRIGGER;
+        paramContent[8] = SSI_PARAM_VALUE_TRIGGER_CONTINUOUS;
     }
 
     paramContent[9]  = SSI_PARAM_INDEX_EVENT;
