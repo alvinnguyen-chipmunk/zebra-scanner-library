@@ -1,0 +1,2 @@
+ACTION=="add", ATTRS{idVendor}=="05e0", ATTRS{idProduct}=="1701", RUN+="/bin/ln -s -f /dev/serial/by-id/usb-Symbol_Technologies__Inc__2008_Symbol_Bar_Code_Scanner_S_N:Motorola_Scanner____________-if00 /dev/scanner", ENV{ID_MM_DEVICE_IGNORE}="1"
+ACTION=="remove", ATTRS{idVendor}=="05e0", ATTRS{idProduct}=="1701", RUN+="/bin/rm /dev/scanner"
